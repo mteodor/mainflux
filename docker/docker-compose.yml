@@ -67,7 +67,7 @@ services:
     image: mainflux/users:latest
     container_name: mainflux-users
     volumes:
-      - ../users/emailer/templates/${MF_EMAIL_TEMPLATE}:${MF_EMAIL_TEMPLATE}
+      - ../users/emailer/templates/${MF_EMAIL_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
     depends_on:
       - users-db
     expose:
