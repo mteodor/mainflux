@@ -38,7 +38,7 @@ done
 ###
 # Users
 ###
-MF_USERS_LOG_LEVEL=info $BUILD_DIR/mainflux-users &
+MF_USERS_LOG_LEVEL=info MF_EMAIL_TEMPLATE=email.tmpl $BUILD_DIR/mainflux-users &
 
 ###
 # Things
