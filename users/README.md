@@ -41,8 +41,8 @@ default values.
 | MF_EMAIL_PASSWORD         | Mail server password                                                    |                |
 | MF_EMAIL_FROM_ADDRESS     | Email "from" address                                                    |                |
 | MF_EMAIL_FROM_NAME        | Email "from" name                                                       |                |
-| MF_EMAIL_TEMPLATE         | Email template for sending emails with password reset link              |                |
-| MF_TOKEN_SECRET           | Token s|cret for signing token used for password reset                  | email.tmpl     | 
+| MF_EMAIL_TEMPLATE         | Email template for sending emails with password reset link              | email.tmpl     |
+| MF_TOKEN_SECRET           | Token secret for signing token used for password reset                  |                | 
 | MF_TOKEN_DURATION         | Token duration in minutes                                               | 5              |
 | MF_TOKEN_DEBUG_LEVEL      | Token util debug level                                                  | info           |
 | MF_TOKEN_RESET_ENDPOINT   | Password request reset endpoint, for constructing link                  | /reset-request |
