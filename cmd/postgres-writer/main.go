@@ -82,7 +82,8 @@ func main() {
 
 	repo := newService(db, logger)
 	st := senml.New()
-	if err = writers.Start(nc, repo, st, svcName, cfg.channels, logger); err != nil {
+	w := writers.New(nc, repo, st, cfg.channels, nil, logger)
+	if err := w.Start(svcName); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
 
