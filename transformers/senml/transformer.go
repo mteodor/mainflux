@@ -19,9 +19,11 @@ type transformer struct{}
 // New returns transformer service implementation for SenML messages.
 func New() transformers.Transformer {
 	return transformer{}
+
 }
 
-func (n transformer) Transform(msg mainflux.Message) (interface{}, error) {
+func (n transformer) Transform(in interface{}) (interface{}, error) {
+	msg := in.(mainflux.Message)
 	format, ok := formats[msg.ContentType]
 	if !ok {
 		format = senml.JSON
