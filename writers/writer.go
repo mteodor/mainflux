@@ -14,65 +14,86 @@ import (
 	nats "github.com/nats-io/go-nats"
 )
 
-type consumer struct {
-	nc          *nats.Conn
-	channels    map[string]bool
-	repo        MessageRepository
-	transformer transformers.Transformer
-	logger      log.Logger
+type Writer interface {
+	Start(string) error
+	Consume(m *nats.Msg)
+	Write(msgs ...interface{})
+}
+
+type Consumer struct {
+	Nc          *nats.Conn
+	Channels    map[string]bool
+	Repo        MessageRepository
+	Transformer transformers.Transformer
+	Logger      log.Logger
+	Cons        func(*nats.Msg)
+}
+
+//
+func New(nc *nats.Conn, repo MessageRepository, transformer transformers.Transformer, channels map[string]bool, fConsume func(*nats.Msg), logger log.Logger) Writer {
+
+	c := Consumer{
+		Nc:          nc,
+		Channels:    channels,
+		Repo:        repo,
+		Transformer: transformer,
+		Logger:      logger,
+		Cons:        fConsume,
+	}
+
+	if fConsume == nil {
+		c.Cons = c.Consume
+	}
+	return &c
 }
 
 // Start method starts consuming messages received from NATS.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
-func Start(nc *nats.Conn, repo MessageRepository, transformer transformers.Transformer, queue string, channels map[string]bool, logger log.Logger) error {
-	c := consumer{
-		nc:          nc,
-		channels:    channels,
-		repo:        repo,
-		transformer: transformer,
-		logger:      logger,
-	}
-
-	_, err := nc.QueueSubscribe(mainflux.InputChannels, queue, c.consume)
+func (c *Consumer) Start(queue string) error {
+	_, err := c.Nc.QueueSubscribe(mainflux.InputChannels, queue, c.Cons)
 	return err
 }
 
-func (c *consumer) consume(m *nats.Msg) {
+func (c *Consumer) Consume(m *nats.Msg) {
 	var msg mainflux.Message
 	if err := proto.Unmarshal(m.Data, &msg); err != nil {
-		c.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
+		c.Logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
 		return
 	}
 
-	t, err := c.transformer.Transform(msg)
+	t, err := c.Transformer.Transform(msg)
 	if err != nil {
-		c.logger.Warn(fmt.Sprintf("Failed to tranform received message: %s", err))
+		c.Logger.Warn(fmt.Sprintf("Failed to tranform received message: %s", err))
 		return
 	}
 	norm, ok := t.([]senml.Message)
 	if !ok {
-		c.logger.Warn("Invalid message format from the Transformer output.")
+		c.Logger.Warn("Invalid message format from the Transformer output.")
 		return
 	}
-	var msgs []senml.Message
+	var msgs []interface{}
 	for _, v := range norm {
 		if c.channelExists(v.Channel) {
 			msgs = append(msgs, v)
 		}
 	}
 
-	if err := c.repo.Save(msgs...); err != nil {
-		c.logger.Warn(fmt.Sprintf("Failed to save message: %s", err))
+	c.Write(msgs)
+}
+
+func (c *Consumer) Write(msgs ...interface{}) {
+	if err := c.Repo.Save(msgs...); err != nil {
+		c.Logger.Warn(fmt.Sprintf("Failed to save message: %s", err))
 		return
 	}
 }
 
-func (c *consumer) channelExists(channel string) bool {
-	if _, ok := c.channels["*"]; ok {
+func (c *Consumer) channelExists(channel string) bool {
+	if _, ok := c.Channels["*"]; ok {
 		return true
 	}
 
-	_, found := c.channels[channel]
+	_, found := c.Channels[channel]
 	return found
 }

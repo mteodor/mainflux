@@ -36,13 +36,15 @@ func New(client influxdata.Client, database string) writers.MessageRepository {
 	}
 }
 
-func (repo *influxRepo) Save(messages ...senml.Message) error {
+func (repo *influxRepo) Save(messages ...interface{}) error {
+
 	pts, err := influxdata.NewBatchPoints(repo.cfg)
 	if err != nil {
 		return err
 	}
 
-	for _, msg := range messages {
+	for _, m := range messages {
+		msg := m.(senml.Message)
 		tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
 
 		sec, dec := math.Modf(msg.Time)

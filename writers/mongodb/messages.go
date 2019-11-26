@@ -5,6 +5,7 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -43,10 +44,14 @@ func New(db *mongo.Database) writers.MessageRepository {
 	return &mongoRepo{db}
 }
 
-func (repo *mongoRepo) Save(messages ...senml.Message) error {
+func (repo *mongoRepo) Save(in ...interface{}) error {
 	coll := repo.db.Collection(collectionName)
-	var msgs []interface{}
-	for _, msg := range messages {
+	msgs := []interface{}{}
+	for _, msgIn := range in {
+		msg, ok := msgIn.(senml.Message)
+		if !ok {
+			return errors.New("incorrect message type")
+		}
 		m := message{
 			Channel:    msg.Channel,
 			Subtopic:   msg.Subtopic,
