@@ -31,7 +31,7 @@ import (
 const (
 	svcName           = "exporter"
 	defNatsURL        = nats.DefaultURL
-	defLogLevel       = "error"
+	defLogLevel       = "debug"
 	defPort           = "8170"
 	defMqttHost       = "tcp://localhost:1883"
 	defMqttUsername   = ""
@@ -303,7 +303,7 @@ func mqttConnect(name string, conf export.Config, logger logger.Logger) (mqtt.Cl
 
 	opts := mqtt.NewClientOptions().
 		AddBroker(conf.MqttHost).
-		SetClientID("mainflux-exporter").
+		SetClientID(name).
 		SetCleanSession(true).
 		SetAutoReconnect(true).
 		SetOnConnectHandler(conn).
@@ -336,7 +336,7 @@ func mqttConnect(name string, conf export.Config, logger logger.Logger) (mqtt.Cl
 	token.Wait()
 
 	if token.Error() != nil {
-		logger.Error(fmt.Sprintf("Client %v had error connecting to the broker: %s\n", "Luffa-gw", token.Error().Error()))
+		logger.Error(fmt.Sprintf("Client %s had error connecting to the broker: %s\n", name, token.Error().Error()))
 		return nil, token.Error()
 	}
 	return client, nil
