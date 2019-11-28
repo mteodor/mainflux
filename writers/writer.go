@@ -79,7 +79,7 @@ func (c *Consumer) Consume(m *nats.Msg) {
 		}
 	}
 
-	c.Write(msgs)
+	c.Write(msgs...)
 }
 
 func (c *Consumer) Write(msgs ...interface{}) {

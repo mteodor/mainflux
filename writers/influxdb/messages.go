@@ -4,6 +4,7 @@
 package influxdb
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	"time"
@@ -44,7 +45,10 @@ func (repo *influxRepo) Save(messages ...interface{}) error {
 	}
 
 	for _, m := range messages {
-		msg := m.(senml.Message)
+		msg, ok := m.(senml.Message)
+		if !ok {
+			return errors.New("incorrect message type")
+		}
 		tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
 
 		sec, dec := math.Modf(msg.Time)

@@ -6,7 +6,6 @@ package writer
 import (
 	"fmt"
 
-	"github.com/cisco/senml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
@@ -20,19 +19,6 @@ var _ writers.Writer = (*exporter)(nil)
 type exporter struct {
 	writer writers.Writer
 	logger log.Logger
-}
-
-const (
-	// SenMLJSON represents SenML in JSON format content type.
-	SenMLJSON = "application/senml+json"
-
-	// SenMLCBOR represents SenML in CBOR format content type.
-	SenMLCBOR = "application/senml+cbor"
-)
-
-var formats = map[string]senml.Format{
-	SenMLJSON: senml.JSON,
-	SenMLCBOR: senml.CBOR,
 }
 
 func New(nc *nats.Conn, repo writers.MessageRepository, transformer transformers.Transformer, channels map[string]bool, fConsume func(*nats.Msg), logger log.Logger) writers.Writer {
@@ -50,27 +36,19 @@ func (e *exporter) Start(queue string) error {
 }
 
 func (e *exporter) Consume(m *nats.Msg) {
-	var msg mainflux.Message
+	msg := mainflux.Message{}
 
-	format, ok := formats[msg.ContentType]
-	if !ok {
-		format = senml.JSON
-	}
 	if err := proto.Unmarshal(m.Data, &msg); err != nil {
 		e.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
 		return
 	}
 
-	raw, err := senml.Decode(msg.Payload, format)
-	if err != nil {
-		e.logger.Error(fmt.Sprintf("Failed to decode payload message: %s", err))
-	}
 	msgs := []interface{}{}
-	msgs = append(msgs, raw)
+	msgs = append(msgs, msg)
 
-	e.Write(msgs)
+	e.Write(msgs...)
 }
 
 func (e *exporter) Write(msgs ...interface{}) {
-	e.writer.Write(msgs)
+	e.writer.Write(msgs...)
 }
