@@ -206,20 +206,28 @@ aedes.authorizePublish = function (client, packet, publish) {
 
     var channelTopic = st.length ? baseTopic + '.' + st.join('.') : baseTopic,
         onAuthorize = function (err, res) {
+
             var msg;
             if (!err) {
-                msg = Message.encode({
-                    publisher: client.thingId,
-                    channel: channelId,
-                    subtopic: st.join('.'),
-                    contentType: contentType,
-                    protocol: 'mqtt',
-                    payload: packet.payload
-                }).finish();
+                if ( elements[0] == 'telegraf' ) {
+                    nats.publish(channelTopic, packet.payload);
+                    publish(null);
+                }else {
 
-                nats.publish(channelTopic, msg);
-
-                publish(null);
+                    msg = Message.encode({
+                        publisher: client.thingId,
+                        channel: channelId,
+                        subtopic: st.join('.'),
+                        contentType: contentType,
+                        protocol: 'mqtt',
+                        payload: packet.payload
+                    }).finish();
+    
+                    nats.publish(channelTopic, msg);
+    
+                    publish(null);
+                }
+                
             } else {
                 logger.warn('unauthorized publish: %s', err.message);
                 publish(err); // Bad username or password
