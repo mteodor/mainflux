@@ -15,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/api"
-	"github.com/mainflux/mainflux/provision/certs"
 	mfSDK "github.com/mainflux/mainflux/sdk/go"
 )
 
@@ -32,7 +31,7 @@ const (
 	defHTTPPort        = "8091"
 	defMfUser          = "test@example.com"
 	defMfPass          = "test"
-	defMfApiKey        = ""
+	defMfAPIKey        = ""
 	defMfBSURL         = "http://localhost:8202/things/configs"
 	defMfWhiteListURL  = "http://localhost:8202/things/state"
 	defMfCertsURL      = "http://localhost/certs"
@@ -53,7 +52,7 @@ const (
 	envThingsLocation   = "MF_PROVISION_THINGS_LOCATION"
 	envMfUser           = "MF_PROVISION_USER"
 	envMfPass           = "MF_PROVISION_PASS"
-	envMfApiKey         = "MF_PROVISION_API_KEY"
+	envMfAPIKey         = "MF_PROVISION_API_KEY"
 	envMfCertsURL       = "MF_PROVISION_CERTS_SVC_URL"
 	envProvisionCerts   = "MF_PROVISION_X509_PROVISIONING"
 	envMfBSURL          = "MF_PROVISION_BS_SVC_URL"
@@ -65,10 +64,11 @@ const (
 
 var (
 	errMissingConfigFile        = errors.New("missing config file setting")
+	errFailedToLoadConfigFile   = errors.New("failed to load config from file")
 	errFailedToGetAutoWhiteList = errors.New("failed to get auto whitelist setting")
-	errGettingCertificate       = errors.New("getting certificate file setting")
-	errGettingTLSConf           = errors.New("error getting certificate setting")
-	errSettingProvBS            = errors.New("error getting provision BS url setting")
+	errFailGettingCertSettings  = errors.New("failed to get certificate file setting")
+	errFailGettingTLSConf       = errors.New("failed to get TLS setting")
+	errFailGettingProvBS        = errors.New("failed to get BS url setting")
 )
 
 func main() {
@@ -80,21 +80,26 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	cfg, err = loadConfigFromFile(cfg, logger)
-	if err != nil {
-		logger.Warn(fmt.Sprintf("Continue with settings from env vars: %s", err))
+	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {
+		logger.Warn(fmt.Sprintf("Continue with settings from env, failed to load from: %s: %s", cfg.File, err))
+	} else {
+		// Merge environment variables and file settings.
+		mergeConfigs(&cfgFromFile, &cfg)
+		cfg = cfgFromFile
+		logger.Info("Continue with settings from file:" + cfg.File)
 	}
 
 	SDKCfg := mfSDK.Config{
-		BaseURL:           mainflux.Env(envThingsLocation, defThingsLocation),
+		BaseURL:           cfg.Server.ThingsLocation,
+		BootstrapURL:      cfg.Server.MfBSURL,
+		CertsURL:          cfg.Server.MfCertsURL,
 		HTTPAdapterPrefix: "http",
 		MsgContentType:    "application/json",
 		TLSVerification:   cfg.Server.TLS,
 	}
 	SDK := mfSDK.NewSDK(SDKCfg)
-	certs := certs.New(cfg.Server.MfCertsURL)
 
-	svc := provision.New(cfg, SDK, certs, logger)
+	svc := provision.New(cfg, SDK, logger)
 	svc = api.NewLoggingMiddleware(svc, logger)
 
 	errs := make(chan error, 2)
@@ -123,33 +128,30 @@ func startHTTPServer(svc provision.Service, cfg provision.Config, logger logger.
 	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 }
 
-func loadConfigFromFile(cfg provision.Config, logger logger.Logger) (provision.Config, error) {
-	_, err := os.Stat(cfg.File)
+func loadConfigFromFile(file string) (provision.Config, error) {
+	_, err := os.Stat(file)
 	if os.IsNotExist(err) {
-		return cfg, errMissingConfigFile
+		return provision.Config{}, errors.Wrap(errMissingConfigFile, err)
 	}
-	c, err := provision.Read(cfg.File)
+	c, err := provision.Read(file)
 	if err != nil {
-		return cfg, err
+		return provision.Config{}, errors.Wrap(errFailedToLoadConfigFile, err)
 	}
-	// We will merge settings from environment and from file.
-	merge(&c, &cfg)
-	logger.Info("Continue with settings from file:" + cfg.File)
 	return c, nil
 }
 
 func loadConfig() (provision.Config, error) {
 	tls, err := strconv.ParseBool(mainflux.Env(envTLS, defTLS))
 	if err != nil {
-		return provision.Config{}, errors.Wrap(errGettingTLSConf, err)
+		return provision.Config{}, errors.Wrap(errFailGettingTLSConf, err)
 	}
 	provisionX509, err := strconv.ParseBool(mainflux.Env(envProvisionCerts, defProvisionCerts))
 	if err != nil {
-		return provision.Config{}, errors.Wrap(errGettingCertificate, err)
+		return provision.Config{}, errors.Wrap(errFailGettingCertSettings, err)
 	}
 	provisionBS, err := strconv.ParseBool(mainflux.Env(envProvisionBS, defProvisionBS))
 	if err != nil {
-		return provision.Config{}, errors.Wrap(errSettingProvBS, fmt.Errorf(" for %s", envProvisionBS))
+		return provision.Config{}, errors.Wrap(errFailGettingProvBS, fmt.Errorf(" for %s", envProvisionBS))
 	}
 
 	autoWhiteList, err := strconv.ParseBool(mainflux.Env(envBSAutoWhiteList, defBSAutoWhitelist))
@@ -172,7 +174,9 @@ func loadConfig() (provision.Config, error) {
 			MfCertsURL:     mainflux.Env(envMfCertsURL, defMfCertsURL),
 			MfUser:         mainflux.Env(envMfUser, defMfUser),
 			MfPass:         mainflux.Env(envMfPass, defMfPass),
-			MfApiKey:       mainflux.Env(envMfApiKey, defMfApiKey),
+			MfAPIKey:       mainflux.Env(envMfAPIKey, defMfAPIKey),
+			ThingsLocation: mainflux.Env(envThingsLocation, defThingsLocation),
+			UsersLocation:  mainflux.Env(envUsersLocation, defUsersLocation),
 			TLS:            tls,
 		},
 		Bootstrap: provision.Bootstrap{
@@ -184,34 +188,27 @@ func loadConfig() (provision.Config, error) {
 
 		// This is default conf for provision if there is no config file
 		Channels: []provision.Channel{
-			provision.Channel{
+			{
 				Name:     "control-channel",
 				Metadata: map[string]interface{}{"type": "control"},
-			},
-			provision.Channel{
+			}, {
 				Name:     "data-channel",
 				Metadata: map[string]interface{}{"type": "data"},
 			},
 		},
 		Things: []provision.Thing{
-			provision.Thing{
+			{
 				Name:     "thing",
-				Metadata: map[string]interface{}{"externalID": "xxxxxx"},
+				Metadata: map[string]interface{}{"external_id": "xxxxxx"},
 			},
 		},
 	}
 
-	cfg.File = mainflux.Env(envConfigFile, "")
-	if cfg.File == "" {
-		cfg.File = defConfigFile
-		if err != provision.Save(cfg, defConfigFile) {
-			return cfg, err
-		}
-	}
+	cfg.File = mainflux.Env(envConfigFile, defConfigFile)
 	return cfg, nil
 }
 
-func merge(dst, src interface{}) interface{} {
+func mergeConfigs(dst, src interface{}) interface{} {
 	d := reflect.ValueOf(dst).Elem()
 	s := reflect.ValueOf(src).Elem()
 
@@ -222,7 +219,7 @@ func merge(dst, src interface{}) interface{} {
 		case reflect.Struct:
 			dst := dField.Addr().Interface()
 			src := sField.Addr().Interface()
-			m := merge(dst, src)
+			m := mergeConfigs(dst, src)
 			val := reflect.ValueOf(m).Elem().Interface()
 			dField.Set(reflect.ValueOf(val))
 		case reflect.Slice:
