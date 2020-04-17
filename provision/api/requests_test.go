@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "github.com/mainflux/mainflux/provision/sdk"
 	"github.com/stretchr/testify/assert"
+	SDK "github.com/mainflux/mainflux/sdk/go"
 )
 
 func TestValidate(t *testing.T) {
@@ -21,7 +21,7 @@ func TestValidate(t *testing.T) {
 			err:         nil,
 		},
 		"external id for device empty": {
-			err: sdk.ErrMalformedEntity,
+			err: SDK.Err
 		},
 	}
 

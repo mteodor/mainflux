@@ -16,17 +16,6 @@ volumes:
   mainflux-license-db-volume:
 
 services:
-<<<<<<< HEAD
-  provision:
-    image: mainflux/provision:latest
-    container_name: mainflux-provision
-    restart: on-failure
-    ports:
-      - ${MF_PROVISION_PORT}:${MF_PROVISION_PORT}
-    environment:
-      MF_PROVISION_LOG_LEVEL: ${MF_PROVISION_LOG_LEVEL}
-      MF_PROVISION_PORT: ${MF_PROVISION_PORT}
-=======
   license-db:
     image: postgres:12.1-alpine
     container_name: mainflux-license-db
@@ -59,6 +48,5 @@ services:
       MF_LICENSE_PORT: ${MF_LICENSE_PORT}
       MF_AUTH_URL: authn:${MF_AUTHN_GRPC_PORT}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
->>>>>>> Add provision service
     networks:
       - docker_mainflux-base-net
