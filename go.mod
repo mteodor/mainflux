@@ -15,7 +15,7 @@ require (
 	github.com/gocql/gocql v0.0.0-20181106112037-68ae1e384be4
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/protobuf v1.4.0-rc.4.0.20200313231945-b860323f09d0
+	github.com/golang/protobuf v1.4.0
 	github.com/gopcua/opcua v0.1.6
 	github.com/hokaccha/go-prettyjson v0.0.0-20180920040306-f579f869bbfe
 	github.com/influxdata/influxdb v1.6.4
@@ -26,7 +26,7 @@ require (
 	github.com/nats-io/nats.go v1.9.1
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pelletier/go-toml v1.7.0
-	github.com/prometheus/client_golang v0.9.3
+	github.com/prometheus/client_golang v1.5.1
 	github.com/rubenv/sql-migrate v0.0.0-20181106121204-ba2c6a7295c5
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.5.0
@@ -37,6 +37,5 @@ require (
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 	gonum.org/v1/gonum v0.0.0-20190808205415-ced62fe5104b
 	google.golang.org/grpc v1.27.1
-	google.golang.org/protobuf v1.21.0 // indirect
 	gopkg.in/ory/dockertest.v3 v3.3.5
 )

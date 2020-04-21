@@ -54,6 +54,9 @@ var (
 
 	// ErrFetchVersion indicates that fetching of version failed.
 	ErrFetchVersion = errors.New("failed to fetch version")
+
+	// ErrFailedWhitelist failed to whitelist configs
+	ErrFailedWhitelist = errors.New("failed to whitelist")
 )
 
 // ContentType represents all possible content types.
@@ -176,6 +179,9 @@ type SDK interface {
 
 	// View returns Thing Config with given ID belonging to the user identified by the given key.
 	Boostrap(key, id string) (BoostrapConfig, error)
+
+	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given key.
+	Whitelist(key string, cfg BoostrapConfig) error
 }
 
 type mfSDK struct {
