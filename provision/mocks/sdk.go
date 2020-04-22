@@ -31,18 +31,18 @@ func NewSDK() mfSDK.SDK {
 	return sdk
 }
 
-func (s *mockSDK) CreateUser(u mfSDK.User) {
+func (s *mockSDK) CreateUser(u mfSDK.User) error {
 	panic("CreatUser not implemented")
 }
 
-func (s *mockSDK) User(token string) {
+func (s *mockSDK) User(token string) (mfSDK.User, error) {
 	panic("User not implemented")
 }
 func (s *mockSDK) UpdateUser(u mfSDK.User, token string) error {
 	panic("UpdateUser not implemented")
 }
 
-func (s *mockSDK) UpdatePassword(u mfSDK.User, token string) error {
+func (s *mockSDK) UpdatePassword(oldPass, newPass, token string) error {
 	panic("UpdatePassword not implemented")
 }
 
@@ -136,8 +136,8 @@ func (s *mockSDK) Whitelist(key string, cfg mfSDK.BoostrapConfig) error {
 	return nil
 }
 
-func (s *mockSDK) CreateToken(email, pass string) (string, error) {
-	if email != validEmail || pass != validPass {
+func (s *mockSDK) CreateToken(u mfSDK.User) (string, error) {
+	if u.Email != validEmail || u.Password != validPass {
 		return "", mfSDK.ErrUnauthorized
 	}
 	return validToken, nil
@@ -211,7 +211,7 @@ func (s *mockSDK) CreateChannel(channel mfSDK.Channel, token string) (string, er
 	newChan := mfSDK.Channel{ID: id.String(), Name: channel.Name, Metadata: channel.Metadata}
 	s.channels[newChan.ID] = newChan
 
-	return "", nil
+	return newChan.ID, nil
 }
 
 func (s *mockSDK) DeleteChannel(id string, token string) error {

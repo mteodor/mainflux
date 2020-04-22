@@ -25,6 +25,22 @@ var (
 			MfPass: "test",
 			MfUser: "test@example.com",
 		},
+		Channels: []provision.Channel{
+			provision.Channel{
+				Name:     "control-channel",
+				Metadata: map[string]interface{}{"type": "control"},
+			},
+			provision.Channel{
+				Name:     "data-channel",
+				Metadata: map[string]interface{}{"type": "data"},
+			},
+		},
+		Things: []provision.Thing{
+			provision.Thing{
+				Name:     "thing",
+				Metadata: map[string]interface{}{"externalID": "xxxxxx"},
+			},
+		},
 	}
 	log, _ = logger.New(os.Stdout, "info")
 )

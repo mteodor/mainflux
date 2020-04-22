@@ -49,8 +49,8 @@ type Thing struct {
 // Config struct of Provision
 type Config struct {
 	File      string      `toml:"file"`
-	Server    ServiceConf `toml:"server"`
-	Bootstrap Bootstrap   `toml:"bootstrap"`
+	Server    ServiceConf `toml:"server" mapstructure:"server"`
+	Bootstrap Bootstrap   `toml:"bootstrap" mapstructure:"boostrap"`
 	Things    []Thing     `toml:"things" mapstructure:"things"`
 	Channels  []Channel   `toml:"channels" mapstructure:"channel"`
 }
