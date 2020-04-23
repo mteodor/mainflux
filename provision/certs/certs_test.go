@@ -12,7 +12,6 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux/provision/certs"
 	SDK "github.com/mainflux/mainflux/sdk/go"
-	"github.com/mainflux/provision/certs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -67,7 +66,7 @@ func delete(rw http.ResponseWriter, r *http.Request) {
 }
 
 func createToken(rw http.ResponseWriter, r *http.Request) {
-	var u mfSDK.User
+	var u SDK.User
 	if !ct(rw, r) {
 		return
 	}
@@ -209,34 +208,6 @@ func TestCert(t *testing.T) {
 	}
 	for _, tc := range cases {
 		_, err := sdk.Cert(tc.id, tc.key, tc.token)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-	}
-}
-
-func TestCreateToken(t *testing.T) {
-	sdk := newSDK()
-
-	cases := []struct {
-		desc  string
-		email string
-		pass  string
-		err   error
-	}{
-		{
-			desc:  "Create token successfully",
-			email: "test@email.com",
-			pass:  valid,
-			err:   nil,
-		},
-		{
-			desc:  "Create an invalid token",
-			email: invalid,
-			pass:  valid,
-			err:   mfSDK.ErrInvalidArgs,
-		},
-	}
-	for _, tc := range cases {
-		_, err := sdk.CreateToken(tc.email, tc.pass)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
