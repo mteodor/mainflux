@@ -130,7 +130,6 @@ func startHTTPServer(svc provision.Service, cfg provision.Config, logger logger.
 
 func loadConfigFromFile(file string) (provision.Config, error) {
 	_, err := os.Stat(file)
-	fmt.Printf("file:%s\n", file)
 	if os.IsNotExist(err) {
 		return provision.Config{}, errors.Wrap(errMissingConfigFile, err)
 	}
