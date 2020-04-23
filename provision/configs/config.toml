@@ -43,3 +43,4 @@ file = "config.toml"
 
   [channels.metadata]
     type = "data"
+    
