@@ -88,11 +88,6 @@ func (s *mockSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (
 	panic("ChannelsByThing not implemented")
 }
 
-// Channel returns channel data by id.
-func (s *mockSDK) Channel(id, token string) (mfSDK.Channel, error) {
-	panic("Channel not implemented")
-}
-
 // UpdateChannel updates existing channel.
 func (s *mockSDK) UpdateChannel(channel mfSDK.Channel, token string) error {
 	panic("UpdateChannel not implemented")
@@ -184,6 +179,24 @@ func (s *mockSDK) Thing(id, token string) (mfSDK.Thing, error) {
 
 }
 
+// Channel returns channel data by id.
+func (s *mockSDK) Channel(id, token string) (mfSDK.Channel, error) {
+	c := mfSDK.Channel{}
+
+	if token != validToken {
+		return c, mfSDK.ErrUnauthorized
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if c, ok := s.channels[id]; ok {
+		return c, nil
+	}
+
+	return c, mfSDK.ErrFailedFetch
+}
+
 func (s *mockSDK) DeleteThing(id string, token string) error {
 	if id == invalid {
 		return mfSDK.ErrFailedRemoval
@@ -264,6 +277,12 @@ func (s *mockSDK) AddBootstrap(token string, cfg mfSDK.BoostrapConfig) (string, 
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for _, val := range s.configs {
+		if val.ExternalID == cfg.ExternalID {
+			return "", mfSDK.ErrFailedCreation
+		}
+	}
+
 	mfid, err := uuid.NewV4()
 	if err != nil {
 		return "", err
