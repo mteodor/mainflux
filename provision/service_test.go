@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/mocks"
-	SDK "github.com/mainflux/mainflux/sdk/go"
 
 	logger "github.com/mainflux/mainflux/logger"
 	"github.com/stretchr/testify/assert"
@@ -70,13 +70,13 @@ func TestProvision(t *testing.T) {
 			externalID:  "id",
 			externalKey: "key",
 			svc:         svc,
-			err:         SDK.ErrFailedCreation,
+			err:         provision.ErrFailedBootstrap,
 		},
 	}
 
 	for _, tc := range cases {
 		_, err := tc.svc.Provision("", tc.externalID, tc.externalKey)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, errors.Contains(err, tc.err), err, fmt.Sprintf("%s: expected `%v` got `%v`", tc.desc, tc.err, err))
 	}
 
 }
