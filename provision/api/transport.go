@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/provision"
 
 	kithttp "github.com/go-kit/kit/transport/http"
