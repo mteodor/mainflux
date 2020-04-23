@@ -16,17 +16,17 @@ const (
 )
 
 var (
-	errFailedToCreateToken      = errors.New("failed to create access token")
-	errEmptyThingsList          = errors.New("things list in configuration empty")
-	errEmptyChannelsList        = errors.New("channels list in configuration is empty")
-	errFailedChannelCreation    = errors.New("failed to create channel")
-	errFailedChannelRetrieval   = errors.New("failed to retrieve channel")
-	errFailedThingCreation      = errors.New("failed to create thing")
-	errFailedThingRetrieval     = errors.New("failed to retrieve thing")
-	errMissingCredentials       = errors.New("missing credentials")
-	errFailedBootstrapRetrieval = errors.New("failed to retrieve bootstrap")
-	errFailedCertCreation       = errors.New("failed to create certificates")
-	errFailedBootstrap          = errors.New("failed to create bootstrap config")
+	ErrFailedToCreateToken      = errors.New("failed to create access token")
+	ErrEmptyThingsList          = errors.New("things list in configuration empty")
+	ErrEmptyChannelsList        = errors.New("channels list in configuration is empty")
+	ErrFailedChannelCreation    = errors.New("failed to create channel")
+	ErrFailedChannelRetrieval   = errors.New("failed to retrieve channel")
+	ErrFailedThingCreation      = errors.New("failed to create thing")
+	ErrFailedThingRetrieval     = errors.New("failed to retrieve thing")
+	ErrMissingCredentials       = errors.New("missing credentials")
+	ErrFailedBootstrapRetrieval = errors.New("failed to retrieve bootstrap")
+	ErrFailedCertCreation       = errors.New("failed to create certificates")
+	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
 )
 
 var _ Service = (*provisionService)(nil)
@@ -81,7 +81,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		token = ps.conf.Server.MfApiKey
 		if token == "" {
 			if ps.conf.Server.MfUser == "" || ps.conf.Server.MfPass == "" {
-				return res, errMissingCredentials
+				return res, ErrMissingCredentials
 			}
 			u := SDK.User{
 				Email:    ps.conf.Server.MfUser,
@@ -89,16 +89,16 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			}
 			token, err = ps.sdk.CreateToken(u)
 			if err != nil {
-				return res, errors.Wrap(errFailedToCreateToken, err)
+				return res, errors.Wrap(ErrFailedToCreateToken, err)
 			}
 		}
 
 	}
 	if len(ps.conf.Things) == 0 {
-		return res, errEmptyThingsList
+		return res, ErrEmptyThingsList
 	}
 	if len(ps.conf.Channels) == 0 {
-		return res, errEmptyChannelsList
+		return res, ErrEmptyChannelsList
 	}
 	for _, thing := range ps.conf.Things {
 		// If thing in configs contains metadata with externalid
@@ -113,13 +113,13 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		thID, err := ps.sdk.CreateThing(th, token)
 		if err != nil {
 			res.Error = err.Error()
-			return res, errors.Wrap(errFailedThingCreation, err)
+			return res, errors.Wrap(ErrFailedThingCreation, err)
 		}
 		// Get newly created thing (in order to get the key).
 		thing, err := ps.sdk.Thing(thID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("thing id:%s", thID))
-			return res, errors.Wrap(errFailedThingRetrieval, e)
+			return res, errors.Wrap(ErrFailedThingRetrieval, e)
 		}
 		things = append(things, thing)
 	}
@@ -136,7 +136,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		ch, err = ps.sdk.Channel(chCreated, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("channel id:%s", chCreated))
-			return res, errors.Wrap(errFailedChannelRetrieval, e)
+			return res, errors.Wrap(ErrFailedChannelRetrieval, e)
 		}
 		channels = append(channels, ch)
 	}
@@ -169,7 +169,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			}
 
 			if _, err := ps.sdk.AddBootstrap(token, bsReq); err != nil {
-				return Result{}, errors.Wrap(errFailedBootstrap, err)
+				return Result{}, errors.Wrap(ErrFailedBootstrap, err)
 			}
 		}
 
@@ -177,7 +177,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			cert, err = ps.certs.Cert(thing.ID, thing.Key, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("thing id:%s", thing.ID))
-				return res, errors.Wrap(errFailedCertCreation, e)
+				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
 			res.ClientCert[thing.ID] = cert.ClientCert
 			res.ClientKey[thing.ID] = cert.ClientKey
@@ -220,14 +220,14 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 	if e == nil {
 		return
 	}
-	if errors.Contains(err, errFailedThingRetrieval) || errors.Contains(err, errFailedChannelCreation) {
+	if errors.Contains(err, ErrFailedThingRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, th := range things {
 			ps.errLog(ps.sdk.DeleteThing(th.ID, token))
 		}
 		return
 	}
 
-	if errors.Contains(err, errFailedChannelRetrieval) || errors.Contains(err, errFailedCertCreation) {
+	if errors.Contains(err, ErrFailedChannelRetrieval) || errors.Contains(err, ErrFailedCertCreation) {
 		for _, th := range things {
 			ps.errLog(ps.sdk.DeleteThing(th.ID, token))
 		}
@@ -237,7 +237,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		return
 	}
 
-	if errors.Contains(err, errFailedBootstrap) {
+	if errors.Contains(err, ErrFailedBootstrap) {
 		clean(ps, things, channels, token)
 		if ps.conf.Bootstrap.X509Provision {
 			for _, th := range things {
@@ -254,7 +254,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 				ps.errLog(ps.certs.RemoveCert(th.ID, token))
 			}
 			bs, err := ps.sdk.ViewBoostrap(token, th.ID)
-			ps.errLog(errors.Wrap(errFailedBootstrapRetrieval, err))
+			ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
 			ps.errLog(ps.sdk.RemoveBoostrap(token, bs.MFThing))
 		}
 		return
