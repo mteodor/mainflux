@@ -3,7 +3,7 @@ KEY = default
 O = Mainflux
 OU = mainflux
 EA = info@mainflux.com
-CN = localhost
+CN = mainflux.ml 
 CRT_FILE_NAME = thing
 
 all: clean_certs ca server_crt
@@ -11,7 +11,7 @@ all: clean_certs ca server_crt
 # CA name and key is "ca".
 ca:
 	openssl req -newkey rsa:2048 -x509 -nodes -sha512 -days 1095 \
-				-keyout $(CRT_LOCATION)/ca.key -out $(CRT_LOCATION)/ca.crt -subj "/CN=localhost/O=Mainflux/OU=IoT/emailAddress=info@mainflux.com"
+				-keyout $(CRT_LOCATION)/ca.key -out $(CRT_LOCATION)/ca.crt -subj "/CN=mainflux.ml/O=Mainflux/OU=IoT/emailAddress=info@mainflux.com"
 
 # Server cert and key name is "mainflux-server".
 server_cert:
