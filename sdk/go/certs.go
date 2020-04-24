@@ -1,4 +1,4 @@
-package certs
+package sdk
 
 import (
 	"bytes"
@@ -15,12 +15,6 @@ type Cert struct {
 	ClientCert string `json:"client_cert,omitempty"`
 }
 
-// New creates new Provision SDK.
-func New(certsURL string) SDK {
-	return &provisionSDK{
-		certsURL: certsURL,
-	}
-}
 func (sdk mfSDK) Cert(thingID, thingKey, token string) (Cert, error) {
 	var c Cert
 	r := certReq{
@@ -85,6 +79,6 @@ func request(method, jwt, url string, data []byte) (*http.Response, error) {
 }
 
 type certReq struct {
-	ThingID  string `json:"id,omitempty"`
-	ThingKey string `json:"key,omitempty"`
+	ThingID  string `json:"thing_id,omitempty"`
+	ThingKey string `json:"thing_key,omitempty"`
 }

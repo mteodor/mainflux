@@ -1,4 +1,4 @@
-package certs_test
+package sdk_test
 
 import (
 	"encoding/json"
@@ -32,8 +32,8 @@ type tokenRes struct {
 }
 
 type certReq struct {
-	ThingID  string `json:"id,omitempty"`
-	ThingKey string `json:"key,omitempty"`
+	ThingID  string `json:"thing_id,omitempty"`
+	ThingKey string `json:"thing_key,omitempty"`
 }
 
 func auth(rw http.ResponseWriter, r *http.Request) bool {
