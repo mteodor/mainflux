@@ -5,9 +5,7 @@ import (
 
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/provision/certs"
 	SDK "github.com/mainflux/mainflux/sdk/go"
-	sdk "github.com/mainflux/mainflux/sdk/go"
 )
 
 const (
@@ -45,7 +43,6 @@ type Service interface {
 type provisionService struct {
 	logger logger.Logger
 	sdk    SDK.SDK
-	certs  certs.SDK
 	conf   Config
 }
 
@@ -62,12 +59,11 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, sdk SDK.SDK, certs certs.SDK, logger logger.Logger) Service {
+func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 	return &provisionService{
 		logger: logger,
 		conf:   cfg,
 		sdk:    sdk,
-		certs:  certs,
 	}
 }
 
@@ -149,7 +145,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		ClientKey:   map[string]string{},
 	}
 
-	var cert certs.Cert
+	var cert SDK.Cert
 	for _, thing := range things {
 
 		chanIDs := []string{}
@@ -157,7 +153,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			chanIDs = append(chanIDs, ch.ID)
 		}
 		if ps.conf.Bootstrap.Provision {
-			bsReq := sdk.BoostrapConfig{
+			bsReq := SDK.BoostrapConfig{
 				ThingID:     thing.ID,
 				ExternalID:  externalID,
 				ExternalKey: externalKey,
@@ -174,7 +170,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		}
 
 		if ps.conf.Bootstrap.X509Provision {
-			cert, err = ps.certs.Cert(thing.ID, thing.Key, token)
+			cert, err = ps.sdk.Cert(thing.ID, thing.Key, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("thing id:%s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
@@ -186,7 +182,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 
 		if ps.conf.Bootstrap.AutoWhiteList {
 
-			wlReq := sdk.BoostrapConfig{
+			wlReq := SDK.BoostrapConfig{
 				State: Active,
 			}
 			if err := ps.sdk.Whitelist(token, wlReq); err != nil {
@@ -241,7 +237,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		clean(ps, things, channels, token)
 		if ps.conf.Bootstrap.X509Provision {
 			for _, th := range things {
-				ps.errLog(ps.certs.RemoveCert(th.ID, token))
+				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
 			}
 		}
 		return
@@ -251,7 +247,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		clean(ps, things, channels, token)
 		for _, th := range things {
 			if ps.conf.Bootstrap.X509Provision {
-				ps.errLog(ps.certs.RemoveCert(th.ID, token))
+				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
 			}
 			bs, err := ps.sdk.ViewBoostrap(token, th.ID)
 			ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
