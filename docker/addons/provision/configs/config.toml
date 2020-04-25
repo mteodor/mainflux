@@ -1,4 +1,4 @@
-file = "./configs/config.toml"
+file = "./docker/addons/provision/configs/config.toml"
 
 [[things]]
   name = "thing"
