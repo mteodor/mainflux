@@ -69,8 +69,13 @@ func (sdk mfSDK) AddBootstrap(key string, cfg BoostrapConfig) (string, error) {
 func (sdk mfSDK) Whitelist(key string, cfg BoostrapConfig) error {
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return err
+		return errors.Wrap(ErrFailedWhitelist, err)
 	}
+
+	if cfg.MFThing == "" {
+		return ErrFailedWhitelist
+	}
+
 	endpoint := fmt.Sprintf("%s/%s", whitelistEndpoint, cfg.MFThing)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 
