@@ -2,7 +2,7 @@ file = "config.toml"
 
 [bootstrap]
   autowhite_list = true
-  content = "{}%!(EXTRA string=tcp://localhost:1883)"
+  content = ""
   provision = true
   x509_provision = false
 
