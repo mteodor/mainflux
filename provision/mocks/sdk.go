@@ -320,3 +320,17 @@ func (s *mockSDK) RemoveBoostrap(token, id string) error {
 	delete(s.configs, id)
 	return nil
 }
+
+func (s *mockSDK) Cert(thingID, thingKey string, token string) (mfSDK.Cert, error) {
+	if thingID == invalid || thingKey == invalid {
+		return mfSDK.Cert{}, mfSDK.ErrCerts
+	}
+	return mfSDK.Cert{}, nil
+}
+
+func (s *mockSDK) RemoveCert(key string, token string) error {
+	if key == invalid {
+		return mfSDK.ErrCertsRemove
+	}
+	return nil
+}
