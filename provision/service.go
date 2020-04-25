@@ -147,12 +147,15 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 
 	var cert SDK.Cert
 	for _, thing := range things {
-
+		bootstrap := false
+		if _, ok := thing.Metadata[ExternalID]; ok {
+			bootstrap = true
+		}
 		chanIDs := []string{}
 		for _, ch := range channels {
 			chanIDs = append(chanIDs, ch.ID)
 		}
-		if ps.conf.Bootstrap.Provision {
+		if ps.conf.Bootstrap.Provision && bootstrap {
 			bsReq := SDK.BoostrapConfig{
 				ThingID:     thing.ID,
 				ExternalID:  externalID,
@@ -183,7 +186,8 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		if ps.conf.Bootstrap.AutoWhiteList {
 
 			wlReq := SDK.BoostrapConfig{
-				State: Active,
+				MFThing: thing.ID,
+				State:   Active,
 			}
 			if err := ps.sdk.Whitelist(token, wlReq); err != nil {
 				res.Error = err.Error()
