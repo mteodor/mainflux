@@ -24,12 +24,12 @@ paths:
          schema:
            type: object
            required:
-             - externalid
-             - externalkey
+             - external_id
+             - external_key
            properties:
-             externalid:
+             external_id:
                type: string
-              externalkey:
+              external_key:
                 type: string
       responses:
         201:
