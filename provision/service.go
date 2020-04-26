@@ -74,7 +74,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 	defer ps.recover(&err, &things, &channels, &token)
 
 	if token == "" {
-		token = ps.conf.Server.MfApiKey
+		token = ps.conf.Server.MfAPIKey
 		if token == "" {
 			if ps.conf.Server.MfUser == "" || ps.conf.Server.MfPass == "" {
 				return res, ErrMissingCredentials
