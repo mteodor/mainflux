@@ -47,9 +47,8 @@ var (
 
 func TestProvision(t *testing.T) {
 	// Create multiple services with different configurations.
-	certs := mocks.NewCertsSDK()
 	sdk := mocks.NewSDK()
-	svc := provision.New(cfg, sdk, certs, log)
+	svc := provision.New(cfg, sdk, log)
 
 	cases := []struct {
 		desc        string

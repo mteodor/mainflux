@@ -7,6 +7,14 @@ import (
 	mfSDK "github.com/mainflux/mainflux/sdk/go"
 )
 
+const (
+	validEmail   = "test@example.com"
+	validPass    = "test"
+	invalid      = "invalid"
+	validToken   = "valid_token"
+	invalidToken = "invalid_token"
+)
+
 // SDK is fake sdk for mocking
 type mockSDK struct {
 	things      map[string]mfSDK.Thing
