@@ -14,7 +14,7 @@ import (
 // Service represents service config.
 type ServiceConf struct {
 	Port           string `toml:"port"`
-	LogLevel       string `toml:"log_level`
+	LogLevel       string `toml:"log_level"`
 	TLS            bool   `toml:"tls"`
 	CACerts        string `toml:"ca_certs"`
 	ServerCert     string `toml:"server_cert"`

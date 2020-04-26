@@ -8,18 +8,16 @@ import (
 )
 
 const (
-	validEmail   = "test@example.com"
-	validPass    = "test"
-	invalid      = "invalid"
-	validToken   = "valid_token"
-	invalidToken = "invalid_token"
+	validEmail = "test@example.com"
+	validPass  = "test"
+	invalid    = "invalid"
+	validToken = "valid_token"
 )
 
 // SDK is fake sdk for mocking
 type mockSDK struct {
 	things      map[string]mfSDK.Thing
 	channels    map[string]mfSDK.Channel
-	users       map[string]mfSDK.User
 	connections map[string][]string
 	configs     map[string]mfSDK.BoostrapConfig
 	mu          sync.Mutex
