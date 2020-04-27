@@ -38,7 +38,7 @@ default values.
 By default, call to mapping endpoint will create one thing and two channels ( 'control' and 'data' ) and connect it. If there is a requirement for different conf
 we can use [config](docker/configs/config.toml) file.
 In config.toml we can enlist array of things and channels that we want to create and make connections between them.
-Metadata can be whatever suits your needs except that at least one thing needs to have 'externalID' (which is populated with value from [request](#example)).
+Metadata can be whatever suits your needs except that at least one thing needs to have 'external_id' (which is populated with value from [request](#example)).
 For channels metadata 'type' is reserved for 'control' and 'data'.
 
 Example below
