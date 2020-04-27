@@ -114,7 +114,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		// Get newly created thing (in order to get the key).
 		thing, err := ps.sdk.Thing(thID, token)
 		if err != nil {
-			e := errors.Wrap(err, fmt.Errorf("thing id:%s", thID))
+			e := errors.Wrap(err, fmt.Errorf("thing id: %s", thID))
 			return res, errors.Wrap(ErrFailedThingRetrieval, e)
 		}
 		things = append(things, thing)
@@ -131,7 +131,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		}
 		ch, err = ps.sdk.Channel(chCreated, token)
 		if err != nil {
-			e := errors.Wrap(err, fmt.Errorf("channel id:%s", chCreated))
+			e := errors.Wrap(err, fmt.Errorf("channel id: %s", chCreated))
 			return res, errors.Wrap(ErrFailedChannelRetrieval, e)
 		}
 		channels = append(channels, ch)
@@ -175,7 +175,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		if ps.conf.Bootstrap.X509Provision {
 			cert, err = ps.sdk.Cert(thing.ID, thing.Key, token)
 			if err != nil {
-				e := errors.Wrap(err, fmt.Errorf("thing id:%s", thing.ID))
+				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
 			res.ClientCert[thing.ID] = cert.ClientCert
