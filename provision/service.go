@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ExternalID = "externalID"
+	ExternalID = "external_id"
 	Active     = 1
 )
 
