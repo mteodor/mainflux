@@ -38,7 +38,7 @@ var (
 		Things: []provision.Thing{
 			provision.Thing{
 				Name:     "thing",
-				Metadata: map[string]interface{}{"externalID": "xxxxxx"},
+				Metadata: map[string]interface{}{"external_id": "xxxxxx"},
 			},
 		},
 	}
