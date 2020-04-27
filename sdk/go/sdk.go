@@ -66,18 +66,6 @@ var (
 
 	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
 	ErrCertsRemove = errors.New("failed to remove certificate")
-
-	// // ErrConflict indicates duplicate unique field.
-	// ErrConflict = errors.New("duplicate unique field")
-
-	// // ErrUnauthorized indicates forbidden access.
-	// ErrUnauthorized = errors.New("unauthorized access")
-
-	// // ErrMalformedEntity indicates malformed request data.
-	// ErrMalformedEntity = errors.New("malformed data")
-
-	// // ErrNotFound indicates that entity doesn't exist.
-	// ErrNotFound = errors.New("entity not found")
 )
 
 // ContentType represents all possible content types.
