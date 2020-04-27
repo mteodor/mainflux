@@ -47,7 +47,7 @@ Example below
   name = "thing"
 
   [things.metadata]
-    externalID = "xxxxxx"
+    external_id = "xxxxxx"
 
 
 [[channels]]
