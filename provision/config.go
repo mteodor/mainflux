@@ -52,7 +52,7 @@ type Config struct {
 	Server    ServiceConf `toml:"server" mapstructure:"server"`
 	Bootstrap Bootstrap   `toml:"bootstrap" mapstructure:"boostrap"`
 	Things    []Thing     `toml:"things" mapstructure:"things"`
-	Channels  []Channel   `toml:"channels" mapstructure:"channel"`
+	Channels  []Channel   `toml:"channels" mapstructure:"channels"`
 }
 
 // Save - store config in a file
