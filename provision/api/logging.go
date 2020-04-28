@@ -22,7 +22,7 @@ func NewLoggingMiddleware(svc provision.Service, logger log.Logger) provision.Se
 
 func (lm *loggingMiddleware) Provision(token, externalID, externalKey string) (res provision.Result, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method add thing and connect to proxy: token: %s, new things: %v took %s to complete", token, res.Things, time.Since(begin))
+		message := fmt.Sprintf("Method provision and connect to proxy: token: %s, new things: %v took %s to complete", token, res.Things, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
