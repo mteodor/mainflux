@@ -96,7 +96,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		return res, ErrEmptyChannelsList
 	}
 	for _, thing := range ps.conf.Things {
-		// If thing in configs contains metadata with externalid
+		// If thing in configs contains metadata with external_id
 		// set value for it from the provision request
 		if _, ok := thing.Metadata[ExternalID]; ok {
 			thing.Metadata[ExternalID] = externalID
@@ -111,12 +111,12 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			return res, errors.Wrap(ErrFailedThingCreation, err)
 		}
 		// Get newly created thing (in order to get the key).
-		thing, err := ps.sdk.Thing(thID, token)
+		th, err = ps.sdk.Thing(thID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("thing id: %s", thID))
 			return res, errors.Wrap(ErrFailedThingRetrieval, e)
 		}
-		things = append(things, thing)
+		things = append(things, th)
 	}
 
 	for _, channel := range ps.conf.Channels {
@@ -165,7 +165,6 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 				ClientKey:   cert.ClientKey,
 				Content:     ps.conf.Bootstrap.Content,
 			}
-
 			if _, err := ps.sdk.AddBootstrap(token, bsReq); err != nil {
 				return Result{}, errors.Wrap(ErrFailedBootstrap, err)
 			}
@@ -183,7 +182,6 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		}
 
 		if ps.conf.Bootstrap.AutoWhiteList {
-
 			wlReq := SDK.BoostrapConfig{
 				MFThing: thing.ID,
 				State:   Active,
