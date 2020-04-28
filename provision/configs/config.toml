@@ -8,10 +8,10 @@ file = "config.toml"
 
 
 [server]
-  LogLevel = "debug"
+  LogLevel = "info"
   ca_certs = ""
-  http_port = "2222"
-  mf_api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyOGMwY2M3Yy01MGE1LTQxM2MtYTU4Mi1mZDgyMmYxMThkN2MiLCJpYXQiOjE1ODY3OTA2NzIsImlzcyI6Im1pcmthc2hAZW1haWwuY29tIiwidHlwZSI6Mn0.K8VuiNhZDdhuSY8MLwkqqjarJ4Affz4DHcf4fpIvoV8"
+  http_port = "8091"
+  mf_api_key = ""
   mf_bs_url = "http://localhost:8202"
   mf_certs_url = "http://localhost/certs"
   mf_pass = ""
