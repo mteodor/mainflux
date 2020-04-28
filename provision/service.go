@@ -49,7 +49,6 @@ type provisionService struct {
 // Result represent what is created with additional info.
 type Result struct {
 	Things      []SDK.Thing       `json:"things,omitempty"`
-	ThingsID    []string          `json:"thing_ids,omitempty"`
 	Channels    []SDK.Channel     `json:"channels,omitempty"`
 	ClientCert  map[string]string `json:"client_cert,omitempty"`
 	ClientKey   map[string]string `json:"client_key,omitempty"`
