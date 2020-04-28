@@ -189,10 +189,10 @@ type SDK interface {
 	// View returns Thing Config with given ID belonging to the user identified by the given key.
 	Boostrap(key, id string) (BoostrapConfig, error)
 
-	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given key.
-	Whitelist(key string, cfg BoostrapConfig) error
+	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
+	Whitelist(token string, cfg BoostrapConfig) error
 
-	// Cert issues a certificate for thing required for mtls
+	// Cert issues a certificate for a thing required for mtls.
 	Cert(thingID, thingKey, token string) (Cert, error)
 
 	// RemoveCert remove a certificate

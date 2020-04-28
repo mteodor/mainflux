@@ -66,7 +66,7 @@ func (sdk mfSDK) AddBootstrap(key string, cfg BoostrapConfig) (string, error) {
 	return id, nil
 }
 
-func (sdk mfSDK) Whitelist(key string, cfg BoostrapConfig) error {
+func (sdk mfSDK) Whitelist(token string, cfg BoostrapConfig) error {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return errors.Wrap(ErrFailedWhitelist, err)
@@ -84,7 +84,7 @@ func (sdk mfSDK) Whitelist(key string, cfg BoostrapConfig) error {
 		return errors.Wrap(ErrFailedWhitelist, err)
 	}
 
-	resp, err := sdk.sendRequest(req, key, string(CTJSON))
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
 		return errors.Wrap(ErrFailedWhitelist, err)
 	}
