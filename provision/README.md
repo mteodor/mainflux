@@ -1,9 +1,9 @@
 # Provision service
 
-Provision service provides an HTTP API to interact with Mainflux. 
+Provision service provides an HTTP API to interact with [Mainflux](https://github.com/mainflux/mainflux). 
 Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case. 
-For example lets say you are using a Mainflux and connecting gateways to it. Gateways need an easy way to configure itself for communication with Mainflux (receiving and sending controls and data) and for that you will use bootstrap service but before gateway connects to the bootstrap service configuration needs to be created (things, channels, connections, bootstrap configuration and certificates if mtls is being used). Provision service should provide an easy way of provisioning your gateways. On a gateway there can be many services running and you may require more than one thing and channel to establish all the required means of representing a gateway in your application. You may need to create any number of things and channels for your purposes, let's say that you are using services [Agent](https://github.com/mainflux/agent) and [Export](https://github.com/mainflux/export) on a gateway, if you enabled mtls each service will need a thing and certificate for access to Mainflux and you will need two channels for `Agent` (`data` and `control`) and for `Export` you could use as many as you find suitable, this kind of setup we can call `provision layout`.
-Provision service provides a way of specifying this `provision layout` and creating a setup according to it on a `/mapping` endpoint. Provision layout is configured in [config.toml](configs/config.toml)
+For example lets say you are connecting gateways to [Mainflux](https://github.com/mainflux/mainflux). Gateways need an easy way to configure itself for communication with [Mainflux](https://github.com/mainflux/mainflux) (receiving and sending controls and data). To get the authentication parameters gateway will send a request to [Bootstrap](../bootstrap/README.md) service. To get connection parameters gateway will provide `<external_id>` and `<external_key>` in request from [Bootstrap](../bootstrap/README.md). To make a request to [Bootstrap](../bootstrap/README.md) service you can use [Agent](https://github.com/mainflux/agent) service on a gateway. To create bootstrap configuration you can use [Bootstrap](../bootstrap/README.md) or `Provision` service. [Mainflux UI](https://github.com/mainflux/ui) uses [Bootstrap](../bootstrap/README.md) service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent](https://github.com/mainflux/agent) and [Export](https://github.com/mainflux/export) on a gateway, if you enabled mtls each service will need a thing and certificate for access to [Mainflux](https://github.com/mainflux/mainflux) and you will need two channels for `Agent` (`data` and `control`) and one for `Export` or you could use as many as you find suitable, this kind of setup we can call `provision layout`.
+Provision service provides a way of specifying this `provision layout` and creating a setup according to that layout by serving requests on `/mapping` endpoint. Provision layout is configured in [config.toml](configs/config.toml)
 
 ## Configuration
 
@@ -43,11 +43,11 @@ Configuration can be specified in [config.toml](configs/config.toml). Config fil
 `/mapping` endpoint provision layout can be configured.
 
 In `config.toml` we can enlist array of things and channels that we want to create and make connections between them which we call provision layout.
-Metadata can be whatever suits your needs except that at least one thing needs to have `external_id` (which is populated with value from [request](#example)).
+Metadata can be whatever suits your needs except that at least one thing needs to have `external_id` (which is populated with value from [request](#example)). Thing that has `external_id` will be used for creating boostrap configuration which can be fetched with [Agent](https://github.com/mainflux/agent).
 For channels metadata `type` is reserved for `control` and `data` which we use with [Agent](https://github.com/mainflux/agent).
 
-Example below
-```
+Example of provision layout below
+```toml
 [[things]]
   name = "thing"
 
@@ -75,38 +75,36 @@ Example below
 ```
 
 ## Authentication
-In order to create necessary entities provision service needs to authenticate against Mainflux API. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on users/keys endpoint). Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
+In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [authn](../authn/README.md)). Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
 * `username`, `password` - (`MF_PROVISION_USER`, `MF_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
 * API Key - (`MF_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
-* ```Authorization: Token|ApiKey``` - request authorization header containing either users token or API key
-
+* `Authorization: Token|ApiKey` - request authorization header containing either users token or API key. Check [authn](../authn/README.md).
 
 ## Running
-
 Provision service can be run as a standalone or in docker composition as addon to the core docker composition.
 
 Standalone:
-```
+```bash
 MF_PROVISION_BS_SVC_URL=http://localhost:8202/things MF_PROVISION_THINGS_LOCATION=http://localhost:8182 MF_PROVISION_USERS_LOCATION=http://localhost:8180 MF_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml build/mainflux-provision
 ```
 
 Docker composition:
-```
+```bash
 docker-compose -f docker/addons/provision/docker-compose.yml up
 ```
 
-For the case that credentials or API token is passed in configuration call to endpoint is called:
-```
+For the case that credentials or API token is passed in configuration or env, call to `/mapping` endpoint doesnt require `Authentication` header:
+```bash
 curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{ "external_id" : "33:52:77:99:43", "external_key":"223334fw2" }'
 ```
 
-In the case that provision service is not deployed with credential or you want to use user other than default one being set in environment (or config file)
-```
-curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: $TOK" -H 'Content-Type: application/json' -d '{ "external_id" : "02:42:fE:65:D3:23", "external_key":"223334fw2" }'
+In the case that provision service is not deployed with credentials or API key or you want to use user other than one being set in environment (or config file):
+```bash
+curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{ "external_id" : "<external_id>", "external_key":"<external_key>" }'
 ```
 
 Response contains created things and channels and certificates if any.
-```
+```json
 {
   "things": [
     {
@@ -139,4 +137,3 @@ Response contains created things and channels and certificates if any.
   }
 }
 ```
-
