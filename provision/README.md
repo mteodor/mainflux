@@ -93,7 +93,7 @@ Docker composition:
 docker-compose -f docker/addons/provision/docker-compose.yml up
 ```
 
-For the case that credentials or API token is passed in configuration file or environment, call to `/mapping` endpoint doesn't require `Authentication` header:
+For the case that credentials or API token is passed in configuration file or environment variables, call to `/mapping` endpoint doesn't require `Authentication` header:
 ```bash
 curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{ "external_id" : "33:52:77:99:43", "external_key":"223334fw2" }'
 ```
