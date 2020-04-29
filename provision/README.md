@@ -1,8 +1,8 @@
 # Provision service
 
 Provision service provides an HTTP API to interact with [Mainflux][mainflux]. 
-Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case especially useful for gateway provision. 
-For gateways to communicate with [Mainflux][mainflux] connection params are required (mqtt host, thing, channels, certificates...). To get the connection parameters gateway will send a request to [Bootstrap](../bootstrap/README.md) service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap](../bootstrap/README.md) service you can use [Agent](https://github.com/mainflux/agent) service on a gateway. To create bootstrap configuration you can use [Bootstrap](../bootstrap/README.md) or `Provision` service. [Mainflux UI](https://github.com/mainflux/ui) uses [Bootstrap](../bootstrap/README.md) service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent](https://github.com/mainflux/agent) and [Export](https://github.com/mainflux/export) on a gateway, if you enabled mtls each service will need a thing and certificate for access to [Mainflux][mainflux] and you will need two channels for `Agent` (`data` and `control`) and one for `Export` or you could use as many as you find suitable, this kind of setup we can call `provision layout`.
+Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case especially useful for gateway provision.  
+For gateways to communicate with [Mainflux][mainflux] configuration is required (mqtt host, thing, channels, certificates...). To get the configuration gateway will send a request to [Bootstrap][bootstrap] service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap][bootstrap] service you can use [Agent][agent] service on a gateway. To create bootstrap configuration you can use [Bootstrap][bootstrap] or `Provision` service. [Mainflux UI](https://github.com/mainflux/ui) uses [Bootstrap][bootstrap] service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent][agent] and [Export](https://github.com/mainflux/export) on a gateway you will need two channels for `Agent` (`data` and `control`) and one for `Export` and one thing. Additionally if you enabled mtls each service will need its own thing and certificate for access to [Mainflux][mainflux]. Your setup could require any number of things and channels this kind of setup we can call `provision layout`.
 Provision service provides a way of specifying this `provision layout` and creating a setup according to that layout by serving requests on `/mapping` endpoint. Provision layout is configured in [config.toml](configs/config.toml)
 
 ## Configuration
@@ -38,13 +38,13 @@ default values.
 | MF_PROVISION_BS_AUTO_WHITEIST       | Should thing be auto whitelisted                  | true                           |
 | MF_PROVISION_BS_CONTENT             | Bootstrap service content                         | {}                             |
 
-By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. For the purposes of running provision as an add-on in docker composition environment variables seems more suitable. Environoment variables are set in [.env](.env).  
+By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. For the purposes of running provision as an add-on in docker composition environment variables seems more suitable. Environment variables are set in [.env](.env).  
 Configuration can be specified in [config.toml](configs/config.toml). Config file can specify all the settings that environment variables can configure and in addition
 `/mapping` endpoint provision layout can be configured.
 
 In `config.toml` we can enlist array of things and channels that we want to create and make connections between them which we call provision layout.
-Metadata can be whatever suits your needs except that at least one thing needs to have `external_id` (which is populated with value from [request](#example)). Thing that has `external_id` will be used for creating boostrap configuration which can be fetched with [Agent](https://github.com/mainflux/agent).
-For channels metadata `type` is reserved for `control` and `data` which we use with [Agent](https://github.com/mainflux/agent).
+Metadata can be whatever suits your needs except that at least one thing needs to have `external_id` (which is populated with value from [request](#example)). Thing that has `external_id` will be used for creating bootstrap configuration which can be fetched with [Agent][agent].
+For channels metadata `type` is reserved for `control` and `data` which we use with [Agent][agent].
 
 Example of provision layout below
 ```toml
@@ -139,3 +139,6 @@ Response contains created things and channels and certificates if any.
 ```
 
 [mainflux]: https://github.com/mainflux/mainflux
+[bootstrap]: https://github.com/mainflux/mainflux/tree/master/bootstrap
+[export]: https://github.com/mainflux/export
+[agent]: https://github.com/mainflux/agent
