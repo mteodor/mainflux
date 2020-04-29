@@ -1,8 +1,8 @@
 # Provision service
 
-Provision service provides an HTTP API to interact with [Mainflux](https://github.com/mainflux/mainflux). 
-Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case. 
-For example lets say you are connecting gateways to [Mainflux](https://github.com/mainflux/mainflux). Gateways need an easy way to configure itself for communication with [Mainflux](https://github.com/mainflux/mainflux) (receiving and sending controls and data). To get the authentication parameters gateway will send a request to [Bootstrap](../bootstrap/README.md) service. To get connection parameters gateway will provide `<external_id>` and `<external_key>` in request from [Bootstrap](../bootstrap/README.md). To make a request to [Bootstrap](../bootstrap/README.md) service you can use [Agent](https://github.com/mainflux/agent) service on a gateway. To create bootstrap configuration you can use [Bootstrap](../bootstrap/README.md) or `Provision` service. [Mainflux UI](https://github.com/mainflux/ui) uses [Bootstrap](../bootstrap/README.md) service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent](https://github.com/mainflux/agent) and [Export](https://github.com/mainflux/export) on a gateway, if you enabled mtls each service will need a thing and certificate for access to [Mainflux](https://github.com/mainflux/mainflux) and you will need two channels for `Agent` (`data` and `control`) and one for `Export` or you could use as many as you find suitable, this kind of setup we can call `provision layout`.
+Provision service provides an HTTP API to interact with [Mainflux][mainflux]. 
+Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case especially useful for gateway provision. 
+For gateways to communicate with [Mainflux][mainflux] connection params are required (mqtt host, thing, channels, certificates...). To get the connection parameters gateway will send a request to [Bootstrap](../bootstrap/README.md) service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap](../bootstrap/README.md) service you can use [Agent](https://github.com/mainflux/agent) service on a gateway. To create bootstrap configuration you can use [Bootstrap](../bootstrap/README.md) or `Provision` service. [Mainflux UI](https://github.com/mainflux/ui) uses [Bootstrap](../bootstrap/README.md) service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent](https://github.com/mainflux/agent) and [Export](https://github.com/mainflux/export) on a gateway, if you enabled mtls each service will need a thing and certificate for access to [Mainflux][mainflux] and you will need two channels for `Agent` (`data` and `control`) and one for `Export` or you could use as many as you find suitable, this kind of setup we can call `provision layout`.
 Provision service provides a way of specifying this `provision layout` and creating a setup according to that layout by serving requests on `/mapping` endpoint. Provision layout is configured in [config.toml](configs/config.toml)
 
 ## Configuration
@@ -93,7 +93,7 @@ Docker composition:
 docker-compose -f docker/addons/provision/docker-compose.yml up
 ```
 
-For the case that credentials or API token is passed in configuration or env, call to `/mapping` endpoint doesnt require `Authentication` header:
+For the case that credentials or API token is passed in configuration file or environment, call to `/mapping` endpoint doesn't require `Authentication` header:
 ```bash
 curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{ "external_id" : "33:52:77:99:43", "external_key":"223334fw2" }'
 ```
@@ -137,3 +137,5 @@ Response contains created things and channels and certificates if any.
   }
 }
 ```
+
+[mainflux]: https://github.com/mainflux/mainflux
