@@ -44,11 +44,15 @@ default values.
 | MF_PROVISION_BS_AUTO_WHITEIST       | Should thing be auto whitelisted                  | true                           |
 | MF_PROVISION_BS_CONTENT             | Bootstrap service content                         | {}                             |
 
-By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. For the purposes of running provision as an add-on in docker composition environment variables seems more suitable. Environment variables are set in [.env](.env).  
+By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. 
+
+For the purposes of running provision as an add-on in docker composition environment variables seems more suitable. Environment variables are set in [.env](.env).  
+
 Configuration can be specified in [config.toml](configs/config.toml). Config file can specify all the settings that environment variables can configure and in addition
 `/mapping` endpoint provision layout can be configured.
 
 In `config.toml` we can enlist array of things and channels that we want to create and make connections between them which we call provision layout.
+
 Metadata can be whatever suits your needs except that at least one thing needs to have `external_id` (which is populated with value from [request](#example)). Thing that has `external_id` will be used for creating bootstrap configuration which can be fetched with [Agent][agent].
 For channels metadata `type` is reserved for `control` and `data` which we use with [Agent][agent].
 
@@ -82,6 +86,7 @@ Example of provision layout below
 
 ## Authentication
 In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [authn](../authn/README.md)). Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
+
 * `username`, `password` - (`MF_PROVISION_USER`, `MF_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
 * API Key - (`MF_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
 * `Authorization: Token|ApiKey` - request authorization header containing either users token or API key. Check [authn](../authn/README.md).
