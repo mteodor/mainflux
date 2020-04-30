@@ -120,7 +120,7 @@ In the case that provision service is not deployed with credentials or API key o
 curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{ "external_id" : "<external_id>", "external_key":"<external_key>" }'
 ```
 
-Response contains created things and channels and certificates if any.
+Response contains created things, channels and certificates if any:
 ```json
 {
   "things": [
