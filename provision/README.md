@@ -2,7 +2,7 @@
 
 Provision service provides an HTTP API to interact with [Mainflux][mainflux]. 
 Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case especially useful for gateway provision.  
-For gateways to communicate with [Mainflux][mainflux] configuration is required (mqtt host, thing, channels, certificates...). To get the configuration gateway will send a request to [Bootstrap][bootstrap] service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap][bootstrap] service you can use [Agent][agent] service on a gateway. To create bootstrap configuration you can use [Bootstrap][bootstrap] or `Provision` service. [Mainflux UI](https://github.com/mainflux/ui) uses [Bootstrap][bootstrap] service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent][agent] and [Export](https://github.com/mainflux/export) on a gateway you will need two channels for `Agent` (`data` and `control`) and one for `Export` and one thing. Additionally if you enabled mtls each service will need its own thing and certificate for access to [Mainflux][mainflux]. Your setup could require any number of things and channels this kind of setup we can call `provision layout`.
+For gateways to communicate with [Mainflux][mainflux] configuration is required (mqtt host, thing, channels, certificates...). To get the configuration gateway will send a request to [Bootstrap][bootstrap] service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap][bootstrap] service you can use [Agent][agent] service on a gateway. To create bootstrap configuration you can use [Bootstrap][bootstrap] or `Provision` service. [Mainflux UI][mfxui] uses [Bootstrap][bootstrap] service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires. Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent][agent] and [Export](https://github.com/mainflux/export) on a gateway you will need two channels for `Agent` (`data` and `control`) and one for `Export` and one thing. Additionally if you enabled mtls each service will need its own thing and certificate for access to [Mainflux][mainflux]. Your setup could require any number of things and channels this kind of setup we can call `provision layout`.
 Provision service provides a way of specifying this `provision layout` and creating a setup according to that layout by serving requests on `/mapping` endpoint. Provision layout is configured in [config.toml](configs/config.toml)
 
 ## Configuration
@@ -85,7 +85,11 @@ Provision service can be run as a standalone or in docker composition as addon t
 
 Standalone:
 ```bash
-MF_PROVISION_BS_SVC_URL=http://localhost:8202/things MF_PROVISION_THINGS_LOCATION=http://localhost:8182 MF_PROVISION_USERS_LOCATION=http://localhost:8180 MF_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml build/mainflux-provision
+MF_PROVISION_BS_SVC_URL=http://localhost:8202/things \
+MF_PROVISION_THINGS_LOCATION=http://localhost:8182 \
+MF_PROVISION_USERS_LOCATION=http://localhost:8180 \
+MF_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml \
+build/mainflux-provision
 ```
 
 Docker composition:
@@ -142,3 +146,4 @@ Response contains created things and channels and certificates if any.
 [bootstrap]: https://github.com/mainflux/mainflux/tree/master/bootstrap
 [export]: https://github.com/mainflux/export
 [agent]: https://github.com/mainflux/agent
+[mfxui]: https://github.com/mainflux/mainflux/ui
