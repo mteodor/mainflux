@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/mainflux/mainflux/errors"
@@ -9,8 +10,14 @@ import (
 )
 
 const (
-	ExternalID = "external_id"
+	externalID = "external_id"
+	gw         = "gateway"
 	Active     = 1
+	gwtype     = "type"
+
+	control = "control"
+	data    = "data"
+	export  = "export"
 )
 
 var (
@@ -25,6 +32,7 @@ var (
 	ErrFailedBootstrapRetrieval = errors.New("failed to retrieve bootstrap")
 	ErrFailedCertCreation       = errors.New("failed to create certificates")
 	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
+	ErrFailedGatewayUpdate      = errors.New("failed to updated gateway metadata")
 )
 
 var _ Service = (*provisionService)(nil)
@@ -67,7 +75,7 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 }
 
 // Provision is provision method for adding devices to proxy.
-func (ps *provisionService) Provision(token, externalID, externalKey string) (res Result, err error) {
+func (ps *provisionService) Provision(token, extID, externalKey string) (res Result, err error) {
 	channels := make([]SDK.Channel, 0)
 	things := make([]SDK.Thing, 0)
 	defer ps.recover(&err, &things, &channels, &token)
@@ -87,8 +95,8 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 				return res, errors.Wrap(ErrFailedToCreateToken, err)
 			}
 		}
-
 	}
+
 	if len(ps.conf.Things) == 0 {
 		return res, ErrEmptyThingsList
 	}
@@ -98,8 +106,8 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 	for _, thing := range ps.conf.Things {
 		// If thing in configs contains metadata with external_id
 		// set value for it from the provision request
-		if _, ok := thing.Metadata[ExternalID]; ok {
-			thing.Metadata[ExternalID] = externalID
+		if _, ok := thing.Metadata[externalID]; ok {
+			thing.Metadata[externalID] = extID
 		}
 		th := SDK.Thing{
 			Name:     thing.Name,
@@ -145,9 +153,10 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 	}
 
 	var cert SDK.Cert
+	var bs SDK.BootstrapConfig
 	for _, thing := range things {
 		bootstrap := false
-		if _, ok := thing.Metadata[ExternalID]; ok {
+		if _, ok := thing.Metadata[externalID]; ok {
 			bootstrap = true
 		}
 		chanIDs := []string{}
@@ -155,9 +164,9 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			chanIDs = append(chanIDs, ch.ID)
 		}
 		if ps.conf.Bootstrap.Provision && bootstrap {
-			bsReq := SDK.BoostrapConfig{
+			bsReq := SDK.BootstrapConfig{
 				ThingID:     thing.ID,
-				ExternalID:  externalID,
+				ExternalID:  extID,
 				ExternalKey: externalKey,
 				Channels:    chanIDs,
 				CACert:      res.CACert,
@@ -165,8 +174,14 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 				ClientKey:   cert.ClientKey,
 				Content:     ps.conf.Bootstrap.Content,
 			}
-			if _, err := ps.sdk.AddBootstrap(token, bsReq); err != nil {
+			bsid, err := ps.sdk.AddBootstrap(token, bsReq)
+			if err != nil {
 				return Result{}, errors.Wrap(ErrFailedBootstrap, err)
+			}
+
+			bs, err = ps.sdk.ViewBoostrap(token, bsid)
+			if err != nil {
+				return Result{}, err
 			}
 		}
 
@@ -182,7 +197,7 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 		}
 
 		if ps.conf.Bootstrap.AutoWhiteList {
-			wlReq := SDK.BoostrapConfig{
+			wlReq := SDK.BootstrapConfig{
 				MFThing: thing.ID,
 				State:   Active,
 			}
@@ -192,9 +207,47 @@ func (ps *provisionService) Provision(token, externalID, externalKey string) (re
 			}
 			res.Whitelisted[thing.ID] = true
 		}
+
 	}
 
+	ps.updateGateway(token, bs, channels)
 	return res, nil
+}
+
+func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, channels []SDK.Channel) error {
+	g := Gateway{}
+	for _, ch := range channels {
+		switch ch.Metadata["type"] {
+		case control:
+			g.CtrlChannelID = ch.ID
+		case data:
+			g.DataChannelID = ch.ID
+		case export:
+			g.ExportChannelID = ch.ID
+		}
+	}
+	g.GwPassword = bs.ExternalKey
+	g.MAC = bs.ExternalID
+	// same value, keep external id in meta for compatibility
+	g.ExternalID = bs.ExternalID
+	g.CfgID = bs.MFThing
+	g.Type = gw
+
+	th, err := ps.sdk.Thing(bs.MFThing, token)
+	if err != nil {
+		return errors.Wrap(ErrFailedGatewayUpdate, err)
+	}
+	b, err := json.Marshal(g)
+	if err != nil {
+		return errors.Wrap(ErrFailedGatewayUpdate, err)
+	}
+	if err := json.Unmarshal(b, &th.Metadata); err != nil {
+		return errors.Wrap(ErrFailedGatewayUpdate, err)
+	}
+	if err := ps.sdk.UpdateThing(th, token); err != nil {
+		return errors.Wrap(ErrFailedGatewayUpdate, err)
+	}
+	return nil
 }
 
 func (ps *provisionService) errLog(err error) {
@@ -245,6 +298,19 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 	}
 
 	if errors.Contains(err, SDK.ErrFailedWhitelist) {
+		clean(ps, things, channels, token)
+		for _, th := range things {
+			if ps.conf.Bootstrap.X509Provision {
+				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
+			}
+			bs, err := ps.sdk.ViewBoostrap(token, th.ID)
+			ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
+			ps.errLog(ps.sdk.RemoveBoostrap(token, bs.MFThing))
+		}
+		return
+	}
+
+	if errors.Contains(err, ErrFailedGatewayUpdate) {
 		clean(ps, things, channels, token)
 		for _, th := range things {
 			if ps.conf.Bootstrap.X509Provision {

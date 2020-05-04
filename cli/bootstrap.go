@@ -21,7 +21,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			var cfg mfxsdk.BoostrapConfig
+			var cfg mfxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 				logError(err)
 				return
@@ -65,7 +65,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			var cfg mfxsdk.BoostrapConfig
+			var cfg mfxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 				logError(err)
 				return

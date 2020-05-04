@@ -46,6 +46,17 @@ type Thing struct {
 	Metadata map[string]interface{} `toml:"metadata" mapstructure:"metadata"`
 }
 
+type Gateway struct {
+	Type            string `toml:"type" json:"type"`
+	ExternalID      string `toml:"external_id" json:"external_id"`
+	CtrlChannelID   string `toml:"ctrl_channel_id" json:"ctrl_channel_id"`
+	DataChannelID   string `toml:"data_channel_id" json:"data_channel_id"`
+	ExportChannelID string `toml:"export_channel_id" json:"export_channel_id"`
+	GwPassword      string `toml:"gw_password" json:"gw_password"`
+	CfgID           string `toml:"cfg_id" json:"cfg_id"`
+	MAC             string `toml:"mac" json:"mac"`
+}
+
 // Config struct of Provision
 type Config struct {
 	File      string      `toml:"file"`
