@@ -10,10 +10,9 @@ import (
 )
 
 const (
-	externalID = "external_id"
-	gw         = "gateway"
-	Active     = 1
-	gwtype     = "type"
+	externalIDKey = "external_id"
+	gateway       = "gateway"
+	Active        = 1
 
 	control = "control"
 	data    = "data"
@@ -41,11 +40,11 @@ var _ Service = (*provisionService)(nil)
 type Service interface {
 	// Provision is the only method this API specifies. Depending on the configuration,
 	// the following actions will can be executed:
-	// - create a Thing based od mac address
+	// - create a Thing based on external_id ( eg. MAC address)
 	// - create multiple Channels
 	// - create Bootstrap configuration
 	// - whitelist Thing in Bootstrap configuration == connect Thing to Channels
-	Provision(token, externalID, externalKey string) (Result, error)
+	Provision(name, token, externalID, externalKey string) (Result, error)
 }
 
 type provisionService struct {
@@ -74,8 +73,9 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 	}
 }
 
-// Provision is provision method for adding devices to proxy.
-func (ps *provisionService) Provision(token, extID, externalKey string) (res Result, err error) {
+// Provision is provision method for creating setup according to
+// provision layout specified in config.toml
+func (ps *provisionService) Provision(name, token, extIDVal, externalKey string) (res Result, err error) {
 	channels := make([]SDK.Channel, 0)
 	things := make([]SDK.Thing, 0)
 	defer ps.recover(&err, &things, &channels, &token)
@@ -106,13 +106,17 @@ func (ps *provisionService) Provision(token, extID, externalKey string) (res Res
 	for _, thing := range ps.conf.Things {
 		// If thing in configs contains metadata with external_id
 		// set value for it from the provision request
-		if _, ok := thing.Metadata[externalID]; ok {
-			thing.Metadata[externalID] = extID
+		if _, ok := thing.Metadata[externalIDKey]; ok {
+			thing.Metadata[externalIDKey] = extIDVal
 		}
+
 		th := SDK.Thing{
-			Name:     thing.Name,
 			Metadata: thing.Metadata,
 		}
+		if name == "" {
+			name = thing.Name
+		}
+		th.Name = name
 		thID, err := ps.sdk.CreateThing(th, token)
 		if err != nil {
 			res.Error = err.Error()
@@ -156,7 +160,7 @@ func (ps *provisionService) Provision(token, extID, externalKey string) (res Res
 	var bs SDK.BootstrapConfig
 	for _, thing := range things {
 		bootstrap := false
-		if _, ok := thing.Metadata[externalID]; ok {
+		if _, ok := thing.Metadata[externalIDKey]; ok {
 			bootstrap = true
 		}
 		chanIDs := []string{}
@@ -166,7 +170,7 @@ func (ps *provisionService) Provision(token, extID, externalKey string) (res Res
 		if ps.conf.Bootstrap.Provision && bootstrap {
 			bsReq := SDK.BootstrapConfig{
 				ThingID:     thing.ID,
-				ExternalID:  extID,
+				ExternalID:  extIDVal,
 				ExternalKey: externalKey,
 				Channels:    chanIDs,
 				CACert:      res.CACert,
@@ -226,12 +230,9 @@ func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, 
 			g.ExportChannelID = ch.ID
 		}
 	}
-	g.GwPassword = bs.ExternalKey
-	g.MAC = bs.ExternalID
-	// same value, keep external id in meta for compatibility
 	g.ExternalID = bs.ExternalID
 	g.CfgID = bs.MFThing
-	g.Type = gw
+	g.Type = gateway
 
 	th, err := ps.sdk.Thing(bs.MFThing, token)
 	if err != nil {
