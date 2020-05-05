@@ -5,7 +5,7 @@
   name = "thing"
 
   [things.metadata]
-    external_id = "xxxxxx"
+    bootstrap = true
 
 [[channels]]
   name = "control-channel"
