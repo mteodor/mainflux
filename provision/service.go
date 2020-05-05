@@ -179,7 +179,7 @@ func (ps *provisionService) Provision(token, extID, externalKey string) (res Res
 				return Result{}, errors.Wrap(ErrFailedBootstrap, err)
 			}
 
-			bs, err = ps.sdk.ViewBoostrap(token, bsid)
+			bs, err = ps.sdk.ViewBootstrap(token, bsid)
 			if err != nil {
 				return Result{}, err
 			}
@@ -303,9 +303,9 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 			if ps.conf.Bootstrap.X509Provision {
 				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
 			}
-			bs, err := ps.sdk.ViewBoostrap(token, th.ID)
+			bs, err := ps.sdk.ViewBootstrap(token, th.ID)
 			ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-			ps.errLog(ps.sdk.RemoveBoostrap(token, bs.MFThing))
+			ps.errLog(ps.sdk.RemoveBootstrap(token, bs.MFThing))
 		}
 		return
 	}
@@ -316,9 +316,9 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 			if ps.conf.Bootstrap.X509Provision {
 				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
 			}
-			bs, err := ps.sdk.ViewBoostrap(token, th.ID)
+			bs, err := ps.sdk.ViewBootstrap(token, th.ID)
 			ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-			ps.errLog(ps.sdk.RemoveBoostrap(token, bs.MFThing))
+			ps.errLog(ps.sdk.RemoveBootstrap(token, bs.MFThing))
 		}
 		return
 	}

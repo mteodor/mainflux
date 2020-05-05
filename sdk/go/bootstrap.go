@@ -97,7 +97,7 @@ func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
 	return nil
 }
 
-func (sdk mfSDK) ViewBoostrap(token, id string) (BootstrapConfig, error) {
+func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, error) {
 	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, id)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 
@@ -129,7 +129,7 @@ func (sdk mfSDK) ViewBoostrap(token, id string) (BootstrapConfig, error) {
 	return bc, nil
 }
 
-func (sdk mfSDK) UpdateBoostrap(token string, cfg BootstrapConfig) error {
+func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (sdk mfSDK) UpdateBoostrap(token string, cfg BootstrapConfig) error {
 	return nil
 }
 
-func (sdk mfSDK) RemoveBoostrap(token, id string) error {
+func (sdk mfSDK) RemoveBootstrap(token, id string) error {
 	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, id)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 
@@ -176,7 +176,7 @@ func (sdk mfSDK) RemoveBoostrap(token, id string) error {
 	return nil
 }
 
-func (sdk mfSDK) Boostrap(externalKey, externalID string) (BootstrapConfig, error) {
+func (sdk mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, error) {
 	endpoint := fmt.Sprintf("%s/%s", bootstrapEndpoint, externalID)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 

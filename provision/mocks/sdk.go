@@ -120,12 +120,12 @@ func (s *mockSDK) Version() (string, error) {
 }
 
 // Update updates editable fields of the provided Config.
-func (s *mockSDK) UpdateBoostrap(key string, cfg mfSDK.BootstrapConfig) error {
+func (s *mockSDK) UpdateBootstrap(key string, cfg mfSDK.BootstrapConfig) error {
 	panic("UpdatePassword not implemented")
 }
 
 // View returns Thing Config with given ID belonging to the user identified by the given key.
-func (s *mockSDK) Boostrap(key, id string) (mfSDK.BootstrapConfig, error) {
+func (s *mockSDK) Bootstrap(key, id string) (mfSDK.BootstrapConfig, error) {
 	panic("UpdatePassword not implemented")
 }
 
@@ -298,7 +298,7 @@ func (s *mockSDK) AddBootstrap(token string, cfg mfSDK.BootstrapConfig) (string,
 	return mfid.String(), nil
 }
 
-func (s *mockSDK) ViewBoostrap(token string, id string) (mfSDK.BootstrapConfig, error) {
+func (s *mockSDK) ViewBootstrap(token string, id string) (mfSDK.BootstrapConfig, error) {
 	if token != validToken {
 		return mfSDK.BootstrapConfig{}, mfSDK.ErrUnauthorized
 	}
@@ -313,7 +313,7 @@ func (s *mockSDK) ViewBoostrap(token string, id string) (mfSDK.BootstrapConfig, 
 
 }
 
-func (s *mockSDK) RemoveBoostrap(token, id string) error {
+func (s *mockSDK) RemoveBootstrap(token, id string) error {
 	if token != validToken {
 		return mfSDK.ErrUnauthorized
 	}
