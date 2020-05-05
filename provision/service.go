@@ -231,6 +231,7 @@ func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, 
 		}
 	}
 	g.ExternalID = bs.ExternalID
+	g.ExternalKey = bs.ExternalKey
 	g.CfgID = bs.MFThing
 	g.Type = gateway
 

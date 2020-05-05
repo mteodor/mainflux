@@ -49,6 +49,7 @@ type Thing struct {
 type Gateway struct {
 	Type            string `toml:"type" json:"type"`
 	ExternalID      string `toml:"external_id" json:"external_id"`
+	ExternalKey     string `toml:"external_key" json:"external_key"`
 	CtrlChannelID   string `toml:"ctrl_channel_id" json:"ctrl_channel_id"`
 	DataChannelID   string `toml:"data_channel_id" json:"data_channel_id"`
 	ExportChannelID string `toml:"export_channel_id" json:"export_channel_id"`
