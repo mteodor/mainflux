@@ -76,8 +76,8 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 // Provision is provision method for creating setup according to
 // provision layout specified in config.toml
 func (ps *provisionService) Provision(name, token, extIDVal, externalKey string) (res Result, err error) {
-	channels := make([]SDK.Channel, 0)
-	things := make([]SDK.Thing, 0)
+	var channels []SDK.Channel
+	var things []SDK.Thing
 	defer ps.recover(&err, &things, &channels, &token)
 
 	if token == "" {
@@ -163,7 +163,7 @@ func (ps *provisionService) Provision(name, token, extIDVal, externalKey string)
 		if _, ok := thing.Metadata[externalIDKey]; ok {
 			bootstrap = true
 		}
-		chanIDs := []string{}
+		var chanIDs []string
 		for _, ch := range channels {
 			chanIDs = append(chanIDs, ch.ID)
 		}
@@ -219,27 +219,27 @@ func (ps *provisionService) Provision(name, token, extIDVal, externalKey string)
 }
 
 func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, channels []SDK.Channel) error {
-	g := Gateway{}
+	var gw Gateway
 	for _, ch := range channels {
 		switch ch.Metadata["type"] {
 		case control:
-			g.CtrlChannelID = ch.ID
+			gw.CtrlChannelID = ch.ID
 		case data:
-			g.DataChannelID = ch.ID
+			gw.DataChannelID = ch.ID
 		case export:
-			g.ExportChannelID = ch.ID
+			gw.ExportChannelID = ch.ID
 		}
 	}
-	g.ExternalID = bs.ExternalID
-	g.ExternalKey = bs.ExternalKey
-	g.CfgID = bs.MFThing
-	g.Type = gateway
+	gw.ExternalID = bs.ExternalID
+	gw.ExternalKey = bs.ExternalKey
+	gw.CfgID = bs.MFThing
+	gw.Type = gateway
 
 	th, err := ps.sdk.Thing(bs.MFThing, token)
 	if err != nil {
 		return errors.Wrap(ErrFailedGatewayUpdate, err)
 	}
-	b, err := json.Marshal(g)
+	b, err := json.Marshal(gw)
 	if err != nil {
 		return errors.Wrap(ErrFailedGatewayUpdate, err)
 	}
