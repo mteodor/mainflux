@@ -174,7 +174,7 @@ type SDK interface {
 	// Version returns used mainflux version.
 	Version() (string, error)
 
-	// AddBootstrap add boostrap configuration
+	// AddBootstrap add bootstrap configuration
 	AddBootstrap(token string, cfg BootstrapConfig) (string, error)
 
 	// View returns Thing Config with given ID belonging to the user identified by the given token.
