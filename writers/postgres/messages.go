@@ -20,7 +20,7 @@ var (
 	// ErrInvalidMessage indicates that service received message that
 	// doesn't fit required format.
 	ErrInvalidMessage = errors.New("invalid message representation")
-	errSaveMessage    = errors.New("faled to save message to postgress database")
+	errSaveMessage    = errors.New("failed to save message to postgress database")
 )
 
 var _ writers.MessageRepository = (*postgresRepo)(nil)
