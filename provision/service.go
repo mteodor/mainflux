@@ -40,7 +40,7 @@ var _ Service = (*provisionService)(nil)
 type Service interface {
 	// Provision is the only method this API specifies. Depending on the configuration,
 	// the following actions will can be executed:
-	// - create a Thing based on external_id ( eg. MAC address)
+	// - create a Thing based on external_id (eg. MAC address)
 	// - create multiple Channels
 	// - create Bootstrap configuration
 	// - whitelist Thing in Bootstrap configuration == connect Thing to Channels
@@ -75,7 +75,7 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 
 // Provision is provision method for creating setup according to
 // provision layout specified in config.toml
-func (ps *provisionService) Provision(name, token, extIDVal, externalKey string) (res Result, err error) {
+func (ps *provisionService) Provision(name, token, externalID, externalKey string) (res Result, err error) {
 	var channels []SDK.Channel
 	var things []SDK.Thing
 	defer ps.recover(&err, &things, &channels, &token)
@@ -107,7 +107,7 @@ func (ps *provisionService) Provision(name, token, extIDVal, externalKey string)
 		// If thing in configs contains metadata with external_id
 		// set value for it from the provision request
 		if _, ok := thing.Metadata[externalIDKey]; ok {
-			thing.Metadata[externalIDKey] = extIDVal
+			thing.Metadata[externalIDKey] = externalID
 		}
 
 		th := SDK.Thing{
@@ -170,7 +170,7 @@ func (ps *provisionService) Provision(name, token, extIDVal, externalKey string)
 		if ps.conf.Bootstrap.Provision && bootstrap {
 			bsReq := SDK.BootstrapConfig{
 				ThingID:     thing.ID,
-				ExternalID:  extIDVal,
+				ExternalID:  externalID,
 				ExternalKey: externalKey,
 				Channels:    chanIDs,
 				CACert:      res.CACert,
