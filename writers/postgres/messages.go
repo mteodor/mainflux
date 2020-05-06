@@ -44,6 +44,9 @@ func (pr postgresRepo) Save(messages ...senml.Message) (err error) {
     :time, :update_time);`
 
 	tx, err := pr.db.BeginTxx(context.Background(), nil)
+	if err != nil {
+		return errors.Wrap(errSaveMessage, err)
+	}
 	defer func() {
 		if err != nil {
 			if txErr := tx.Rollback(); txErr != nil {
@@ -51,14 +54,12 @@ func (pr postgresRepo) Save(messages ...senml.Message) (err error) {
 			}
 			return
 		}
+
 		if err = tx.Commit(); err != nil {
 			err = errors.Wrap(errSaveMessage, err)
 		}
 		return
 	}()
-	if err != nil {
-		return errors.Wrap(errSaveMessage, err)
-	}
 
 	for _, msg := range messages {
 		dbth, err := toDBMessage(msg)
