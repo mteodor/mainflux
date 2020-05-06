@@ -47,7 +47,7 @@ func (pr postgresRepo) Save(messages ...senml.Message) (err error) {
 	defer func() {
 		if err != nil {
 			if txErr := tx.Rollback(); txErr != nil {
-				err = errors.Wrap(errTransRollback, txErr)
+				err = errors.Wrap(err, errors.Wrap(errTransRollback, txErr))
 			}
 			return
 		}
