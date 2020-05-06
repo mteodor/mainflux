@@ -31,7 +31,7 @@ var (
 	ErrFailedBootstrapRetrieval = errors.New("failed to retrieve bootstrap")
 	ErrFailedCertCreation       = errors.New("failed to create certificates")
 	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
-	ErrFailedGatewayUpdate      = errors.New("failed to updated gateway metadata")
+	ErrGatewayUpdate            = errors.New("failed to updated gateway metadata")
 )
 
 var _ Service = (*provisionService)(nil)
@@ -237,17 +237,17 @@ func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, 
 
 	th, err := ps.sdk.Thing(bs.MFThing, token)
 	if err != nil {
-		return errors.Wrap(ErrFailedGatewayUpdate, err)
+		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	b, err := json.Marshal(gw)
 	if err != nil {
-		return errors.Wrap(ErrFailedGatewayUpdate, err)
+		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	if err := json.Unmarshal(b, &th.Metadata); err != nil {
-		return errors.Wrap(ErrFailedGatewayUpdate, err)
+		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	if err := ps.sdk.UpdateThing(th, token); err != nil {
-		return errors.Wrap(ErrFailedGatewayUpdate, err)
+		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	return nil
 }
@@ -312,7 +312,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		return
 	}
 
-	if errors.Contains(err, ErrFailedGatewayUpdate) {
+	if errors.Contains(err, ErrGatewayUpdate) {
 		clean(ps, things, channels, token)
 		for _, th := range things {
 			if ps.conf.Bootstrap.X509Provision {
