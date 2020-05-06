@@ -5,7 +5,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -48,7 +47,6 @@ func (pr postgresRepo) Save(messages ...senml.Message) error {
 		return errors.Wrap(errSaveMessage, err)
 	}
 	defer func() {
-		fmt.Println("transaction saved")
 		if err == nil {
 			if err = tx.Commit(); err != nil {
 				err = errors.Wrap(errSaveMessage, err)
