@@ -5,6 +5,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -46,6 +47,20 @@ func (pr postgresRepo) Save(messages ...senml.Message) error {
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}
+	defer func() {
+		fmt.Println("transaction saved")
+		if err == nil {
+			if err = tx.Commit(); err != nil {
+				err = errors.Wrap(errSaveMessage, err)
+			}
+			return
+		}
+		err = errors.Wrap(errSaveMessage, err)
+		if txErr := tx.Rollback(); txErr != nil {
+			err = errors.Wrap(errSaveMessage, txErr)
+		}
+		return
+	}()
 
 	for _, msg := range messages {
 		dbth, err := toDBMessage(msg)
@@ -65,10 +80,8 @@ func (pr postgresRepo) Save(messages ...senml.Message) error {
 			return errors.Wrap(errSaveMessage, err)
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		return errors.Wrap(errSaveMessage, err)
-	}
-	return nil
+
+	return err
 }
 
 type dbMessage struct {
