@@ -1,7 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -69,6 +73,8 @@ var (
 	errFailGettingCertSettings  = errors.New("failed to get certificate file setting")
 	errFailGettingTLSConf       = errors.New("failed to get TLS setting")
 	errFailGettingProvBS        = errors.New("failed to get BS url setting")
+	errFailedCertLoading        = errors.New("failed to load certificate")
+	errFailedCertDecode         = errors.New("failed to decode certificate")
 )
 
 func main() {
@@ -88,6 +94,12 @@ func main() {
 		cfg = cfgFromFile
 		logger.Info("Continue with settings from file:" + cfg.File)
 	}
+	tlsCert, x509Cert, err := loadCertificates(cfg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Problem loading certificates %v", err))
+	}
+	cfg.CA = x509Cert.Raw
+	cfg.Cert = tlsCert
 
 	SDKCfg := mfSDK.Config{
 		BaseURL:           cfg.Server.ThingsLocation,
@@ -138,6 +150,33 @@ func loadConfigFromFile(file string) (provision.Config, error) {
 		return provision.Config{}, errors.Wrap(errFailedToLoadConfigFile, err)
 	}
 	return c, nil
+}
+
+func loadCertificates(conf provision.Config) (tls.Certificate, *x509.Certificate, error) {
+	var tlsCert tls.Certificate
+	var caCert *x509.Certificate
+
+	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.PrivKeyPath)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
+	}
+
+	b, err := ioutil.ReadFile(conf.CAPath)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
+	}
+
+	block, _ := pem.Decode(b)
+	if block == nil {
+		log.Fatalf("No PEM data found, failed to decode CA")
+	}
+
+	caCert, err = x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertDecode, err)
+	}
+
+	return tlsCert, caCert, nil
 }
 
 func loadConfig() (provision.Config, error) {

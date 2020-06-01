@@ -1,8 +1,18 @@
 package provision
 
 import (
+	"bufio"
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"log"
+	"math/big"
+	"time"
 
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -216,6 +226,62 @@ func (ps *provisionService) Provision(name, token, externalID, externalKey strin
 
 	ps.updateGateway(token, bs, channels)
 	return res, nil
+}
+
+func (ps *provisionService) Certs(certFile, keyFile string) {
+
+	var priv interface{}
+	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
+
+	notBefore := time.Now()
+	validFor, err := time.ParseDuration(daysValid)
+	if err != nil {
+		log.Fatalf("Failed to set date %v", validFor)
+	}
+	notAfter := notBefore.Add(validFor)
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		log.Fatalf("Failed to generate serial number: %s", err)
+	}
+
+	tmpl := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization:       []string{"Mainflux"},
+			CommonName:         thing.Key,
+			OrganizationalUnit: []string{"mainflux"},
+		},
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
+
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, caCert, publicKey(priv), tlsCert.PrivateKey)
+	if err != nil {
+		log.Fatalf("Failed to create certificate: %s", err)
+	}
+
+	var bw, keyOut bytes.Buffer
+	buffWriter := bufio.NewWriter(&bw)
+	buffKeyOut := bufio.NewWriter(&keyOut)
+
+	if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		log.Fatalf("Failed to write cert pem data: %s", err)
+	}
+	buffWriter.Flush()
+	cert = bw.String()
+
+	if err := pem.Encode(buffKeyOut, pemBlockForKey(priv)); err != nil {
+		log.Fatalf("Failed to write key pem data: %s", err)
+	}
+	buffKeyOut.Flush()
+	key = keyOut.String()
+
 }
 
 func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, channels []SDK.Channel) error {
