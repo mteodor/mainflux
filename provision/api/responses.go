@@ -27,3 +27,20 @@ func (res provisionRes) Headers() map[string]string {
 func (res provisionRes) Empty() bool {
 	return false
 }
+
+type certRes struct {
+	ThingCert    string `json:"thing_cert"`
+	ThingCertKey string `json:"thing_cert_key"`
+}
+
+func (res certRes) Code() int {
+	return http.StatusCreated
+}
+
+func (res certRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res certRes) Empty() bool {
+	return false
+}

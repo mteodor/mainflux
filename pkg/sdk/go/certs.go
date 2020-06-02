@@ -21,6 +21,12 @@ func (sdk mfSDK) Cert(thingID, thingKey, token string) (Cert, error) {
 		ThingID:  thingID,
 		ThingKey: thingKey,
 	}
+	// Check access rights
+	_, err := sdk.Thing(thingID, token)
+	if err != nil {
+		return Cert{}, err
+	}
+
 	d, err := json.Marshal(r)
 	if err != nil {
 		return Cert{}, err

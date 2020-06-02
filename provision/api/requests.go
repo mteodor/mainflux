@@ -7,9 +7,24 @@ type addThingReq struct {
 	ExternalKey string `json:"external_key"`
 }
 
+type addCertReq struct {
+	token     string
+	ThingId   string `json:"thing_id"`
+	ThingKey  string `json:"thing_key"`
+	RsaBits   int    `json:"rsa_bits"`
+	DaysValid string `json:"days_valid"`
+}
+
 func (req addThingReq) validate() error {
 	if req.ExternalID == "" || req.ExternalKey == "" {
 		return errUnauthorized
+	}
+	return nil
+}
+
+func (req addCertReq) validate() error {
+	if req.ThingKey == "" || req.RsaBits < 0 || req.DaysValid == "" {
+		return errMalformedEntity
 	}
 	return nil
 }

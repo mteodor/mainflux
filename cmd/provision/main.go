@@ -98,8 +98,9 @@ func main() {
 	if err != nil {
 		logger.Error(fmt.Sprintf("Problem loading certificates %v", err))
 	}
-	cfg.CA = x509Cert.Raw
-	cfg.Cert = tlsCert
+
+	cfg.Certs.CA = x509Cert
+	cfg.Certs.Cert = tlsCert
 
 	SDKCfg := mfSDK.Config{
 		BaseURL:           cfg.Server.ThingsLocation,
@@ -156,12 +157,12 @@ func loadCertificates(conf provision.Config) (tls.Certificate, *x509.Certificate
 	var tlsCert tls.Certificate
 	var caCert *x509.Certificate
 
-	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.PrivKeyPath)
+	tlsCert, err := tls.LoadX509KeyPair(conf.Certs.CAPath, conf.Certs.PrivKeyPath)
 	if err != nil {
 		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
 	}
 
-	b, err := ioutil.ReadFile(conf.CAPath)
+	b, err := ioutil.ReadFile(conf.Certs.CAPath)
 	if err != nil {
 		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
 	}

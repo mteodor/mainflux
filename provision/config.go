@@ -5,6 +5,7 @@ package provision
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 
@@ -57,18 +58,24 @@ type Gateway struct {
 	CfgID           string `toml:"cfg_id" json:"cfg_id"`
 }
 
+type Certs struct {
+	CAPath      string            `json:"ca_path" toml:"ca_path" `
+	CertPath    string            `json:"cert_path" toml:"cert_path" `
+	PrivKeyPath string            `json:"priv_key_path" toml:"priv_key_path"`
+	DaysValid   string            `json:"days_valid" toml:"days_valid"`
+	RsaBits     int               `json:"rsa_bits", toml:"rsa_bits"`
+	CA          *x509.Certificate `json:"-" toml:"-"`
+	Cert        tls.Certificate   `json:"-" toml:"-"`
+}
+
 // Config struct of Provision
 type Config struct {
-	File        string          `toml:"file"`
-	Server      ServiceConf     `toml:"server" mapstructure:"server"`
-	Bootstrap   Bootstrap       `toml:"bootstrap" mapstructure:"bootstrap"`
-	Things      []Thing         `toml:"things" mapstructure:"things"`
-	Channels    []Channel       `toml:"channels" mapstructure:"channels"`
-	CAPath      string          `json:"ca_path" toml:"ca_path" mapstructure:"ca_path"`
-	CertPath    string          `json:"cert_path" toml:"cert_path" mapstructure:"cert_path"`
-	PrivKeyPath string          `json:"priv_key_path" toml:"priv_key_path" mapstructure:"priv_key_path"`
-	CA          []byte          `json:"-" toml:"-"`
-	Cert        tls.Certificate `json:"-" toml:"-"`
+	File      string      `toml:"file"`
+	Server    ServiceConf `toml:"server" mapstructure:"server"`
+	Bootstrap Bootstrap   `toml:"bootstrap" mapstructure:"bootstrap"`
+	Things    []Thing     `toml:"things" mapstructure:"things"`
+	Channels  []Channel   `toml:"channels" mapstructure:"channels"`
+	Certs     Certs       `toml:"certs" mapstructure:"certs"`
 }
 
 // Save - store config in a file
