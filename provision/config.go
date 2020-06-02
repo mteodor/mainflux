@@ -58,13 +58,13 @@ type Gateway struct {
 }
 
 type Certs struct {
-	CAPath        string            `json:"ca_path" toml:"ca_path" `
-	CertPath      string            `json:"cert_path" toml:"cert_path" `
-	CAPrivKeyPath string            `json:"priv_key_path" toml:"priv_key_path"`
-	DaysValid     string            `json:"days_valid" toml:"days_valid"`
-	RsaBits       int               `json:"rsa_bits", toml:"rsa_bits"`
-	CA            *x509.Certificate `json:"-" toml:"-"`
-	Cert          tls.Certificate   `json:"-" toml:"-"`
+	CAPath    string            `json:"ca_path" toml:"ca_path" `
+	CertPath  string            `json:"cert_path" toml:"cert_path" `
+	CAKeyPath string            `json:"priv_key_path" toml:"priv_key_path"`
+	DaysValid string            `json:"days_valid" toml:"days_valid"`
+	RsaBits   int               `json:"rsa_bits", toml:"rsa_bits"`
+	CA        *x509.Certificate `json:"-" toml:"-"`
+	Cert      tls.Certificate   `json:"-" toml:"-"`
 }
 
 // Config struct of Provision

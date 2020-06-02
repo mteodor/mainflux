@@ -5,9 +5,14 @@ package sdk
 
 import (
 	"crypto/tls"
-	"errors"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
+
+	"github.com/mainflux/mainflux/errors"
 )
 
 const (
@@ -194,7 +199,7 @@ type SDK interface {
 	Whitelist(token string, cfg BootstrapConfig) error
 
 	// Cert issues a certificate for a thing required for mtls.
-	Cert(thingID, thingKey, token string) (Cert, error)
+	Cert(thingID, daysValid string, rsaBits int, token string) (Cert, error)
 
 	// RemoveCert remove a certificate
 	RemoveCert(id, token string) error
@@ -213,6 +218,14 @@ type mfSDK struct {
 	bootstrapPrefix   string
 	msgContentType    ContentType
 	client            *http.Client
+
+	certsCAPath    string
+	certsCertPath  string
+	certsCAKeyPath string
+	certsDaysValid string
+	certsRsaBits   int
+	certsCA        *x509.Certificate
+	certsCert      tls.Certificate
 }
 
 // Config contains sdk configuration parameters.
@@ -228,10 +241,22 @@ type Config struct {
 	BootstrapPrefix   string
 	MsgContentType    ContentType
 	TLSVerification   bool
+
+	CAPath    string
+	CertPath  string
+	CAKeyPath string
+	DaysValid string
+	RsaBits   int
 }
 
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
+
+	tlsCert, x509Cert, _ := loadCertificates(conf)
+	// if err != nil {
+	// 	return err
+	// }
+
 	return &mfSDK{
 		baseURL:           conf.BaseURL,
 		readerURL:         conf.ReaderURL,
@@ -250,7 +275,42 @@ func NewSDK(conf Config) SDK {
 				},
 			},
 		},
+		certsCA:        x509Cert,
+		certsCert:      tlsCert,
+		certsDaysValid: conf.DaysValid,
+		certsRsaBits:   conf.RsaBits,
 	}
+}
+
+func loadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error) {
+	var tlsCert tls.Certificate
+	var caCert *x509.Certificate
+
+	if conf.CAPath == "" || conf.CAKeyPath == "" {
+		return tlsCert, caCert, nil
+	}
+
+	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.CAKeyPath)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
+	}
+
+	b, err := ioutil.ReadFile(conf.CAPath)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
+	}
+
+	block, _ := pem.Decode(b)
+	if block == nil {
+		log.Fatalf("No PEM data found, failed to decode CA")
+	}
+
+	caCert, err = x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertDecode, err)
+	}
+
+	return tlsCert, caCert, nil
 }
 
 func (sdk mfSDK) sendRequest(req *http.Request, token, contentType string) (*http.Response, error) {

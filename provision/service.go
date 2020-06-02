@@ -1,19 +1,8 @@
 package provision
 
 import (
-	"bufio"
-	"bytes"
-	"crypto/ecdsa"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
-	"math/big"
-	"os"
-	"time"
 
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -43,12 +32,6 @@ var (
 	ErrFailedCertCreation       = errors.New("failed to create certificates")
 	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
 	ErrGatewayUpdate            = errors.New("failed to updated gateway metadata")
-
-	errFailedCertCreation     = errors.New("failed creating certificate")
-	errFailedDateSetting      = errors.New("failed setting date")
-	errFailedPemDataWrite     = errors.New("failed writing pem data")
-	errFailedPemKeyWrite      = errors.New("failed writing pem key data")
-	errFailedSerialGeneration = errors.New("failed generating certificates serial")
 )
 
 var _ Service = (*provisionService)(nil)
@@ -104,7 +87,7 @@ func (ps *provisionService) Provision(name, token, externalID, externalKey strin
 	var things []SDK.Thing
 	defer ps.recover(&err, &things, &channels, &token)
 
-	token, err = ps.createIfNotValidToken(token)
+	token, err = ps.createTokenIfEmpty(token)
 	if err != nil {
 		return res, err
 	}
@@ -203,19 +186,11 @@ func (ps *provisionService) Provision(name, token, externalID, externalKey strin
 
 		if ps.conf.Bootstrap.X509Provision {
 			var cert SDK.Cert
-			if ps.conf.Server.MfCertsURL == "" {
 
-				cert.ClientCert, cert.ClientKey, err = ps.certs(thing.Key, ps.conf.Certs.DaysValid, ps.conf.Certs.RsaBits)
-				if err != nil {
-					e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
-					return res, errors.Wrap(ErrFailedCertCreation, e)
-				}
-			} else {
-				cert, err = ps.sdk.Cert(thing.ID, thing.Key, token)
-				if err != nil {
-					e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
-					return res, errors.Wrap(ErrFailedCertCreation, e)
-				}
+			cert, err = ps.sdk.Cert(thing.ID, ps.conf.Certs.DaysValid, ps.conf.Certs.RsaBits, token)
+			if err != nil {
+				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
+				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
 
 			res.ClientCert[thing.ID] = cert.ClientCert
@@ -235,17 +210,27 @@ func (ps *provisionService) Provision(name, token, externalID, externalKey strin
 			res.Whitelisted[thing.ID] = true
 		}
 
-		if ps.conf.Server.MfCertsURL == "" && ps.conf.Bootstrap.X509Provision == true {
-
-		}
-
 	}
 
 	ps.updateGateway(token, bs, channels)
 	return res, nil
 }
 
-func (ps *provisionService) createIfNotValidToken(token string) (string, error) {
+func (ps *provisionService) Certs(token, thingId, daysValid string, rsaBits int) (string, string, error) {
+	token, err := ps.createTokenIfEmpty(token)
+	if err != nil {
+		return "", "", err
+	}
+
+	th, err := ps.sdk.Thing(thingId, token)
+	if err != nil {
+		return "", "", errors.Wrap(SDK.ErrUnauthorized, err)
+	}
+	cert, err := ps.sdk.Cert(th.ID, ps.conf.Certs.DaysValid, ps.conf.Certs.RsaBits, token)
+	return cert.ClientCert, cert.ClientKey, err
+}
+
+func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	if token != "" {
 		return token, nil
 	}
@@ -271,103 +256,6 @@ func (ps *provisionService) createIfNotValidToken(token string) (string, error) 
 	}
 
 	return token, nil
-}
-
-func (ps *provisionService) Certs(token, thingId, daysValid string, rsaBits int) (string, string, error) {
-	token, err := ps.createIfNotValidToken(token)
-	if err != nil {
-		return "", "", err
-	}
-
-	th, err := ps.sdk.Thing(thingId, token)
-	if err != nil {
-		return "", "", errors.Wrap(SDK.ErrUnauthorized, err)
-	}
-
-	return ps.certs(th.Key, daysValid, rsaBits)
-}
-
-func (ps *provisionService) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
-	var priv interface{}
-	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
-
-	notBefore := time.Now()
-	validFor, err := time.ParseDuration(daysValid)
-	if err != nil {
-		return "", "", errors.Wrap(errFailedDateSetting, err)
-	}
-	notAfter := notBefore.Add(validFor)
-
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		return "", "", errors.Wrap(errFailedSerialGeneration, err)
-	}
-
-	tmpl := x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization:       []string{"Mainflux"},
-			CommonName:         thingKey,
-			OrganizationalUnit: []string{"mainflux"},
-		},
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
-
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		SubjectKeyId: []byte{1, 2, 3, 4, 6},
-	}
-
-	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, ps.conf.Certs.CA, publicKey(priv), ps.conf.Certs.Cert.PrivateKey)
-	if err != nil {
-		return "", "", errors.Wrap(errFailedCertCreation, err)
-	}
-
-	var bw, keyOut bytes.Buffer
-	buffWriter := bufio.NewWriter(&bw)
-	buffKeyOut := bufio.NewWriter(&keyOut)
-
-	if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-		return "", "", errors.Wrap(errFailedPemDataWrite, err)
-	}
-	buffWriter.Flush()
-	cert := bw.String()
-
-	if err := pem.Encode(buffKeyOut, pemBlockForKey(priv)); err != nil {
-		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
-	}
-	buffKeyOut.Flush()
-	key := keyOut.String()
-
-	return cert, key, nil
-}
-
-func publicKey(priv interface{}) interface{} {
-	switch k := priv.(type) {
-	case *rsa.PrivateKey:
-		return &k.PublicKey
-	case *ecdsa.PrivateKey:
-		return &k.PublicKey
-	default:
-		return nil
-	}
-}
-
-func pemBlockForKey(priv interface{}) *pem.Block {
-	switch k := priv.(type) {
-	case *rsa.PrivateKey:
-		return &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}
-	case *ecdsa.PrivateKey:
-		b, err := x509.MarshalECPrivateKey(k)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to marshal ECDSA private key: %v", err)
-			os.Exit(2)
-		}
-		return &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}
-	default:
-		return nil
-	}
 }
 
 func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, channels []SDK.Channel) error {

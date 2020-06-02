@@ -1,11 +1,34 @@
 package sdk
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
+	"time"
+
+	"github.com/mainflux/mainflux/errors"
+)
+
+var (
+	ErrCertsCreation = errors.New("failed to create certificate")
+
+	errFailedCertCreation     = errors.New("failed creating certificate")
+	errFailedDateSetting      = errors.New("failed setting date")
+	errFailedPemDataWrite     = errors.New("failed writing pem data")
+	errFailedPemKeyWrite      = errors.New("failed writing pem key data")
+	errFailedSerialGeneration = errors.New("failed generating certificates serial")
+	errFailedCertLoading      = errors.New("failed to load certificate")
+	errFailedCertDecode       = errors.New("failed to decode certificate")
 )
 
 // Cert represents certs data.
@@ -15,22 +38,31 @@ type Cert struct {
 	ClientCert string `json:"client_cert,omitempty"`
 }
 
-func (sdk mfSDK) Cert(thingID, thingKey, token string) (Cert, error) {
+func (sdk mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cert, error) {
 	var c Cert
-	r := certReq{
-		ThingID:  thingID,
-		ThingKey: thingKey,
-	}
+
 	// Check access rights
-	_, err := sdk.Thing(thingID, token)
+	th, err := sdk.Thing(thingID, token)
 	if err != nil {
 		return Cert{}, err
 	}
-
+	r := certReq{
+		ThingID:  th.ID,
+		ThingKey: th.Key,
+	}
 	d, err := json.Marshal(r)
 	if err != nil {
 		return Cert{}, err
 	}
+
+	if sdk.certsURL == "" {
+		c.ClientCert, c.ClientKey, err = sdk.certs(th.Key, daysValid, rsaBits)
+		if err != nil {
+			return Cert{}, errors.Wrap(ErrCertsCreation, err)
+		}
+		return c, err
+	}
+
 	res, err := request(http.MethodPost, token, sdk.certsURL, d)
 	if err != nil {
 		return Cert{}, err
@@ -48,6 +80,92 @@ func (sdk mfSDK) Cert(thingID, thingKey, token string) (Cert, error) {
 		return Cert{}, err
 	}
 	return c, nil
+}
+
+func (sdk mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
+	var priv interface{}
+	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
+
+	notBefore := time.Now()
+	validFor, err := time.ParseDuration(daysValid)
+	if err != nil {
+		return "", "", errors.Wrap(errFailedDateSetting, err)
+	}
+	notAfter := notBefore.Add(validFor)
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return "", "", errors.Wrap(errFailedSerialGeneration, err)
+	}
+
+	tmpl := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization:       []string{"Mainflux"},
+			CommonName:         thingKey,
+			OrganizationalUnit: []string{"mainflux"},
+		},
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
+
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, sdk.certsCA, publicKey(priv), sdk.certsCert)
+	if err != nil {
+		return "", "", errors.Wrap(errFailedCertCreation, err)
+	}
+
+	var bw, keyOut bytes.Buffer
+	buffWriter := bufio.NewWriter(&bw)
+	buffKeyOut := bufio.NewWriter(&keyOut)
+
+	if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		return "", "", errors.Wrap(errFailedPemDataWrite, err)
+	}
+	buffWriter.Flush()
+	cert := bw.String()
+
+	block, err := pemBlockForKey(priv)
+	if err != nil {
+		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
+	}
+	if err := pem.Encode(buffKeyOut, block); err != nil {
+		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
+	}
+	buffKeyOut.Flush()
+	key := keyOut.String()
+
+	return cert, key, nil
+}
+
+func publicKey(priv interface{}) interface{} {
+	switch k := priv.(type) {
+	case *rsa.PrivateKey:
+		return &k.PublicKey
+	case *ecdsa.PrivateKey:
+		return &k.PublicKey
+	default:
+		return nil
+	}
+}
+
+func pemBlockForKey(priv interface{}) (*pem.Block, error) {
+	switch k := priv.(type) {
+	case *rsa.PrivateKey:
+		return &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}, nil
+	case *ecdsa.PrivateKey:
+		b, err := x509.MarshalECPrivateKey(k)
+		if err != nil {
+			return nil, err
+		}
+		return &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}, nil
+	default:
+		return nil, nil
+	}
 }
 
 func (sdk mfSDK) RemoveCert(id, token string) error {
