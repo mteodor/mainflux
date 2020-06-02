@@ -1,11 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -44,9 +40,9 @@ const (
 	defBSContent       = ""
 
 	defCACerts        = ""
-	defCertsCAPrivKey = ""
+	defCertsCAKey     = ""
 	defCertsDaysValid = "2400h"
-	defCertsRsaBits   = 4096
+	defCertsRsaBits   = "4096"
 
 	envConfigFile = "MF_PROVISION_CONFIG_FILE"
 	envLogLevel   = "MF_PROVISION_LOG_LEVEL"
@@ -72,7 +68,7 @@ const (
 	envCertsDaysValid = "MF_PROVISION_CERTS_DAYS_VALID"
 	envCertsRsaBits   = "MF_PROVISION_CERTS_RSA_BITS"
 	envCertsCA        = "MF_PROVISION_CERTS_CA"
-	envCertsCAPrivKey = "MF_PROVISION_CERTS_PRIV_KEY"
+	envCertsCAKey     = "MF_PROVISION_CERTS_CA_KEY"
 )
 
 var (
@@ -82,8 +78,7 @@ var (
 	errFailGettingCertSettings  = errors.New("failed to get certificate file setting")
 	errFailGettingTLSConf       = errors.New("failed to get TLS setting")
 	errFailGettingProvBS        = errors.New("failed to get BS url setting")
-	errFailedCertLoading        = errors.New("failed to load certificate")
-	errFailedCertDecode         = errors.New("failed to decode certificate")
+	errFailedToSetRsaBits       = errors.New("failed to set rsa number of bits")
 )
 
 func main() {
@@ -103,13 +98,6 @@ func main() {
 		cfg = cfgFromFile
 		logger.Info("Continue with settings from file:" + cfg.File)
 	}
-	tlsCert, x509Cert, err := loadCertificates(cfg)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Problem loading certificates %v", err))
-	}
-
-	cfg.Certs.CA = x509Cert
-	cfg.Certs.Cert = tlsCert
 
 	SDKCfg := mfSDK.Config{
 		BaseURL:           cfg.Server.ThingsLocation,
@@ -162,33 +150,6 @@ func loadConfigFromFile(file string) (provision.Config, error) {
 	return c, nil
 }
 
-func loadCertificates(conf provision.Config) (tls.Certificate, *x509.Certificate, error) {
-	var tlsCert tls.Certificate
-	var caCert *x509.Certificate
-
-	tlsCert, err := tls.LoadX509KeyPair(conf.Certs.CAPath, conf.Certs.CAPrivKeyPath)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
-	}
-
-	b, err := ioutil.ReadFile(conf.Certs.CAPath)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
-	}
-
-	block, _ := pem.Decode(b)
-	if block == nil {
-		log.Fatalf("No PEM data found, failed to decode CA")
-	}
-
-	caCert, err = x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(errFailedCertDecode, err)
-	}
-
-	return tlsCert, caCert, nil
-}
-
 func loadConfig() (provision.Config, error) {
 	tls, err := strconv.ParseBool(mainflux.Env(envTLS, defTLS))
 	if err != nil {
@@ -210,6 +171,10 @@ func loadConfig() (provision.Config, error) {
 	if autoWhiteList && !provisionBS {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
+	rsaBits, err := strconv.Atoi(mainflux.Env(envCertsRsaBits, defCertsRsaBits))
+	if err != nil && provisionX509 == true {
+		return provision.Config{}, errFailedToSetRsaBits
+	}
 
 	cfg := provision.Config{
 		Server: provision.ServiceConf{
@@ -228,7 +193,10 @@ func loadConfig() (provision.Config, error) {
 			TLS:            tls,
 		},
 		Certs: provision.Certs{
-			CAPath: mainflux.Env(envCertsCA, defCACerts),
+			CAPath:    mainflux.Env(envCertsCA, defCACerts),
+			CAKeyPath: mainflux.Env(envCertsCAKey, defCertsCAKey),
+			DaysValid: mainflux.Env(envCertsDaysValid, defCertsDaysValid),
+			RsaBits:   rsaBits,
 		},
 		Bootstrap: provision.Bootstrap{
 			X509Provision: provisionX509,
