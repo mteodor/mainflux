@@ -25,7 +25,7 @@ default values.
 | MF_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                    |
 | MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 8091                             |
 | MF_PROVISION_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     | false                            |
-| MF_PROVISION_CA_CERTS               | Mainflux gRPC secure certs                        |                                  |
+| MF_PROVISION_CERTS_CA               | Mainflux gRPC secure certs                        |                                  |
 | MF_PROVISION_SERVER_CERT            | Mainflux gRPC secure server cert                  |                                  |
 | MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                  |
 | MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                  |

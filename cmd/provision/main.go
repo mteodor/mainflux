@@ -26,7 +26,6 @@ const (
 	defLogLevel        = "debug"
 	defConfigFile      = "config.toml"
 	defTLS             = "false"
-	defCACerts         = ""
 	defServerCert      = ""
 	defServerKey       = ""
 	defThingsLocation  = "http://localhost"
@@ -44,11 +43,16 @@ const (
 	defBSAutoWhitelist = "true"
 	defBSContent       = ""
 
-	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
-	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
-	envHTTPPort         = "MF_PROVISION_HTTP_PORT"
-	envTLS              = "MF_PROVISION_ENV_CLIENTS_TLS"
-	envCACerts          = "MF_PROVISION_CA_CERTS"
+	defCACerts        = ""
+	defCertsCAPrivKey = ""
+	defCertsDaysValid = "2400h"
+	defCertsRsaBits   = 4096
+
+	envConfigFile = "MF_PROVISION_CONFIG_FILE"
+	envLogLevel   = "MF_PROVISION_LOG_LEVEL"
+	envHTTPPort   = "MF_PROVISION_HTTP_PORT"
+	envTLS        = "MF_PROVISION_ENV_CLIENTS_TLS"
+
 	envServerCert       = "MF_PROVISION_SERVER_CERT"
 	envServerKey        = "MF_PROVISION_SERVER_KEY"
 	envMQTTURL          = "MF_PROVISION_MQTT_URL"
@@ -64,6 +68,11 @@ const (
 	envProvisionBS      = "MF_PROVISION_BS_CONFIG_PROVISIONING"
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
+
+	envCertsDaysValid = "MF_PROVISION_CERTS_DAYS_VALID"
+	envCertsRsaBits   = "MF_PROVISION_CERTS_RSA_BITS"
+	envCertsCA        = "MF_PROVISION_CERTS_CA"
+	envCertsCAPrivKey = "MF_PROVISION_CERTS_PRIV_KEY"
 )
 
 var (
@@ -157,7 +166,7 @@ func loadCertificates(conf provision.Config) (tls.Certificate, *x509.Certificate
 	var tlsCert tls.Certificate
 	var caCert *x509.Certificate
 
-	tlsCert, err := tls.LoadX509KeyPair(conf.Certs.CAPath, conf.Certs.PrivKeyPath)
+	tlsCert, err := tls.LoadX509KeyPair(conf.Certs.CAPath, conf.Certs.CAPrivKeyPath)
 	if err != nil {
 		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
 	}
@@ -205,7 +214,6 @@ func loadConfig() (provision.Config, error) {
 	cfg := provision.Config{
 		Server: provision.ServiceConf{
 			LogLevel:       mainflux.Env(envLogLevel, defLogLevel),
-			CACerts:        mainflux.Env(envCACerts, defCACerts),
 			ServerCert:     mainflux.Env(envServerCert, defServerCert),
 			ServerKey:      mainflux.Env(envServerKey, defServerKey),
 			HTTPPort:       mainflux.Env(envHTTPPort, defHTTPPort),
@@ -218,6 +226,9 @@ func loadConfig() (provision.Config, error) {
 			ThingsLocation: mainflux.Env(envThingsLocation, defThingsLocation),
 			UsersLocation:  mainflux.Env(envUsersLocation, defUsersLocation),
 			TLS:            tls,
+		},
+		Certs: provision.Certs{
+			CAPath: mainflux.Env(envCertsCA, defCACerts),
 		},
 		Bootstrap: provision.Bootstrap{
 			X509Provision: provisionX509,

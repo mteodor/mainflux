@@ -40,6 +40,39 @@ paths:
           description: Failed due to malformed JSON.
         500:
           description: Unexpected server-side error ocurred.
+  /certs:
+    post:
+      consumes:
+        - application/json
+      summary: Creates a certificate for thing
+      description: Creates a certificate for thing
+      tags:
+        - Thing to proxy
+      parameters:
+      - $ref: "#/parameters/Authorization"
+      - in: body
+         name: cert
+         description: 
+         schema:
+           type: object
+           required:
+             - thing_id
+             - days_valid
+             - rsa_bits
+           properties:
+              thing_id:
+                type: string
+              days_valid:
+                type: string
+              rsa_bits:
+                type: integer
+      responses:
+        201:
+          description: Created
+        400:
+          description: Failed due to malformed JSON.
+        500:
+          description: Unexpected server-side error ocurred.
 parameters:
   Authorization:
     name: Authorization
