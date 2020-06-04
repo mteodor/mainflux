@@ -250,6 +250,10 @@ func mergeConfigs(dst, src interface{}) interface{} {
 			if dField.Interface() == false {
 				dField.Set(reflect.ValueOf(sField.Interface()))
 			}
+		case reflect.Int:
+			if dField.Interface() == 0 {
+				dField.Set(reflect.ValueOf(sField.Interface()))
+			}
 		case reflect.String:
 			if dField.Interface() == "" {
 				dField.Set(reflect.ValueOf(sField.Interface()))
