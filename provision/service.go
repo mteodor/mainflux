@@ -82,7 +82,7 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 
 // Provision is provision method for creating setup according to
 // provision layout specified in config.toml
-func (ps *provisionService) Provision(name, token, externalID, externalKey string) (res Result, err error) {
+func (ps *provisionService) Provision(token, name, externalID, externalKey string) (res Result, err error) {
 	var channels []SDK.Channel
 	var things []SDK.Thing
 	defer ps.recover(&err, &things, &channels, &token)
@@ -329,7 +329,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		return
 	}
 
-	if errors.Contains(err, ErrFailedBootstrap) {
+	if errors.Contains(err, ErrFailedBootstrap) || errors.Contains(err, ErrFailedCertCreation) {
 		clean(ps, things, channels, token)
 		if ps.conf.Bootstrap.X509Provision {
 			for _, th := range things {

@@ -30,6 +30,7 @@ var (
 	errFailedCertLoading      = errors.New("failed to load certificate")
 	errFailedCertDecode       = errors.New("failed to decode certificate")
 	errMissingCACertificate   = errors.New("missing CA")
+	errRsaBitsValueWrong      = errors.New("value for RSA bits must be > 0")
 )
 
 // Cert represents certs data.
@@ -86,6 +87,9 @@ func (sdk mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cer
 func (sdk mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
 	if sdk.certsCA == nil {
 		return "", "", errors.Wrap(errFailedCertCreation, errMissingCACertificate)
+	}
+	if rsaBits == 0 {
+		return "", "", errors.Wrap(errFailedCertCreation, errRsaBitsValueWrong)
 	}
 	var priv interface{}
 	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
