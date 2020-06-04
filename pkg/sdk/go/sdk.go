@@ -11,8 +11,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (
@@ -71,6 +72,13 @@ var (
 
 	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
 	ErrCertsRemove = errors.New("failed to remove certificate")
+
+	// ErrCACertificateDoesntExist indicates missing CA certificate required for
+	// creating mTLS client certificates
+	ErrCACertificateDoesntExist = errors.New("CA certificate doesnt exist")
+
+	// ErrCAKeyDoesntExist indicates missing CA private key
+	ErrCAKeyDoesntExist = errors.New("CA certificate key doesnt exist")
 )
 
 // ContentType represents all possible content types.
@@ -252,7 +260,7 @@ type Config struct {
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
 
-	tlsCert, x509Cert, _ := loadCertificates(conf)
+	tlsCert, x509Cert, err := loadCertificates(conf)
 	// if err != nil {
 	// 	return err
 	// }
@@ -288,6 +296,14 @@ func loadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error) {
 
 	if conf.CAPath == "" || conf.CAKeyPath == "" {
 		return tlsCert, caCert, nil
+	}
+
+	if _, err := os.Stat(conf.CAPath); os.IsNotExist(err) {
+		return tlsCert, caCert, ErrCACertificateDoesntExist
+	}
+
+	if _, err := os.Stat(conf.CAKeyPath); os.IsNotExist(err) {
+		return tlsCert, caCert, ErrCAKeyDoesntExist
 	}
 
 	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.CAKeyPath)
