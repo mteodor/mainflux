@@ -114,7 +114,7 @@ func (sdk mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string,
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, sdk.certsCA, publicKey(priv), sdk.certsCert)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, sdk.certsCA, publicKey(priv), sdk.certsCert.PrivateKey)
 	if err != nil {
 		return "", "", errors.Wrap(errFailedCertCreation, err)
 	}
