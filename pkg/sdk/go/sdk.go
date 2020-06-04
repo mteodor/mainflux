@@ -260,7 +260,7 @@ type Config struct {
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
 
-	tlsCert, x509Cert, err := loadCertificates(conf)
+	tlsCert, x509Cert, _ := loadCertificates(conf)
 	// if err != nil {
 	// 	return err
 	// }

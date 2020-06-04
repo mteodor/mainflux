@@ -48,3 +48,5 @@ services:
       MF_PROVISION_CERTS_CA_KEY: ${MF_PROVISION_CERTS_CA_KEY}
     volumes:
       - ./configs:/configs
+      - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
+      - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
