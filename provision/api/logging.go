@@ -35,7 +35,7 @@ func (lm *loggingMiddleware) Provision(token, name, externalID, externalKey stri
 
 func (lm *loggingMiddleware) Cert(token, thingId, duration string, rsaBits int) (cert string, key string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method certs for token: %s and thing: %v took %s to complete", token, thingId, time.Since(begin))
+		message := fmt.Sprintf("Method cert for token: %s and thing: %v took %s to complete", token, thingId, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

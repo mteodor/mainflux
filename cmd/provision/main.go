@@ -38,17 +38,15 @@ const (
 	defProvisionBS     = "true"
 	defBSAutoWhitelist = "true"
 	defBSContent       = ""
+	defCACerts         = ""
+	defCertsCAKey      = ""
+	defCertsDaysValid  = "2400h"
+	defCertsRsaBits    = "4096"
 
-	defCACerts        = ""
-	defCertsCAKey     = ""
-	defCertsDaysValid = "2400h"
-	defCertsRsaBits   = "4096"
-
-	envConfigFile = "MF_PROVISION_CONFIG_FILE"
-	envLogLevel   = "MF_PROVISION_LOG_LEVEL"
-	envHTTPPort   = "MF_PROVISION_HTTP_PORT"
-	envTLS        = "MF_PROVISION_ENV_CLIENTS_TLS"
-
+	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
+	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
+	envHTTPPort         = "MF_PROVISION_HTTP_PORT"
+	envTLS              = "MF_PROVISION_ENV_CLIENTS_TLS"
 	envServerCert       = "MF_PROVISION_SERVER_CERT"
 	envServerKey        = "MF_PROVISION_SERVER_KEY"
 	envMQTTURL          = "MF_PROVISION_MQTT_URL"
@@ -64,11 +62,10 @@ const (
 	envProvisionBS      = "MF_PROVISION_BS_CONFIG_PROVISIONING"
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
-	// certificate configuration
-	envCertsDaysValid = "MF_PROVISION_CERTS_DAYS_VALID"
-	envCertsRsaBits   = "MF_PROVISION_CERTS_RSA_BITS"
-	envCertsCA        = "MF_PROVISION_CERTS_CA"
-	envCertsCAKey     = "MF_PROVISION_CERTS_CA_KEY"
+	envCertsDaysValid   = "MF_PROVISION_CERTS_DAYS_VALID"
+	envCertsRsaBits     = "MF_PROVISION_CERTS_RSA_BITS"
+	envCertsCA          = "MF_PROVISION_CERTS_CA"
+	envCertsCAKey       = "MF_PROVISION_CERTS_CA_KEY"
 )
 
 var (
