@@ -9,7 +9,7 @@ type addThingReq struct {
 
 type addCertReq struct {
 	token     string
-	ThingId   string `json:"thing_id"`
+	ThingID   string `json:"thing_id"`
 	RsaBits   int    `json:"rsa_bits"`
 	DaysValid string `json:"days_valid"`
 }
@@ -22,7 +22,7 @@ func (req addThingReq) validate() error {
 }
 
 func (req addCertReq) validate() error {
-	if req.ThingId == "" || req.RsaBits < 0 || req.DaysValid == "" {
+	if req.ThingID == "" || req.RsaBits < 0 || req.DaysValid == "" {
 		return errMalformedEntity
 	}
 	return nil
