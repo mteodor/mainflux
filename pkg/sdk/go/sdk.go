@@ -211,6 +211,9 @@ type SDK interface {
 
 	// RemoveCert remove a certificate
 	RemoveCert(id, token string) error
+
+	// LoadCertificates loads certificates from file needed for things certificate generation.
+	LoadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error)
 }
 
 type mfSDK struct {
@@ -260,11 +263,6 @@ type Config struct {
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
 
-	tlsCert, x509Cert, _ := loadCertificates(conf)
-	// if err != nil {
-	// 	return err
-	// }
-
 	return &mfSDK{
 		baseURL:           conf.BaseURL,
 		readerURL:         conf.ReaderURL,
@@ -283,14 +281,13 @@ func NewSDK(conf Config) SDK {
 				},
 			},
 		},
-		certsCA:        x509Cert,
-		certsCert:      tlsCert,
+
 		certsDaysValid: conf.DaysValid,
 		certsRsaBits:   conf.RsaBits,
 	}
 }
 
-func loadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error) {
+func (sdk *mfSDK) LoadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error) {
 	var tlsCert tls.Certificate
 	var caCert *x509.Certificate
 
@@ -325,11 +322,12 @@ func loadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error) {
 	if err != nil {
 		return tlsCert, caCert, errors.Wrap(errFailedCertDecode, err)
 	}
-
+	sdk.certsCA = caCert
+	sdk.certsCert = tlsCert
 	return tlsCert, caCert, nil
 }
 
-func (sdk mfSDK) sendRequest(req *http.Request, token, contentType string) (*http.Response, error) {
+func (sdk *mfSDK) sendRequest(req *http.Request, token, contentType string) (*http.Response, error) {
 	if token != "" {
 		req.Header.Set("Authorization", token)
 	}

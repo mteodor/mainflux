@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"sync"
 
 	"github.com/gofrs/uuid"
@@ -20,11 +22,12 @@ type mockSDK struct {
 	channels    map[string]mfSDK.Channel
 	connections map[string][]string
 	configs     map[string]mfSDK.BootstrapConfig
+	sdk         mfSDK.SDK
 	mu          sync.Mutex
 }
 
 // NewSDK returns new mock SDK for testing purposes.
-func NewSDK() mfSDK.SDK {
+func NewSDK(conf mfSDK.Config) mfSDK.SDK {
 	sdk := &mockSDK{}
 	sdk.channels = make(map[string]mfSDK.Channel)
 	sdk.connections = make(map[string][]string)
@@ -32,6 +35,7 @@ func NewSDK() mfSDK.SDK {
 
 	th := mfSDK.Thing{ID: "predefined", Name: "ID"}
 	sdk.things = map[string]mfSDK.Thing{"predefined": th}
+	sdk.sdk = mfSDK.NewSDK(conf)
 	sdk.mu = sync.Mutex{}
 
 	return sdk
@@ -327,10 +331,7 @@ func (s *mockSDK) RemoveBootstrap(token, id string) error {
 	return nil
 }
 
-func (s *mockSDK) Cert(thingID, thingKey string, token string) (mfSDK.Cert, error) {
-	if thingID == invalid || thingKey == invalid {
-		return mfSDK.Cert{}, mfSDK.ErrCerts
-	}
+func (s *mockSDK) Cert(thingID, daysValid string, rsaBits int, token string) (mfSDK.Cert, error) {
 	return mfSDK.Cert{}, nil
 }
 
@@ -339,4 +340,8 @@ func (s *mockSDK) RemoveCert(key string, token string) error {
 		return mfSDK.ErrCertsRemove
 	}
 	return nil
+}
+
+func (s *mockSDK) LoadCertificates(conf mfSDK.Config) (tls.Certificate, *x509.Certificate, error) {
+	return s.sdk.LoadCertificates(conf)
 }

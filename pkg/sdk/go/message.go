@@ -13,7 +13,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-func (sdk mfSDK) SendMessage(chanName, msg, token string) error {
+func (sdk *mfSDK) SendMessage(chanName, msg, token string) error {
 	chanNameParts := strings.SplitN(chanName, ".", 2)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -41,7 +41,7 @@ func (sdk mfSDK) SendMessage(chanName, msg, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, error) {
+func (sdk *mfSDK) ReadMessages(chanName, token string) (MessagesPage, error) {
 	chanNameParts := strings.SplitN(chanName, ".", 2)
 	chanID := chanNameParts[0]
 	subtopicPart := ""

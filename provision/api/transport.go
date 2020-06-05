@@ -43,7 +43,7 @@ func MakeHandler(svc provision.Service) http.Handler {
 	))
 
 	r.Post("/certs", kithttp.NewServer(
-		doCerts(svc),
+		doCert(svc),
 		decodeCertsCreation,
 		encodeResponse,
 		opts...,

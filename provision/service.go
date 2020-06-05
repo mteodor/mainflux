@@ -51,7 +51,7 @@ type Service interface {
 	// each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// rsaBits for certificate key
-	Certs(token, thingId, duration string, rsaBits int) (string, string, error)
+	Cert(token, thingId, duration string, rsaBits int) (string, string, error)
 }
 
 type provisionService struct {
@@ -216,7 +216,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 	return res, nil
 }
 
-func (ps *provisionService) Certs(token, thingId, daysValid string, rsaBits int) (string, string, error) {
+func (ps *provisionService) Cert(token, thingId, daysValid string, rsaBits int) (string, string, error) {
 	token, err := ps.createTokenIfEmpty(token)
 	if err != nil {
 		return "", "", err

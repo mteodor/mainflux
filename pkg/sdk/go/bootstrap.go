@@ -39,7 +39,7 @@ type BootstrapConfig struct {
 	State       int       `json:"state,omitempty"`
 }
 
-func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error) {
+func (sdk *mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return "", err
@@ -66,7 +66,7 @@ func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error)
 	return id, nil
 }
 
-func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
+func (sdk *mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
 	data, err := json.Marshal(BootstrapConfig{State: cfg.State})
 	if err != nil {
 		return errors.Wrap(ErrFailedWhitelist, err)
@@ -97,7 +97,7 @@ func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
 	return nil
 }
 
-func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, error) {
+func (sdk *mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, error) {
 	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, id)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 
@@ -129,7 +129,7 @@ func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, error) {
 	return bc, nil
 }
 
-func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
+func (sdk *mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
 	return nil
 }
 
-func (sdk mfSDK) RemoveBootstrap(token, id string) error {
+func (sdk *mfSDK) RemoveBootstrap(token, id string) error {
 	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, id)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 
@@ -176,7 +176,7 @@ func (sdk mfSDK) RemoveBootstrap(token, id string) error {
 	return nil
 }
 
-func (sdk mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, error) {
+func (sdk *mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, error) {
 	endpoint := fmt.Sprintf("%s/%s", bootstrapEndpoint, externalID)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
 

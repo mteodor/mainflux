@@ -12,7 +12,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-func (sdk mfSDK) CreateUser(u User) error {
+func (sdk *mfSDK) CreateUser(u User) error {
 	data, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (sdk mfSDK) CreateUser(u User) error {
 	return nil
 }
 
-func (sdk mfSDK) User(token string) (User, error) {
+func (sdk *mfSDK) User(token string) (User, error) {
 	url := createURL(sdk.baseURL, sdk.usersPrefix, "users")
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -63,7 +63,7 @@ func (sdk mfSDK) User(token string) (User, error) {
 	return u, nil
 }
 
-func (sdk mfSDK) CreateToken(user User) (string, error) {
+func (sdk *mfSDK) CreateToken(user User) (string, error) {
 	data, err := json.Marshal(user)
 	if err != nil {
 		return "", err
@@ -94,7 +94,7 @@ func (sdk mfSDK) CreateToken(user User) (string, error) {
 	return tr.Token, nil
 }
 
-func (sdk mfSDK) UpdateUser(u User, token string) error {
+func (sdk *mfSDK) UpdateUser(u User, token string) error {
 	data, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (sdk mfSDK) UpdateUser(u User, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
+func (sdk *mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 	ur := UserPasswordReq{
 		OldPassword: oldPass,
 		Password:    newPass,

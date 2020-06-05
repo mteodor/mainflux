@@ -20,17 +20,19 @@ import (
 )
 
 var (
-	ErrCertsCreation = errors.New("failed to create certificate")
+	ErrCertsCreation     = errors.New("failed to create certificate")
+	ErrRsaBitsValueWrong = errors.New("value for RSA bits must be > 0")
 
-	errFailedCertCreation     = errors.New("failed creating certificate")
-	errFailedDateSetting      = errors.New("failed setting date")
-	errFailedPemDataWrite     = errors.New("failed writing pem data")
-	errFailedPemKeyWrite      = errors.New("failed writing pem key data")
-	errFailedSerialGeneration = errors.New("failed generating certificates serial")
-	errFailedCertLoading      = errors.New("failed to load certificate")
-	errFailedCertDecode       = errors.New("failed to decode certificate")
-	errMissingCACertificate   = errors.New("missing CA")
-	errRsaBitsValueWrong      = errors.New("value for RSA bits must be > 0")
+	errFailedCertCreation        = errors.New("failed creating certificate")
+	errFailedDateSetting         = errors.New("failed setting date")
+	errFailedPemDataWrite        = errors.New("failed writing pem data")
+	errFailedPemKeyWrite         = errors.New("failed writing pem key data")
+	errFailedSerialGeneration    = errors.New("failed generating certificates serial")
+	errFailedCertLoading         = errors.New("failed to load certificate")
+	errFailedCertDecode          = errors.New("failed to decode certificate")
+	errMissingCACertificate      = errors.New("missing CA")
+	errPrivateKeyEmpty           = errors.New("private key empty")
+	errPrivateKeyUnsupportedType = errors.New("private key unsupported type")
 )
 
 // Cert represents certs data.
@@ -40,7 +42,7 @@ type Cert struct {
 	ClientCert string `json:"client_cert,omitempty"`
 }
 
-func (sdk mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cert, error) {
+func (sdk *mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cert, error) {
 	var c Cert
 
 	// Check access rights
@@ -57,6 +59,7 @@ func (sdk mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cer
 		return Cert{}, err
 	}
 
+	// If certsURL == "" we don't use 3rd party PKI service.
 	if sdk.certsURL == "" {
 		c.ClientCert, c.ClientKey, err = sdk.certs(th.Key, daysValid, rsaBits)
 		if err != nil {
@@ -75,7 +78,6 @@ func (sdk mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cer
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		println(err.Error())
 		return Cert{}, err
 	}
 	if err := json.Unmarshal(body, &c); err != nil {
@@ -84,12 +86,12 @@ func (sdk mfSDK) Cert(thingID, daysValid string, rsaBits int, token string) (Cer
 	return c, nil
 }
 
-func (sdk mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
+func (sdk *mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
 	if sdk.certsCA == nil {
 		return "", "", errors.Wrap(errFailedCertCreation, errMissingCACertificate)
 	}
 	if rsaBits == 0 {
-		return "", "", errors.Wrap(errFailedCertCreation, errRsaBitsValueWrong)
+		return "", "", errors.Wrap(errFailedCertCreation, ErrRsaBitsValueWrong)
 	}
 	var priv interface{}
 	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
@@ -122,7 +124,11 @@ func (sdk mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string,
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, sdk.certsCA, publicKey(priv), sdk.certsCert.PrivateKey)
+	pubKey, err := publicKey(priv)
+	if err != nil {
+		return "", "", errors.Wrap(errFailedCertCreation, err)
+	}
+	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, sdk.certsCA, pubKey, sdk.certsCert.PrivateKey)
 	if err != nil {
 		return "", "", errors.Wrap(errFailedCertCreation, err)
 	}
@@ -150,14 +156,17 @@ func (sdk mfSDK) certs(thingKey, daysValid string, rsaBits int) (string, string,
 	return cert, key, nil
 }
 
-func publicKey(priv interface{}) interface{} {
+func publicKey(priv interface{}) (interface{}, error) {
+	if priv == nil {
+		return nil, errPrivateKeyEmpty
+	}
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
-		return &k.PublicKey
+		return &k.PublicKey, nil
 	case *ecdsa.PrivateKey:
-		return &k.PublicKey
+		return &k.PublicKey, nil
 	default:
-		return nil
+		return nil, errPrivateKeyUnsupportedType
 	}
 }
 
@@ -176,7 +185,7 @@ func pemBlockForKey(priv interface{}) (*pem.Block, error) {
 	}
 }
 
-func (sdk mfSDK) RemoveCert(id, token string) error {
+func (sdk *mfSDK) RemoveCert(id, token string) error {
 	res, err := request(http.MethodDelete, token, fmt.Sprintf("%s/%s", sdk.certsURL, id), nil)
 	if res != nil {
 		res.Body.Close()

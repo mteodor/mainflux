@@ -112,6 +112,7 @@ func main() {
 		TLSVerification:   cfg.Server.TLS,
 	}
 	SDK := mfSDK.NewSDK(SDKCfg)
+	SDK.LoadCertificates(SDKCfg)
 
 	svc := provision.New(cfg, SDK, logger)
 	svc = api.NewLoggingMiddleware(svc, logger)

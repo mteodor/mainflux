@@ -6,11 +6,20 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	SDK "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/mocks"
 
 	logger "github.com/mainflux/mainflux/logger"
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	validEmail = "test@example.com"
+	validPass  = "test"
+	invalid    = "invalid"
+	validToken = "valid_token"
 )
 
 var (
@@ -47,7 +56,8 @@ var (
 
 func TestProvision(t *testing.T) {
 	// Create multiple services with different configurations.
-	sdk := mocks.NewSDK()
+	conf := SDK.Config{}
+	sdk := mocks.NewSDK(conf)
 	svc := provision.New(cfg, sdk, log)
 
 	cases := []struct {
@@ -75,6 +85,60 @@ func TestProvision(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := tc.svc.Provision("", "", tc.externalID, tc.externalKey)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", tc.desc, tc.err, err))
+	}
+}
+
+func TestCert(t *testing.T) {
+	conf := SDK.Config{}
+	sdk := mocks.NewSDK(conf)
+	svc := provision.New(cfg, sdk, log)
+
+	nonExistingID, err := uuid.New().ID()
+	assert.Nil(t, err, fmt.Sprintf("Failed to generate uuid: %s", err))
+
+	existingID, err := sdk.CreateThing(SDK.Thing{Name: "test"}, validToken)
+
+	cases := []struct {
+		desc      string
+		token     string
+		thingId   string
+		svc       provision.Service
+		daysValid string
+		rsaBits   int
+		err       error
+	}{
+		{
+			desc:      "Create certs successfully",
+			token:     validToken,
+			thingId:   existingID,
+			svc:       svc,
+			daysValid: "2400h",
+			rsaBits:   4096,
+			err:       nil,
+		},
+		{
+			desc:      "Create certs for non existing id",
+			token:     validToken,
+			thingId:   nonExistingID,
+			svc:       svc,
+			daysValid: "2400h",
+			rsaBits:   4096,
+			err:       SDK.ErrUnauthorized,
+		},
+		{
+			desc:      "Create certs for invalid token",
+			token:     invalid,
+			thingId:   existingID,
+			svc:       svc,
+			daysValid: "2400h",
+			rsaBits:   4096,
+			err:       SDK.ErrUnauthorized,
+		},
+	}
+
+	for _, tc := range cases {
+		_, _, err := tc.svc.Cert(tc.token, tc.thingId, tc.daysValid, tc.rsaBits)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", tc.desc, tc.err, err))
 	}
 
