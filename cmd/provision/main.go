@@ -70,12 +70,12 @@ const (
 
 var (
 	errMissingConfigFile        = errors.New("missing config file setting")
-	errFailedToLoadConfigFile   = errors.New("failed to load config from file")
-	errFailedToGetAutoWhiteList = errors.New("failed to get auto whitelist setting")
+	errFailLoadingConfigFile    = errors.New("failed to load config from file")
+	errFailGettingAutoWhiteList = errors.New("failed to get auto whitelist setting")
 	errFailGettingCertSettings  = errors.New("failed to get certificate file setting")
 	errFailGettingTLSConf       = errors.New("failed to get TLS setting")
 	errFailGettingProvBS        = errors.New("failed to get BS url setting")
-	errFailedToSetRsaBits       = errors.New("failed to set rsa number of bits")
+	errFailSettingRsaBits       = errors.New("failed to set rsa number of bits")
 )
 
 func main() {
@@ -147,7 +147,7 @@ func loadConfigFromFile(file string) (provision.Config, error) {
 	}
 	c, err := provision.Read(file)
 	if err != nil {
-		return provision.Config{}, errors.Wrap(errFailedToLoadConfigFile, err)
+		return provision.Config{}, errors.Wrap(errFailLoadingConfigFile, err)
 	}
 	return c, nil
 }
@@ -168,14 +168,14 @@ func loadConfig() (provision.Config, error) {
 
 	autoWhiteList, err := strconv.ParseBool(mainflux.Env(envBSAutoWhiteList, defBSAutoWhitelist))
 	if err != nil {
-		return provision.Config{}, errors.Wrap(errFailedToGetAutoWhiteList, fmt.Errorf(" for %s", envBSAutoWhiteList))
+		return provision.Config{}, errors.Wrap(errFailGettingAutoWhiteList, fmt.Errorf(" for %s", envBSAutoWhiteList))
 	}
 	if autoWhiteList && !provisionBS {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
 	rsaBits, err := strconv.Atoi(mainflux.Env(envCertsRsaBits, defCertsRsaBits))
 	if err != nil && provisionX509 == true {
-		return provision.Config{}, errFailedToSetRsaBits
+		return provision.Config{}, errFailSettingRsaBits
 	}
 
 	cfg := provision.Config{
