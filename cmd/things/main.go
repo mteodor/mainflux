@@ -179,7 +179,7 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -216,7 +216,7 @@ func loadConfig() config {
 		singleUserToken: mainflux.Env(envSingleUserToken, defSingleUserToken),
 		jaegerURL:       mainflux.Env(envJaegerURL, defJaegerURL),
 		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:    timeout,
+		authnTimeout:    authnTimeout,
 	}
 }
 

@@ -178,7 +178,7 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
-	timeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -213,7 +213,7 @@ func loadConfig() config {
 		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
 		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
 		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:   timeout,
+		authnTimeout:   authnTimeout,
 	}
 }
 

@@ -157,7 +157,7 @@ func main() {
 }
 
 func loadConfig() config {
-	timeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -202,7 +202,7 @@ func loadConfig() config {
 		authnTLS:     tls,
 		authnCACerts: mainflux.Env(envAuthnCACerts, defAuthnCACerts),
 		authnURL:     mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout: timeout,
+		authnTimeout: authnTimeout,
 	}
 
 }
