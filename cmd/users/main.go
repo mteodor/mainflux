@@ -66,7 +66,7 @@ const (
 	defAuthnTLS     = "false"
 	defAuthnCACerts = ""
 	defAuthnURL     = "localhost:8181"
-	defAuthnTimeout = "1" // in seconds
+	defAuthnTimeout = "1s"
 
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"

@@ -69,7 +69,7 @@ const (
 	defSingleUserToken = ""
 	defJaegerURL       = ""
 	defAuthnURL        = "localhost:8181"
-	defAuthnTimeout    = "1" // in seconds
+	defAuthnTimeout    = "1s"
 
 	envLogLevel        = "MF_THINGS_LOG_LEVEL"
 	envDBHost          = "MF_THINGS_DB_HOST"

@@ -60,7 +60,7 @@ const (
 	defChannelID       = ""
 	defNatsURL         = "nats://localhost:4222"
 	defAuthnURL        = "localhost:8181"
-	defAuthnTimeout    = "1" // in seconds
+	defAuthnTimeout    = "1s"
 
 	envLogLevel        = "MF_TWINS_LOG_LEVEL"
 	envHTTPPort        = "MF_TWINS_HTTP_PORT"
