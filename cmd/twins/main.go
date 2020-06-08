@@ -158,7 +158,7 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envAuthnTimeout, defAuthnTimeout), 10, 64)
+	timeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -186,7 +186,7 @@ func loadConfig() config {
 		channelID:       mainflux.Env(envChannelID, defChannelID),
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:    time.Duration(timeout) * time.Second,
+		authnTimeout:    timeout,
 	}
 }
 
