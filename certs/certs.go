@@ -6,13 +6,9 @@ package certs
 import "time"
 
 type Cert struct {
-	ThingID      string
-	ThingKey     string
-	ClientCert   string
-	ClientKey    string
-	CACert       string
-	ClientCertID string
-	Expire       time.Time
+	ThingID string
+	Serial  string
+	Expire  time.Time
 }
 
 // ConfigsPage contains page related metadata as well as list
@@ -25,6 +21,6 @@ type CertsPage struct {
 
 // CertsRepository specifies a Config persistence API.
 type CertsRepository interface {
-	//AddCert()
-	AddCert()
+	//Save()
+	Save(cert Cert) (string, error)
 }

@@ -40,7 +40,7 @@ var _ Service = (*certsService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	//
-	IssueCert(token string)
+	IssueCert(token string) (Cert, error)
 }
 
 type certsService struct {
@@ -49,7 +49,7 @@ type certsService struct {
 	sdk   mfsdk.SDK
 }
 
-// New returns new Bootstrap service.
+// New returns new Certs service.
 func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK) Service {
 	return &certsService{
 		certs: certs,
@@ -58,5 +58,6 @@ func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK)
 	}
 }
 
-func (cs *certsService) IssueCert(token string) {
+func (cs *certsService) IssueCert(token string) (Cert, error) {
+	return Cert{}, nil
 }

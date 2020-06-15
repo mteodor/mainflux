@@ -8,6 +8,7 @@ type certsResponse struct {
 	ClientCert map[string]string `json:"client_cert,omitempty"`
 	ClientKey  map[string]string `json:"client_key,omitempty"`
 	CACert     string            `json:"ca_cert,omitempty"`
+	Error      string            `json:"error"`
 }
 
 func (res certsResponse) Code() int {

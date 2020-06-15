@@ -6,7 +6,6 @@ import (
 
 	"github.com/mainflux/mainflux/certs"
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/provision"
 )
 
 var _ certs.Service = (*loggingMiddleware)(nil)
@@ -17,11 +16,11 @@ type loggingMiddleware struct {
 }
 
 // NewLoggingMiddleware adds logging facilities to the core service.
-func NewLoggingMiddleware(svc certs.Service, logger log.Logger) provision.Service {
+func NewLoggingMiddleware(svc certs.Service, logger log.Logger) certs.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) IssueCert(token string) (res provision.Result, err error) {
+func (lm *loggingMiddleware) IssueCert(token string) (res certs.Cert, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method issue_cert for token: %s took %s to complete", token, time.Since(begin))
 		if err != nil {
@@ -31,5 +30,5 @@ func (lm *loggingMiddleware) IssueCert(token string) (res provision.Result, err 
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.IssueToken(token)
+	return lm.svc.IssueCert(token)
 }

@@ -22,7 +22,7 @@ func doIssueCert(svc certs.Service) endpoint.Endpoint {
 			return certsResponse{Error: err.Error()}, nil
 		}
 
-		return certsResponse, nil
+		return res, nil
 
 	}
 }

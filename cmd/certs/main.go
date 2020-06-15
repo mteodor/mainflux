@@ -10,14 +10,20 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	"github.com/mainflux/mainflux/bootstrap"
+	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -25,20 +31,31 @@ import (
 	"github.com/mainflux/mainflux/certs/api"
 	"github.com/mainflux/mainflux/certs/postgres"
 	mflog "github.com/mainflux/mainflux/logger"
-	mfsdk "github.com/mainflux/mainflux/sdk"
+	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	jconfig "github.com/uber/jaeger-client-go/config"
 )
 
 type Config struct {
-	dbConfig     postgres.Config
-	logLevel     string
-	caCerts      string
-	authnURL     string
-	esURL        string
-	esPass       string
-	esDB         string
-	jaegerURL    string
-	authnTimeout time.Duration
+	logLevel       string
+	dbConfig       postgres.Config
+	clientTLS      bool
+	encKey         []byte
+	caCerts        string
+	httpPort       string
+	serverCert     string
+	serverKey      string
+	baseURL        string
+	thingsPrefix   string
+	esThingsURL    string
+	esThingsPass   string
+	esThingsDB     string
+	esURL          string
+	esPass         string
+	esDB           string
+	esConsumerName string
+	jaegerURL      string
+	authnURL       string
+	authnTimeout   time.Duration
 }
 
 func main() {
@@ -51,9 +68,6 @@ func main() {
 
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
-
-	// thingsESConn := connectToRedis(cfg.esThingsURL, cfg.esThingsPass, cfg.esThingsDB, logger)
-	// defer thingsESConn.Close()
 
 	esClient := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esClient.Close()
@@ -70,7 +84,7 @@ func main() {
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
-	go subscribeToThingsES(svc, thingsESConn, cfg.esConsumerName, logger)
+	//go subscribeToThingsES(svc, thingsESConn, cfg.esConsumerName, logger)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -83,9 +97,22 @@ func main() {
 }
 
 func loadConfig() Config {
-
+	return Config{}
 }
 
+func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *redis.Client {
+	db, err := strconv.Atoi(redisDB)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to redis: %s", err))
+		os.Exit(1)
+	}
+
+	return redis.NewClient(&redis.Options{
+		Addr:     redisURL,
+		Password: redisPass,
+		DB:       db,
+	})
+}
 func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	db, err := postgres.Connect(dbConfig)
 	if err != nil {
@@ -144,8 +171,8 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) certs.Service {
-	thingsRepo := postgres.NewConfigRepository(db, logger)
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, cfg Config) certs.Service {
+	certsRepo := postgres.NewCertsRepository(db, logger)
 
 	config := mfsdk.Config{
 		BaseURL:      cfg.baseURL,
@@ -154,7 +181,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 
 	sdk := mfsdk.NewSDK(config)
 
-	svc := certs.New(auth, thingsRepo, sdk, cfg.encKey)
+	svc := certs.New(auth, certsRepo, sdk)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -174,7 +201,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 	return svc
 }
 
-func startHTTPServer(svc certs.Service, cfg config, logger mflog.Logger, errs chan error) {
+func startHTTPServer(svc certs.Service, cfg Config, logger mflog.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
 	if cfg.serverCert != "" || cfg.serverKey != "" {
 		logger.Info(fmt.Sprintf("Bootstrap service started using https on port %s with cert %s key %s",
@@ -184,4 +211,12 @@ func startHTTPServer(svc certs.Service, cfg config, logger mflog.Logger, errs ch
 	}
 	logger.Info(fmt.Sprintf("Bootstrap service started using http on port %s", cfg.httpPort))
 	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
+}
+
+func subscribeToThingsES(svc bootstrap.Service, client *redis.Client, consumer string, logger mflog.Logger) {
+	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
+	logger.Info("Subscribed to Redis Event Store")
+	if err := eventStore.Subscribe("mainflux.things"); err != nil {
+		logger.Warn(fmt.Sprintf("Bootstrap service failed to subscribe to event sourcing: %s", err))
+	}
 }
