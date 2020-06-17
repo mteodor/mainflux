@@ -62,6 +62,12 @@ const (
 	defAuthnURL       = "localhost:8181"
 	defAuthnTimeout   = "1s"
 
+	defSigningCAPath = ""
+	defSigningCertPath = ""
+	defSigningHoursValid = ""
+	defSigningRSABits = ""
+
+
 	envLogLevel       = "MF_CERTS_LOG_LEVEL"
 	envDBHost         = "MF_CERTS_DB_HOST"
 	envDBPort         = "MF_CERTS_DB_PORT"
@@ -90,9 +96,15 @@ const (
 	envJaegerURL      = "MF_JAEGER_URL"
 	envAuthnURL       = "MF_AUTHN_GRPC_URL"
 	envAuthnTimeout   = "MF_AUTHN_GRPC_TIMEOUT"
+
+	envSigningCAPath = "MF_CERTS_SIGN_CA_PATH"
+	envSigningCertPath = "MF_CERTS_SIGN_CERT_PATH"
+	envSigningHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
+	envSigningRSABits = "MF_CERTS_SIGN_RSA_BITS"
+
 )
 
-type Config struct {
+type config struct {
 	logLevel       string
 	dbConfig       postgres.Config
 	clientTLS      bool
@@ -122,6 +134,14 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
+	tlsCert, caCert, err := loadCertificates(cfg)
+	if err != nil {
+		logger.Error("Failed to load CA certificates for issuing client certs")
+	}
+
+	cfg.tlsCert = tlsCert
+	cfg.caCert = caCert
 
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
@@ -153,7 +173,7 @@ func main() {
 	logger.Error(fmt.Sprintf("Certs service terminated: %s", err))
 }
 
-func loadConfig() Config {
+func loadConfig() config {
 	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
 	if err != nil {
 		tls = false
@@ -175,7 +195,7 @@ func loadConfig() Config {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
 
-	return Config{
+	return config{
 		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
 		dbConfig:       dbConfig,
 		clientTLS:      tls,
@@ -196,6 +216,7 @@ func loadConfig() Config {
 		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
 		authnTimeout:   authnTimeout,
 	}
+
 }
 
 func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *redis.Client {
@@ -269,8 +290,30 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, cfg Config) certs.Service {
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, cfg config) certs.Service {
 	certsRepo := postgres.NewCertsRepository(db, logger)
+
+	certsConfig := certs.Config{
+		logLevel:       cfg.logLevel
+		dbConfig:       cfg.dbConfig,
+		clientTLS:      cfg.clientTLS,
+		caCerts:        cfg.caCerts,
+		httpPort:       cfg.httpPort,
+		serverCert:    cfg.serverCert,
+		serverKey:      cfg.serverKey,
+		baseURL:        cfg.baseURL,
+		thingsPrefix:   cfg.thingsPrefix,
+		esThingsURL:    cfg.esThingsURL,
+		esThingsPass:   cfg.esThingsPass,
+		esThingsDB:     cfg.esThingsDB,
+		esURL:          cfg.esURL,
+		esPass:         cfg.esPass,
+		esDB:           cfg.esDB,
+		esConsumerName: cf.esConsumerName,
+		jaegerURL:      es.jaegerURL,
+		authnURL:       es.authnURL,
+		authnTimeout:   es.authnTimeout,
+	}
 
 	config := mfsdk.Config{
 		BaseURL:      cfg.baseURL,
@@ -279,7 +322,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 
 	sdk := mfsdk.NewSDK(config)
 
-	svc := certs.New(auth, certsRepo, sdk)
+	svc := certs.New(auth, certsRepo, sdk, certsConfig)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -310,6 +353,47 @@ func startHTTPServer(svc certs.Service, cfg Config, logger mflog.Logger, errs ch
 	logger.Info(fmt.Sprintf("Certs service started using http on port %s", cfg.httpPort))
 	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 }
+
+
+func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {
+	var tlsCert tls.Certificate
+	var caCert *x509.Certificate
+
+	if conf.CAPath == "" || conf.CAKeyPath == "" {
+		return tlsCert, caCert, nil
+	}
+
+	if _, err := os.Stat(conf.CAPath); os.IsNotExist(err) {
+		return tlsCert, caCert, ErrCACertificateDoesntExist
+	}
+
+	if _, err := os.Stat(conf.CAKeyPath); os.IsNotExist(err) {
+		return tlsCert, caCert, ErrCAKeyDoesntExist
+	}
+
+	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.CAKeyPath)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
+	}
+
+	b, err := ioutil.ReadFile(conf.CAPath)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
+	}
+
+	block, _ := pem.Decode(b)
+	if block == nil {
+		log.Fatalf("No PEM data found, failed to decode CA")
+	}
+
+	caCert, err = x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return tlsCert, caCert, errors.Wrap(errFailedCertDecode, err)
+	}
+
+	return tlsCert, caCert, nil
+}
+
 
 // func subscribeToThingsES(svc certs.Service, client *redis.Client, consumer string, logger mflog.Logger) {
 // 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
