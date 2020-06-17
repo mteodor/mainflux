@@ -58,25 +58,25 @@ func (sdk *MfxSDK) DeleteThing(id, token string) error
 func (sdk *MfxSDK) DisconnectThing(thingID, chanID, token string) error
     DisconnectThing - connect thing to a channel
 
-func (sdk *mfSDK) SendMessage(chanID, msg, token string) error
+func (sdk mfSDK) SendMessage(chanID, msg, token string) error
     SendMessage - send message on Mainflux channel
 
-func (sdk *mfSDK) SetContentType(ct ContentType) error
+func (sdk mfSDK) SetContentType(ct ContentType) error
     SetContentType - set message content type. Available options are SenML
     JSON, custom JSON and custom binary (octet-stream).
 
-func (sdk *mfSDK) Thing(id, token string) (Thing, error)
+func (sdk mfSDK) Thing(id, token string) (Thing, error)
     Thing - gets thing by ID
 
-func (sdk *mfSDK) Things(token string) ([]Thing, error)
+func (sdk mfSDK) Things(token string) ([]Thing, error)
     Things - gets all things
 
-func (sdk *mfSDK) UpdateChannel(channel Channel, token string) error
+func (sdk mfSDK) UpdateChannel(channel Channel, token string) error
     UpdateChannel - update a channel
 
-func (sdk *mfSDK) UpdateThing(thing Thing, token string) error
+func (sdk mfSDK) UpdateThing(thing Thing, token string) error
     UpdateThing - updates thing by ID
 
-func (sdk *mfSDK) Version() (string, error)
+func (sdk mfSDK) Version() (string, error)
     Version - server health check
 ```

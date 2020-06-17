@@ -16,7 +16,7 @@ import (
 
 const channelsEndpoint = "channels"
 
-func (sdk *mfSDK) CreateChannel(c Channel, token string) (string, error) {
+func (sdk mfSDK) CreateChannel(c Channel, token string) (string, error) {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return "", err
@@ -41,7 +41,7 @@ func (sdk *mfSDK) CreateChannel(c Channel, token string) (string, error) {
 	return id, nil
 }
 
-func (sdk *mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, error) {
+func (sdk mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, error) {
 	data, err := json.Marshal(chs)
 	if err != nil {
 		return []Channel{}, err
@@ -78,7 +78,7 @@ func (sdk *mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, error)
 	return ccr.Channels, nil
 }
 
-func (sdk *mfSDK) Channels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
+func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", channelsEndpoint, offset, limit, name)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
@@ -110,7 +110,7 @@ func (sdk *mfSDK) Channels(token string, offset, limit uint64, name string) (Cha
 	return cp, nil
 }
 
-func (sdk *mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (ChannelsPage, error) {
+func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (ChannelsPage, error) {
 	endpoint := fmt.Sprintf("things/%s/channels?offset=%d&limit=%d", thingID, offset, limit)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
@@ -142,7 +142,7 @@ func (sdk *mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (
 	return cp, nil
 }
 
-func (sdk *mfSDK) Channel(id, token string) (Channel, error) {
+func (sdk mfSDK) Channel(id, token string) (Channel, error) {
 	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, id)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
@@ -174,7 +174,7 @@ func (sdk *mfSDK) Channel(id, token string) (Channel, error) {
 	return c, nil
 }
 
-func (sdk *mfSDK) UpdateChannel(c Channel, token string) error {
+func (sdk mfSDK) UpdateChannel(c Channel, token string) error {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (sdk *mfSDK) UpdateChannel(c Channel, token string) error {
 	return nil
 }
 
-func (sdk *mfSDK) DeleteChannel(id, token string) error {
+func (sdk mfSDK) DeleteChannel(id, token string) error {
 	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, id)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 

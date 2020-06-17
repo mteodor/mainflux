@@ -6,12 +6,8 @@ package sdk
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -287,47 +283,7 @@ func NewSDK(conf Config) SDK {
 	}
 }
 
-func (sdk *mfSDK) LoadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error) {
-	var tlsCert tls.Certificate
-	var caCert *x509.Certificate
-
-	if conf.CAPath == "" || conf.CAKeyPath == "" {
-		return tlsCert, caCert, nil
-	}
-
-	if _, err := os.Stat(conf.CAPath); os.IsNotExist(err) {
-		return tlsCert, caCert, ErrCACertificateDoesntExist
-	}
-
-	if _, err := os.Stat(conf.CAKeyPath); os.IsNotExist(err) {
-		return tlsCert, caCert, ErrCAKeyDoesntExist
-	}
-
-	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.CAKeyPath)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
-	}
-
-	b, err := ioutil.ReadFile(conf.CAPath)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
-	}
-
-	block, _ := pem.Decode(b)
-	if block == nil {
-		log.Fatalf("No PEM data found, failed to decode CA")
-	}
-
-	caCert, err = x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(errFailedCertDecode, err)
-	}
-	sdk.certsCA = caCert
-	sdk.certsCert = tlsCert
-	return tlsCert, caCert, nil
-}
-
-func (sdk *mfSDK) sendRequest(req *http.Request, token, contentType string) (*http.Response, error) {
+func (sdk mfSDK) sendRequest(req *http.Request, token, contentType string) (*http.Response, error) {
 	if token != "" {
 		req.Header.Set("Authorization", token)
 	}
