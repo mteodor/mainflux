@@ -1,5 +1,4 @@
 {
-  "allowed_domains": "example.com",
-  "allow_subdomains": true,
+  "allow_any_name":"true",
   "max_ttl": "720h"
 }

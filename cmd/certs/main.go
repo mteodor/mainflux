@@ -18,8 +18,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
-	"github.com/mainflux/mainflux/bootstrap"
-	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
@@ -33,6 +31,65 @@ import (
 	mflog "github.com/mainflux/mainflux/logger"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	jconfig "github.com/uber/jaeger-client-go/config"
+)
+
+const (
+	defLogLevel       = "error"
+	defDBHost         = "localhost"
+	defDBPort         = "5432"
+	defDBUser         = "mainflux"
+	defDBPass         = "mainflux"
+	defDB             = "certs"
+	defDBSSLMode      = "disable"
+	defDBSSLCert      = ""
+	defDBSSLKey       = ""
+	defDBSSLRootCert  = ""
+	defClientTLS      = "false"
+	defCACerts        = ""
+	defPort           = "8204"
+	defServerCert     = ""
+	defServerKey      = ""
+	defBaseURL        = "http://localhost"
+	defThingsPrefix   = ""
+	defThingsESURL    = "localhost:6379"
+	defThingsESPass   = ""
+	defThingsESDB     = "0"
+	defESURL          = "localhost:6379"
+	defESPass         = ""
+	defESDB           = "0"
+	defESConsumerName = "certs"
+	defJaegerURL      = ""
+	defAuthnURL       = "localhost:8181"
+	defAuthnTimeout   = "1s"
+
+	envLogLevel       = "MF_CERTS_LOG_LEVEL"
+	envDBHost         = "MF_CERTS_DB_HOST"
+	envDBPort         = "MF_CERTS_DB_PORT"
+	envDBUser         = "MF_CERTS_DB_USER"
+	envDBPass         = "MF_CERTS_DB_PASS"
+	envDB             = "MF_CERTS_DB"
+	envDBSSLMode      = "MF_CERTS_DB_SSL_MODE"
+	envDBSSLCert      = "MF_CERTS_DB_SSL_CERT"
+	envDBSSLKey       = "MF_CERTS_DB_SSL_KEY"
+	envDBSSLRootCert  = "MF_CERTS_DB_SSL_ROOT_CERT"
+	envEncryptKey     = "MF_CERTS_ENCRYPT_KEY"
+	envClientTLS      = "MF_CERTS_CLIENT_TLS"
+	envCACerts        = "MF_CERTS_CA_CERTS"
+	envPort           = "MF_CERTS_PORT"
+	envServerCert     = "MF_CERTS_SERVER_CERT"
+	envServerKey      = "MF_CERTS_SERVER_KEY"
+	envBaseURL        = "MF_SDK_BASE_URL"
+	envThingsPrefix   = "MF_SDK_THINGS_PREFIX"
+	envThingsESURL    = "MF_THINGS_ES_URL"
+	envThingsESPass   = "MF_THINGS_ES_PASS"
+	envThingsESDB     = "MF_THINGS_ES_DB"
+	envESURL          = "MF_CERTS_ES_URL"
+	envESPass         = "MF_CERTS_ES_PASS"
+	envESDB           = "MF_CERTS_ES_DB"
+	envESConsumerName = "MF_CERTS_EVENT_CONSUMER"
+	envJaegerURL      = "MF_JAEGER_URL"
+	envAuthnURL       = "MF_AUTHN_GRPC_URL"
+	envAuthnTimeout   = "MF_AUTHN_GRPC_TIMEOUT"
 )
 
 type Config struct {
@@ -97,7 +154,48 @@ func main() {
 }
 
 func loadConfig() Config {
-	return Config{}
+	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
+	if err != nil {
+		tls = false
+	}
+	dbConfig := postgres.Config{
+		Host:        mainflux.Env(envDBHost, defDBHost),
+		Port:        mainflux.Env(envDBPort, defDBPort),
+		User:        mainflux.Env(envDBUser, defDBUser),
+		Pass:        mainflux.Env(envDBPass, defDBPass),
+		Name:        mainflux.Env(envDB, defDB),
+		SSLMode:     mainflux.Env(envDBSSLMode, defDBSSLMode),
+		SSLCert:     mainflux.Env(envDBSSLCert, defDBSSLCert),
+		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),
+		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
+	}
+
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
+	}
+
+	return Config{
+		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
+		dbConfig:       dbConfig,
+		clientTLS:      tls,
+		caCerts:        mainflux.Env(envCACerts, defCACerts),
+		httpPort:       mainflux.Env(envPort, defPort),
+		serverCert:     mainflux.Env(envServerCert, defServerCert),
+		serverKey:      mainflux.Env(envServerKey, defServerKey),
+		baseURL:        mainflux.Env(envBaseURL, defBaseURL),
+		thingsPrefix:   mainflux.Env(envThingsPrefix, defThingsPrefix),
+		esThingsURL:    mainflux.Env(envThingsESURL, defThingsESURL),
+		esThingsPass:   mainflux.Env(envThingsESPass, defThingsESPass),
+		esThingsDB:     mainflux.Env(envThingsESDB, defThingsESDB),
+		esURL:          mainflux.Env(envESURL, defESURL),
+		esPass:         mainflux.Env(envESPass, defESPass),
+		esDB:           mainflux.Env(envESDB, defESDB),
+		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
+		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
+		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
+		authnTimeout:   authnTimeout,
+	}
 }
 
 func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *redis.Client {
@@ -204,19 +302,19 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 func startHTTPServer(svc certs.Service, cfg Config, logger mflog.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
 	if cfg.serverCert != "" || cfg.serverKey != "" {
-		logger.Info(fmt.Sprintf("Bootstrap service started using https on port %s with cert %s key %s",
+		logger.Info(fmt.Sprintf("Certs service started using https on port %s with cert %s key %s",
 			cfg.httpPort, cfg.serverCert, cfg.serverKey))
 		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc))
 		return
 	}
-	logger.Info(fmt.Sprintf("Bootstrap service started using http on port %s", cfg.httpPort))
+	logger.Info(fmt.Sprintf("Certs service started using http on port %s", cfg.httpPort))
 	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 }
 
-func subscribeToThingsES(svc bootstrap.Service, client *redis.Client, consumer string, logger mflog.Logger) {
-	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
-	logger.Info("Subscribed to Redis Event Store")
-	if err := eventStore.Subscribe("mainflux.things"); err != nil {
-		logger.Warn(fmt.Sprintf("Bootstrap service failed to subscribe to event sourcing: %s", err))
-	}
-}
+// func subscribeToThingsES(svc certs.Service, client *redis.Client, consumer string, logger mflog.Logger) {
+// 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
+// 	logger.Info("Subscribed to Redis Event Store")
+// 	if err := eventStore.Subscribe("mainflux.things"); err != nil {
+// 		logger.Warn(fmt.Sprintf("Certs service failed to subscribe to event sourcing: %s", err))
+// 	}
+// }

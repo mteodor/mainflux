@@ -20,9 +20,9 @@ func NewLoggingMiddleware(svc certs.Service, logger log.Logger) certs.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) IssueCert(token string) (res certs.Cert, err error) {
+func (lm *loggingMiddleware) IssueCert(id, token string) (res certs.Cert, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method issue_cert for token: %s took %s to complete", token, time.Since(begin))
+		message := fmt.Sprintf("Method issue_cert for token: %s and thing: %s took %s to complete", token, id, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -30,5 +30,5 @@ func (lm *loggingMiddleware) IssueCert(token string) (res certs.Cert, err error)
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.IssueCert(token)
+	return lm.svc.IssueCert(id, token)
 }
