@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
@@ -69,7 +70,7 @@ type Service interface {
 	IssueCert(thingID, token string) (Cert, error)
 }
 
-type struct Config {
+type Config struct {
 	logLevel       string
 	dbConfig       postgres.Config
 	clientTLS      bool
@@ -89,7 +90,7 @@ type struct Config {
 	esConsumerName string
 	jaegerURL      string
 	authnURL       string
-	certsURL 		string
+	certsURL       string
 	authnTimeout   time.Duration
 }
 
@@ -127,9 +128,9 @@ type certRes struct {
 // New returns new Certs service.
 func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK, config Config) Service {
 	return &certsService{
-		certs: certs,
-		sdk:   sdk,
-		auth:  auth,
+		certs:  certs,
+		sdk:    sdk,
+		auth:   auth,
 		config: config,
 	}
 }
@@ -142,7 +143,6 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 		return Cert{}, errors.Wrap(errIssueCert, err)
 	}
 
-
 	// If certsURL == "" we don't use 3rd party PKI service.
 	if cs.config.certsURL == "" {
 		c.ClientCert, c.ClientKey, err = cs.certs(th.Key, daysValid, rsaBits)
@@ -151,7 +151,6 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 		}
 		return c, err
 	}
-
 
 	rootCAs, err := x509.SystemCertPool()
 	if err != nil {

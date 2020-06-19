@@ -18,7 +18,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
-	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -232,6 +231,7 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *r
 		DB:       db,
 	})
 }
+
 func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	db, err := postgres.Connect(dbConfig)
 	if err != nil {

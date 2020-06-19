@@ -201,15 +201,6 @@ type SDK interface {
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	Whitelist(token string, cfg BootstrapConfig) error
-
-	// Cert issues a certificate for a thing required for mtls.
-	Cert(thingID, daysValid string, rsaBits int, token string) (Cert, error)
-
-	// RemoveCert remove a certificate
-	RemoveCert(id, token string) error
-
-	// LoadCertificates loads certificates from file needed for things certificate generation.
-	LoadCertificates(conf Config) (tls.Certificate, *x509.Certificate, error)
 }
 
 type mfSDK struct {
