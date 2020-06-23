@@ -20,19 +20,11 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
-const (
-	VAULT_HOST = "http://127.0.0.1:8200/v1/"
-	ISSUE_URL  = "pki_int/issue/"
-	ROLE       = "example-dot-com"
-
-	VAULT_TOKEN = "s.eN0R5b500gqpP0JEgebhDoth"
-)
+const xVaultToken = "X-Vault-Token"
 
 var (
 	// ErrNotFound indicates a non-existent entity request.
@@ -58,7 +50,45 @@ var (
 	// ErrFailedLoadingTrustedCA
 	ErrFailedLoadingTrustedCA = errors.New("failed to load trusted certificates")
 
-	errIssueCert = errors.New("failed to issue certificate")
+	// ErrCertsCreation
+	ErrCertsCreation = errors.New("failed to create client certificates")
+
+	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
+	ErrCertsRemove = errors.New("failed to remove certificate")
+
+	// ErrCACertificateDoesntExist indicates missing CA certificate required for
+	// creating mTLS client certificates
+	ErrCACertificateDoesntExist = errors.New("CA certificate doesnt exist")
+
+	// ErrCAKeyDoesntExist indicates missing CA private key
+	ErrCAKeyDoesntExist = errors.New("CA certificate key doesnt exist")
+
+	// ErrFailedCertCreation failed to create certificate for thing
+	ErrFailedCertCreation = errors.New("failed to create client certificate")
+
+	// ErrFailedDateSetting
+	ErrFailedDateSetting = errors.New("failed to set date for certificate")
+
+	// ErrRsaBitsValueWrong
+	ErrRsaBitsValueWrong = errors.New("missing RSA bits for certificate creation")
+
+	// ErrMissingCACertificate
+	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
+
+	// ErrFailedSerialGeneration
+	ErrFailedSerialGeneration = errors.New("failed to generate certificate serial")
+
+	// ErrFailedPemKeyWrite
+	ErrFailedPemKeyWrite = errors.New("failed to write PEM key")
+
+	// ErrFailedPemDataWrite
+	ErrFailedPemDataWrite = errors.New("failed to write pem data for certificate")
+
+	// ErrPrivateKeyUnsupportedType
+	ErrPrivateKeyUnsupportedType = errors.New("private key type is unsupported")
+
+	// ErrPrivateKeyEmpty
+	ErrPrivateKeyEmpty = errors.New("private key is empty")
 )
 
 var _ Service = (*certsService)(nil)
@@ -67,38 +97,50 @@ var _ Service = (*certsService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// IssueCert issues certificate for given thing id if access is granted with token
-	IssueCert(thingID, token string) (Cert, error)
+	IssueCert(thingID, daysValid string, rsaBits int, token string) (Cert, error)
 }
 
 type Config struct {
-	logLevel       string
-	dbConfig       postgres.Config
-	clientTLS      bool
-	encKey         []byte
-	caCerts        string
-	httpPort       string
-	serverCert     string
-	serverKey      string
-	baseURL        string
-	thingsPrefix   string
-	esThingsURL    string
-	esThingsPass   string
-	esThingsDB     string
-	esURL          string
-	esPass         string
-	esDB           string
-	esConsumerName string
-	jaegerURL      string
-	authnURL       string
-	certsURL       string
-	authnTimeout   time.Duration
+	LogLevel       string
+	ClientTLS      bool
+	CaCerts        string
+	HttpPort       string
+	ServerCert     string
+	ServerKey      string
+	BaseURL        string
+	ThingsPrefix   string
+	EsThingsURL    string
+	EsThingsPass   string
+	EsThingsDB     string
+	EsURL          string
+	EsPass         string
+	EsDB           string
+	EsConsumerName string
+	JaegerURL      string
+	AuthnURL       string
+	AuthnTimeout   time.Duration
+	SignTLSCert    tls.Certificate
+	SignX509Cert   *x509.Certificate
+	PkiHost        string
+	PkiIssueURL    string
+	PkiAccessToken string
+	PkiRole        string
 }
 
 type certsService struct {
-	auth  mainflux.AuthNServiceClient
-	certs CertsRepository
-	sdk   mfsdk.SDK
-	conf  Config
+	auth      mainflux.AuthNServiceClient
+	certsRepo CertsRepository
+	sdk       mfsdk.SDK
+	conf      Config
+}
+
+type Cert struct {
+	ThingID    string
+	Serial     string
+	ClientCert string
+	ClientKey  string
+	ChainCA    string
+	Expire     time.Time
 }
 
 type certReq struct {
@@ -128,24 +170,24 @@ type certRes struct {
 // New returns new Certs service.
 func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK, config Config) Service {
 	return &certsService{
-		certs:  certs,
-		sdk:    sdk,
-		auth:   auth,
-		config: config,
+		certsRepo: certs,
+		sdk:       sdk,
+		auth:      auth,
+		conf:      config,
 	}
 }
 
 func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int, token string) (Cert, error) {
-
 	// Get the SystemCertPool, continue with an empty pool on error
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
-		return Cert{}, errors.Wrap(errIssueCert, err)
+		return Cert{}, errors.Wrap(ErrCertsCreation, err)
 	}
+	var c Cert
 
-	// If certsURL == "" we don't use 3rd party PKI service.
-	if cs.config.certsURL == "" {
-		c.ClientCert, c.ClientKey, err = cs.certs(th.Key, daysValid, rsaBits)
+	// If PkiHost == "" we don't use 3rd party PKI service.
+	if cs.conf.PkiHost == "" {
+		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, rsaBits)
 		if err != nil {
 			return Cert{}, errors.Wrap(ErrCertsCreation, err)
 		}
@@ -182,7 +224,7 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 		return Cert{}, err
 	}
 
-	req.Header.Add("X-Vault-Token", VAULT_TOKEN)
+	req.Header.Add(xVaultToken, cs.conf.PkiAccessToken)
 	resp, err := client.Do(req)
 	if err != nil {
 		return Cert{}, err
@@ -196,7 +238,7 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 		if err := json.Unmarshal(body, &c); err != nil {
 			return Cert{}, err
 		}
-		return Cert{}, errors.Wrap(errIssueCert, errors.New(c.Errors[0]))
+		return Cert{}, errors.Wrap(ErrCertsCreation, errors.New(c.Errors[0]))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -204,7 +246,7 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 		return Cert{}, err
 	}
 	defer resp.Body.Close()
-	c := Cert{}
+	c = Cert{}
 	if err := json.Unmarshal(body, &c); err != nil {
 		return Cert{}, err
 	}
@@ -213,75 +255,34 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 }
 
 func (cs *certsService) getIssueUrl() string {
-	url := VAULT_HOST + ISSUE_URL + ROLE
+	// url := VAULT_HOST + ISSUE_URL + ROLE
+	url := cs.conf.PkiHost + cs.conf.PkiIssueURL + cs.conf.PkiRole
 	return url
 }
 
-func (cs *certsService) Cert(thingID, daysValid string, rsaBits int, token string) (Cert, error) {
-	var c Cert
-
-	// Check access rights
-	th, err := sdk.Thing(thingID, token)
-	if err != nil {
-		return Cert{}, err
-	}
-	r := certReq{
-		ThingID:  th.ID,
-		ThingKey: th.Key,
-	}
-	d, err := json.Marshal(r)
-	if err != nil {
-		return Cert{}, err
-	}
-
-	// // If certsURL == "" we don't use 3rd party PKI service.
-	// if sdk.certsURL == "" {
-	// 	c.ClientCert, c.ClientKey, err = sdk.certs(th.Key, daysValid, rsaBits)
-	// 	if err != nil {
-	// 		return Cert{}, errors.Wrap(ErrCertsCreation, err)
-	// 	}
-	// 	return c, err
-	// }
-
-	res, err := request(http.MethodPost, token, sdk.certsURL, d)
-	if err != nil {
-		return Cert{}, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusCreated {
-		return Cert{}, ErrCerts
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return Cert{}, err
-	}
-	if err := json.Unmarshal(body, &c); err != nil {
-		return Cert{}, err
-	}
-	return c, nil
-}
-
 func (cs *certsService) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
-	if sdk.config.certsCA == nil {
-		return "", "", errors.Wrap(errFailedCertCreation, errMissingCACertificate)
+	if cs.conf.SignX509Cert == nil {
+		return "", "", errors.Wrap(ErrFailedCertCreation, ErrMissingCACertificate)
 	}
 	if rsaBits == 0 {
-		return "", "", errors.Wrap(errFailedCertCreation, ErrRsaBitsValueWrong)
+		return "", "", errors.Wrap(ErrFailedCertCreation, ErrRsaBitsValueWrong)
 	}
 	var priv interface{}
+	// p224 := elliptic.P224()
+	// priv, err := elliptic.GenerateKey(p224, rand.Reader)
 	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
 
 	notBefore := time.Now()
 	validFor, err := time.ParseDuration(daysValid)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedDateSetting, err)
+		return "", "", errors.Wrap(ErrFailedDateSetting, err)
 	}
 	notAfter := notBefore.Add(validFor)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedSerialGeneration, err)
+		return "", "", errors.Wrap(ErrFailedSerialGeneration, err)
 	}
 
 	tmpl := x509.Certificate{
@@ -301,11 +302,11 @@ func (cs *certsService) certs(thingKey, daysValid string, rsaBits int) (string, 
 
 	pubKey, err := publicKey(priv)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedCertCreation, err)
+		return "", "", errors.Wrap(ErrFailedCertCreation, err)
 	}
-	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, cs.certsCA, pubKey, cs.certsCert.PrivateKey)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, cs.conf.SignX509Cert, pubKey, cs.conf.SignTLSCert.PrivateKey)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedCertCreation, err)
+		return "", "", errors.Wrap(ErrFailedCertCreation, err)
 	}
 
 	var bw, keyOut bytes.Buffer
@@ -313,17 +314,17 @@ func (cs *certsService) certs(thingKey, daysValid string, rsaBits int) (string, 
 	buffKeyOut := bufio.NewWriter(&keyOut)
 
 	if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-		return "", "", errors.Wrap(errFailedPemDataWrite, err)
+		return "", "", errors.Wrap(ErrFailedPemDataWrite, err)
 	}
 	buffWriter.Flush()
 	cert := bw.String()
 
 	block, err := pemBlockForKey(priv)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
+		return "", "", errors.Wrap(ErrFailedPemKeyWrite, err)
 	}
 	if err := pem.Encode(buffKeyOut, block); err != nil {
-		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
+		return "", "", errors.Wrap(ErrFailedPemKeyWrite, err)
 	}
 	buffKeyOut.Flush()
 	key := keyOut.String()
@@ -333,7 +334,7 @@ func (cs *certsService) certs(thingKey, daysValid string, rsaBits int) (string, 
 
 func publicKey(priv interface{}) (interface{}, error) {
 	if priv == nil {
-		return nil, errPrivateKeyEmpty
+		return nil, ErrPrivateKeyEmpty
 	}
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
@@ -341,7 +342,7 @@ func publicKey(priv interface{}) (interface{}, error) {
 	case *ecdsa.PrivateKey:
 		return &k.PublicKey, nil
 	default:
-		return nil, errPrivateKeyUnsupportedType
+		return nil, ErrPrivateKeyUnsupportedType
 	}
 }
 
@@ -374,9 +375,4 @@ func request(method, jwt, url string, data []byte) (*http.Response, error) {
 	}
 
 	return res, nil
-}
-
-type certReq struct {
-	ThingID  string `json:"thing_id,omitempty"`
-	ThingKey string `json:"thing_key,omitempty"`
 }

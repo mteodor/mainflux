@@ -3,6 +3,9 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +21,9 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	"github.com/mainflux/mainflux/certs"
+	"github.com/mainflux/mainflux/certs/api"
+	"github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -25,9 +31,8 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/certs/api"
-	"github.com/mainflux/mainflux/certs/postgres"
 	mflog "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	jconfig "github.com/uber/jaeger-client-go/config"
 )
@@ -61,11 +66,16 @@ const (
 	defAuthnURL       = "localhost:8181"
 	defAuthnTimeout   = "1s"
 
-	defSigningCAPath = ""
-	defSigningCertPath = ""
-	defSigningHoursValid = ""
-	defSigningRSABits = ""
+	defSigningCAPath     = "ca.crt"
+	defSigningCertPath   = "ca.key"
+	defSigningHoursValid = "2048h"
+	defSigningRSABits    = ""
 
+	defVaultHost = "http://127.0.0.1:8200/v1/"
+	//defVaultRole = "mainflux"
+	defVaultRole     = "example-dot-com"
+	defVaultToken    = "s.eN0R5b500gqpP0JEgebhDoth"
+	defVaultIssueURL = "pki_int/issue/"
 
 	envLogLevel       = "MF_CERTS_LOG_LEVEL"
 	envDBHost         = "MF_CERTS_DB_HOST"
@@ -96,11 +106,33 @@ const (
 	envAuthnURL       = "MF_AUTHN_GRPC_URL"
 	envAuthnTimeout   = "MF_AUTHN_GRPC_TIMEOUT"
 
-	envSigningCAPath = "MF_CERTS_SIGN_CA_PATH"
-	envSigningCertPath = "MF_CERTS_SIGN_CERT_PATH"
+	envSigningCAPath     = "MF_CERTS_SIGN_CA_PATH"
+	envSigningCertPath   = "MF_CERTS_SIGN_CERT_PATH"
 	envSigningHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
-	envSigningRSABits = "MF_CERTS_SIGN_RSA_BITS"
+	envSigningRSABits    = "MF_CERTS_SIGN_RSA_BITS"
 
+	envVaultHost     = "MF_CERTS_VAULT_HOST"
+	envVaultIssueURL = "MF_CERTS_VAULT_ISSUE_URL"
+	envVaultRole     = "MF_CERTS_VAULT_ROLE"
+	//envVaultRole = "example-dot-com"
+	evnVaultToken = "MF_CERTS_VAULT_TOKEN"
+
+	// VAULT_HOST = "http://127.0.0.1:8200/v1/"
+	// ISSUE_URL  = "pki_int/issue/"
+	// ROLE       = "example-dot-com"
+	// VAULT_TOKEN = "s.eN0R5b500gqpP0JEgebhDoth"
+
+)
+
+var (
+	errFailedCertLoading         = errors.New("failed to load certificate")
+	errFailedCertDecode          = errors.New("failed to decode certificate")
+	errMissingCACertificate      = errors.New("missing CA")
+	errPrivateKeyEmpty           = errors.New("private key empty")
+	errPrivateKeyUnsupportedType = errors.New("private key unsupported type")
+	errCertsRemove               = errors.New("failed to remove certificate")
+	errCACertificateDoesntExist  = errors.New("CA certificate doesnt exist")
+	errCAKeyDoesntExist          = errors.New("CA certificate key doesnt exist")
 )
 
 type config struct {
@@ -124,6 +156,12 @@ type config struct {
 	jaegerURL      string
 	authnURL       string
 	authnTimeout   time.Duration
+	signCAPath     string
+	signCAKeyPath  string
+	pkiIssueURL    string
+	pkiAccessToken string
+	pkiHost        string
+	pkiRole        string
 }
 
 func main() {
@@ -139,9 +177,6 @@ func main() {
 		logger.Error("Failed to load CA certificates for issuing client certs")
 	}
 
-	cfg.tlsCert = tlsCert
-	cfg.caCert = caCert
-
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
@@ -156,7 +191,7 @@ func main() {
 
 	auth := authapi.NewClient(authTracer, authConn, cfg.authnTimeout)
 
-	svc := newService(auth, db, logger, esClient, cfg)
+	svc := newService(auth, db, logger, esClient, tlsCert, caCert, cfg)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
@@ -241,7 +276,7 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func connectToAuth(cfg Config, logger logger.Logger) *grpc.ClientConn {
+func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	var opts []grpc.DialOption
 	if cfg.clientTLS {
 		if cfg.caCerts != "" {
@@ -290,29 +325,30 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, cfg config) certs.Service {
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config) certs.Service {
 	certsRepo := postgres.NewCertsRepository(db, logger)
 
 	certsConfig := certs.Config{
-		logLevel:       cfg.logLevel
-		dbConfig:       cfg.dbConfig,
-		clientTLS:      cfg.clientTLS,
-		caCerts:        cfg.caCerts,
-		httpPort:       cfg.httpPort,
-		serverCert:    cfg.serverCert,
-		serverKey:      cfg.serverKey,
-		baseURL:        cfg.baseURL,
-		thingsPrefix:   cfg.thingsPrefix,
-		esThingsURL:    cfg.esThingsURL,
-		esThingsPass:   cfg.esThingsPass,
-		esThingsDB:     cfg.esThingsDB,
-		esURL:          cfg.esURL,
-		esPass:         cfg.esPass,
-		esDB:           cfg.esDB,
-		esConsumerName: cf.esConsumerName,
-		jaegerURL:      es.jaegerURL,
-		authnURL:       es.authnURL,
-		authnTimeout:   es.authnTimeout,
+		LogLevel:       cfg.logLevel,
+		ClientTLS:      cfg.clientTLS,
+		CaCerts:        cfg.caCerts,
+		HttpPort:       cfg.httpPort,
+		ServerCert:     cfg.serverCert,
+		ServerKey:      cfg.serverKey,
+		BaseURL:        cfg.baseURL,
+		ThingsPrefix:   cfg.thingsPrefix,
+		EsThingsURL:    cfg.esThingsURL,
+		EsThingsPass:   cfg.esThingsPass,
+		EsThingsDB:     cfg.esThingsDB,
+		EsURL:          cfg.esURL,
+		EsPass:         cfg.esPass,
+		EsDB:           cfg.esDB,
+		EsConsumerName: cfg.esConsumerName,
+		JaegerURL:      cfg.jaegerURL,
+		AuthnURL:       cfg.authnURL,
+		AuthnTimeout:   cfg.authnTimeout,
+		SignTLSCert:    tlsCert,
+		SignX509Cert:   x509Cert,
 	}
 
 	config := mfsdk.Config{
@@ -342,7 +378,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 	return svc
 }
 
-func startHTTPServer(svc certs.Service, cfg Config, logger mflog.Logger, errs chan error) {
+func startHTTPServer(svc certs.Service, cfg config, logger mflog.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
 	if cfg.serverCert != "" || cfg.serverKey != "" {
 		logger.Info(fmt.Sprintf("Certs service started using https on port %s with cert %s key %s",
@@ -354,29 +390,28 @@ func startHTTPServer(svc certs.Service, cfg Config, logger mflog.Logger, errs ch
 	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 }
 
-
 func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {
 	var tlsCert tls.Certificate
 	var caCert *x509.Certificate
 
-	if conf.CAPath == "" || conf.CAKeyPath == "" {
+	if conf.signCAPath == "" || conf.signCAKeyPath == "" {
 		return tlsCert, caCert, nil
 	}
 
-	if _, err := os.Stat(conf.CAPath); os.IsNotExist(err) {
-		return tlsCert, caCert, ErrCACertificateDoesntExist
+	if _, err := os.Stat(conf.signCAPath); os.IsNotExist(err) {
+		return tlsCert, caCert, errCACertificateDoesntExist
 	}
 
-	if _, err := os.Stat(conf.CAKeyPath); os.IsNotExist(err) {
-		return tlsCert, caCert, ErrCAKeyDoesntExist
+	if _, err := os.Stat(conf.signCAKeyPath); os.IsNotExist(err) {
+		return tlsCert, caCert, errCAKeyDoesntExist
 	}
 
-	tlsCert, err := tls.LoadX509KeyPair(conf.CAPath, conf.CAKeyPath)
+	tlsCert, err := tls.LoadX509KeyPair(conf.signCAPath, conf.signCAKeyPath)
 	if err != nil {
 		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
 	}
 
-	b, err := ioutil.ReadFile(conf.CAPath)
+	b, err := ioutil.ReadFile(conf.signCAPath)
 	if err != nil {
 		return tlsCert, caCert, errors.Wrap(errFailedCertLoading, err)
 	}
@@ -393,7 +428,6 @@ func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {
 
 	return tlsCert, caCert, nil
 }
-
 
 // func subscribeToThingsES(svc certs.Service, client *redis.Client, consumer string, logger mflog.Logger) {
 // 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)

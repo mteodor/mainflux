@@ -10,7 +10,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -22,29 +21,28 @@ const (
 	connConstraintErr = "connections_config_id_fkey"
 	fkViolation       = "foreign_key_violation"
 	configFieldsNum   = 8
-	chanFieldsNum     = 3
-	connFieldsNum     = 2
-	cleanupQuery      = `DELETE FROM channels ch WHERE NOT EXISTS (
-						 SELECT channel_id FROM connections c WHERE ch.mainflux_channel = c.channel_id);`
 )
 
 var (
-	errSaveDB           = errors.New("failed to save bootstrap configuration to database")
+	errSaveDB           = errors.New("failed to save certs to database")
 	errMarshalChannel   = errors.New("failed to marshal channel into json")
 	errUnmarshalChannel = errors.New("failed to unmarshal json to channel")
 	errSaveChannels     = errors.New("failed to insert channels to database")
 	errSaveConnections  = errors.New("failed to insert connections to database")
-	errRemoveUnknown    = errors.New("failed to remove from uknown configurations in database")
-	errSaveUnknown      = errors.New("failed to insert into uknown configurations in database")
-	errRetrieve         = errors.New("failed to retreive bootstrap configuration from database")
-	errUpdate           = errors.New("failed to update bootstrap configuration in database")
-	errRemove           = errors.New("failed to remove bootstrap configuration from database")
-	errUpdateChannels   = errors.New("failed to update channels in bootstrap configuration database")
-	errRemoveChannels   = errors.New("failed to remove channels from bootstrap configuration in database")
-	errDisconnectThing  = errors.New("failed to disconnect thing in bootstrap configuration in database")
+	errRemoveUnknown    = errors.New("failed to remove from unknown configurations in database")
+	errSaveUnknown      = errors.New("failed to insert into unknown configurations in database")
+	errRetrieve         = errors.New("failed to retreive certs configuration from database")
+	errUpdate           = errors.New("failed to update certs in database")
+	errRemove           = errors.New("failed to remove certs from database")
 )
 
 var _ certs.CertsRepository = (*certsRepository)(nil)
+
+type Cert struct {
+	ThingID string
+	Serial  string
+	Expire  time.Time
+}
 
 type certsRepository struct {
 	db  *sqlx.DB
@@ -71,7 +69,7 @@ func (cr certsRepository) Save(cert certs.Cert) (string, error) {
 	if _, err := tx.NamedExec(q, dbcrt); err != nil {
 		e := err
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
-			e = bootstrap.ErrConflict
+			e = errors.New("error conflict")
 		}
 
 		cr.rollback("Failed to insert a Cert", tx, err)
@@ -119,7 +117,11 @@ func toDBConfig(c certs.Cert) dbCert {
 	}
 }
 
-func toConfig(dbcrt dbCert) certs.Cert {
-	c := certs.Cert{dbcrt.ThingID, dbcrt.Serial, dbcrt.Expire}
+func toConfig(dbcrt dbCert) Cert {
+	c := Cert{
+		ThingID: dbcrt.ThingID,
+		Serial:  dbcrt.Serial,
+		Expire:  dbcrt.Expire,
+	}
 	return c
 }

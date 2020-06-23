@@ -3,14 +3,6 @@
 
 package certs
 
-import "time"
-
-type Cert struct {
-	ThingID string
-	Serial  string
-	Expire  time.Time
-}
-
 // ConfigsPage contains page related metadata as well as list
 type CertsPage struct {
 	Total  uint64

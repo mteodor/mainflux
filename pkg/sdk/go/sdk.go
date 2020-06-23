@@ -65,16 +65,6 @@ var (
 
 	// ErrCerts indicates error fetching certificates.
 	ErrCerts = errors.New("failed to fetch certs data")
-
-	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
-	ErrCertsRemove = errors.New("failed to remove certificate")
-
-	// ErrCACertificateDoesntExist indicates missing CA certificate required for
-	// creating mTLS client certificates
-	ErrCACertificateDoesntExist = errors.New("CA certificate doesnt exist")
-
-	// ErrCAKeyDoesntExist indicates missing CA private key
-	ErrCAKeyDoesntExist = errors.New("CA certificate key doesnt exist")
 )
 
 // ContentType represents all possible content types.

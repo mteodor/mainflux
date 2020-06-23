@@ -16,7 +16,7 @@ func doIssueCert(svc certs.Service) endpoint.Endpoint {
 		}
 		token := req.token
 
-		res, err := svc.IssueCert(req.ThingID, token)
+		res, err := svc.IssueCert(req.ThingID, req.Valid, req.RsaBits, token)
 
 		if err != nil {
 			return certsResponse{Error: err.Error()}, nil
