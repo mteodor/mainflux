@@ -6,6 +6,7 @@ package certs
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -241,12 +242,11 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, keyBits int,
 		CAChain:        pr.CAChain,
 		ThingID:        thing.ID,
 	}
-
-	cs.certsRepo.Save(c)
-
-	return c, nil
+	_, err = cs.certsRepo.Save(context.Background(), c)
+	return c, err
 }
 
+func (cs *certsService) RetrieveAll ()
 func (cs *certsService) getIssueUrl() string {
 	url := cs.conf.PkiIssueURL + cs.conf.PkiRole
 	return url
