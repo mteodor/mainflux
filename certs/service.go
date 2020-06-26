@@ -13,7 +13,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -97,7 +96,7 @@ var _ Service = (*certsService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// IssueCert issues certificate for given thing id if access is granted with token
-	IssueCert(thingID, daysValid string, rsaBits int, token string) (Cert, error)
+	IssueCert(thingID, daysValid string, keyBits int, keyType string, token string) (Cert, error)
 }
 
 type Config struct {
@@ -128,7 +127,6 @@ type Config struct {
 	PkiIssueURL    string
 	PkiAccessToken string
 	PkiRole        string
-	PkiVaultConfig api.Config
 }
 
 type certsService struct {
@@ -150,41 +148,26 @@ type Cert struct {
 	Expire         time.Duration `mapstructure:"expiration"`
 }
 
+type pkiResponse struct {
+	ClientCert     string        `mapstructure:"certificate"`
+	IssuingCA      string        `mapstructure:"issuing_ca"`
+	CAChain        []string      `mapstructure:"ca_chain"`
+	ClientKey      string        `mapstructure:"private_key"`
+	PrivateKeyType string        `mapstructure:"private_key_type"`
+	Serial         string        `mapstructure:"serial_number"`
+	Expire         time.Duration `mapstructure:"expiration"`
+}
+
 type certReq struct {
 	CommonName string `json:"common_name"`
 	TTL        string `json:"ttl"`
+	KeyBits    int    `json:"key_bits"`
+	KeyType    string `json:"key_type"`
 }
 
 type vaultRes struct {
 	Data map[string]interface{} `json:"data" mapstructure:"data"`
 }
-
-type certData struct {
-	Certificate string   `json:"certificate"`
-	CAChain     []string `json:"ca_chain" mapstructure:"ca_chain"`
-	IssuingCA   string   `json:"issuing_ca"`
-	PrivateKey  string   `json:"private_key"`
-}
-
-type certData2 struct {
-	SerialNumber string `json:"issuing_ca"`
-}
-type certData3 struct {
-	Expire time.Duration `json:"expiration"`
-}
-type certData4 struct {
-	IssuingCA string `json:"issuing_ca"`
-}
-
-// type certRes struct {
-// 	LeaseID       string   `json:"lease_id"`
-// 	Renewable     string   `json:"renewable"`
-// 	LeaseDuration string   `json:"lease_duration"`
-// 	Warnings      string   `json:"warnings"`
-// 	Auth          string   `json:"auth"`
-// 	CertData      certData `json:"data"`
-// 	Errors        []string `json:"errors"`
-// }
 
 // New returns new Certs service.
 func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK, config Config, c *api.Client) Service {
@@ -197,8 +180,7 @@ func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK,
 	}
 }
 
-func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int, token string) (Cert, error) {
-	// Get the SystemCertPool, continue with an empty pool on error
+func (cs *certsService) IssueCert(thingID string, daysValid string, keyBits int, keyType string, token string) (Cert, error) {
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
 		return Cert{}, errors.Wrap(ErrCertsCreation, err)
@@ -207,7 +189,7 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 
 	// If pkiClient == nil we don't use 3rd party PKI service.
 	if cs.pkiClient == nil {
-		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, rsaBits)
+		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, keyBits)
 		if err != nil {
 			return Cert{}, errors.Wrap(ErrCertsCreation, err)
 		}
@@ -216,7 +198,9 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 
 	cReq := certReq{
 		CommonName: thing.Key,
-		TTL:        "24h",
+		TTL:        daysValid,
+		KeyBits:    keyBits,
+		KeyType:    keyType,
 	}
 
 	r := cs.pkiClient.NewRequest("POST", cs.getIssueUrl())
@@ -233,9 +217,6 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 		return Cert{}, err
 	}
 
-	if err != nil {
-		return Cert{}, err
-	}
 	if resp.StatusCode >= http.StatusBadRequest {
 		_, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -245,46 +226,43 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, rsaBits int,
 	}
 
 	s, _ := api.ParseSecret(resp.Body)
-	cr := Cert{}
+	pr := pkiResponse{}
 
-	cr1 := certData{}
-	cr3 := certData2{}
-	cr4 := certData3{}
-	cr5 := certData4{}
-	mapstructure.Decode(s.Data, &cr)
-	mapstructure.Decode(s.Data, &cr4)
-	mapstructure.Decode(s.Data, &cr5)
-	fmt.Println(cr.Expire)
-
-	fmt.Println(cr1)
-	fmt.Println(cr3)
-	fmt.Println(cr4)
-	fmt.Println(cr5)
-
-	if err := mapstructure.Decode(s.Data, &cr); err != nil {
+	if err := mapstructure.Decode(s.Data, &pr); err != nil {
 		return Cert{}, err
 	}
+
+	c = Cert{
+		ClientCert:     pr.ClientCert,
+		ClientKey:      pr.ClientKey,
+		PrivateKeyType: pr.PrivateKeyType,
+		IssuingCA:      pr.IssuingCA,
+		Serial:         pr.Serial,
+		CAChain:        pr.CAChain,
+		ThingID:        thing.ID,
+	}
+
+	cs.certsRepo.Save(c)
 
 	return c, nil
 }
 
 func (cs *certsService) getIssueUrl() string {
-	// url :=  ISSUE_URL + ROLE
 	url := cs.conf.PkiIssueURL + cs.conf.PkiRole
 	return url
 }
 
-func (cs *certsService) certs(thingKey, daysValid string, rsaBits int) (string, string, error) {
+func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, string, error) {
 	if cs.conf.SignX509Cert == nil {
 		return "", "", errors.Wrap(ErrFailedCertCreation, ErrMissingCACertificate)
 	}
-	if rsaBits == 0 {
+	if keyBits == 0 {
 		return "", "", errors.Wrap(ErrFailedCertCreation, ErrRsaBitsValueWrong)
 	}
 	var priv interface{}
 	// p224 := elliptic.P224()
 	// priv, err := elliptic.GenerateKey(p224, rand.Reader)
-	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
+	priv, err := rsa.GenerateKey(rand.Reader, keyBits)
 
 	if daysValid == "" {
 		daysValid = cs.conf.SignHoursValid

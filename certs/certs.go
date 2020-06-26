@@ -3,6 +3,8 @@
 
 package certs
 
+import "context"
+
 // ConfigsPage contains page related metadata as well as list
 type CertsPage struct {
 	Total  uint64
@@ -13,6 +15,9 @@ type CertsPage struct {
 
 // CertsRepository specifies a Config persistence API.
 type CertsRepository interface {
-	//Save()
-	Save(cert Cert) (string, error)
+	//Save  saves cert for thing into database
+	Save(ctx context.Context, cert Cert) (string, error)
+
+	//RetrieveAll retrieve all issued certificates for given thing
+	RetrieveAll(ctx context.Context, thingID string, offset, limit uint64) (CertsPage, error)
 }

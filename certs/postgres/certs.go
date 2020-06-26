@@ -4,6 +4,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -27,11 +28,8 @@ var (
 	errSaveDB           = errors.New("failed to save certs to database")
 	errMarshalChannel   = errors.New("failed to marshal channel into json")
 	errUnmarshalChannel = errors.New("failed to unmarshal json to channel")
-	errSaveChannels     = errors.New("failed to insert channels to database")
-	errSaveConnections  = errors.New("failed to insert connections to database")
-	errRemoveUnknown    = errors.New("failed to remove from unknown configurations in database")
-	errSaveUnknown      = errors.New("failed to insert into unknown configurations in database")
-	errRetrieve         = errors.New("failed to retreive certs configuration from database")
+	errRetrieve         = errors.New("failed to retrieve certs  from database")
+	errEmptyThingID     = errors.New("failed to retrieve, thing id empty")
 	errUpdate           = errors.New("failed to update certs in database")
 	errRemove           = errors.New("failed to remove certs from database")
 )
@@ -55,7 +53,47 @@ func NewCertsRepository(db *sqlx.DB, log logger.Logger) certs.CertsRepository {
 	return &certsRepository{db: db, log: log}
 }
 
-func (cr certsRepository) Save(cert certs.Cert) (string, error) {
+func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offset, limit uint64) (certs.CertsPage, error) {
+	if thingID == "" {
+		return certs.CertsPage{}, errEmptyThingID
+	}
+	q := `SELECT FROM certs WHERE thing_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
+	rows, err := cr.db.Query(q, thingID, limit, offset)
+	if err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
+		return certs.CertsPage{}, err
+	}
+	defer rows.Close()
+
+	certificates := []certs.Cert{}
+
+	for rows.Next() {
+		c := certs.Cert{}
+		if err := rows.Scan(&c.ThingID, &c.Serial, &c.Expire); err != nil {
+			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
+			return certs.CertsPage{}, err
+
+		}
+		certificates = append(certificates, c)
+	}
+
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM certs WHERE thing_id = $1`)
+	var total uint64
+	if err := cr.db.QueryRow(q, thingID).Scan(&total); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
+		return certs.CertsPage{}, err
+	}
+
+	return certs.CertsPage{
+		Total:  total,
+		Limit:  limit,
+		Offset: offset,
+		Certs:  certificates,
+	}, nil
+
+}
+
+func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, error) {
 	q := `INSERT INTO certs (thing_id, serial, expire)
 		  VALUES (:thing_id, :serial, :expire)`
 
