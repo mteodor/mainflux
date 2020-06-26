@@ -44,7 +44,7 @@ func doCert(svc provision.Service) endpoint.Endpoint {
 		}
 
 		token := req.token
-		cert, key, err := svc.Cert(token, req.ThingID, req.DaysValid, req.RsaBits)
+		cert, key, err := svc.Cert(token, req.ThingID, req.HoursValid, req.RsaBits)
 		if err != nil {
 			return provisionRes{Error: err.Error()}, nil
 		}

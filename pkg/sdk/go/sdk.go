@@ -207,13 +207,13 @@ type mfSDK struct {
 	msgContentType    ContentType
 	client            *http.Client
 
-	certsCAPath    string
-	certsCertPath  string
-	certsCAKeyPath string
-	certsDaysValid string
-	certsRsaBits   int
-	certsCA        *x509.Certificate
-	certsCert      tls.Certificate
+	certsCAPath     string
+	certsCertPath   string
+	certsCAKeyPath  string
+	certsHoursValid string
+	certsRsaBits    int
+	certsCA         *x509.Certificate
+	certsCert       tls.Certificate
 }
 
 // Config contains sdk configuration parameters.
@@ -230,11 +230,11 @@ type Config struct {
 	MsgContentType    ContentType
 	TLSVerification   bool
 
-	CAPath    string
-	CertPath  string
-	CAKeyPath string
-	DaysValid string
-	RsaBits   int
+	CAPath     string
+	CertPath   string
+	CAKeyPath  string
+	HoursValid string
+	RsaBits    int
 }
 
 // NewSDK returns new mainflux SDK instance.
@@ -259,8 +259,8 @@ func NewSDK(conf Config) SDK {
 			},
 		},
 
-		certsDaysValid: conf.DaysValid,
-		certsRsaBits:   conf.RsaBits,
+		certsHoursValid: conf.HoursValid,
+		certsRsaBits:    conf.RsaBits,
 	}
 }
 

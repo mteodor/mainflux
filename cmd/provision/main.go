@@ -40,7 +40,7 @@ const (
 	defBSContent       = ""
 	defCACerts         = ""
 	defCertsCAKey      = ""
-	defCertsDaysValid  = "2400h"
+	defCertsHoursValid = "2400h"
 	defCertsRsaBits    = "4096"
 
 	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
@@ -62,7 +62,7 @@ const (
 	envProvisionBS      = "MF_PROVISION_BS_CONFIG_PROVISIONING"
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
-	envCertsDaysValid   = "MF_PROVISION_CERTS_DAYS_VALID"
+	envCertsHoursValid  = "MF_PROVISION_CERTS_DAYS_VALID"
 	envCertsRsaBits     = "MF_PROVISION_CERTS_RSA_BITS"
 	envCertsCA          = "MF_PROVISION_CERTS_CA"
 	envCertsCAKey       = "MF_PROVISION_CERTS_CA_KEY"
@@ -102,7 +102,7 @@ func main() {
 		CertsURL:          cfg.Server.MfCertsURL,
 		CAPath:            cfg.Certs.CAPath,
 		CAKeyPath:         cfg.Certs.CAKeyPath,
-		DaysValid:         cfg.Certs.DaysValid,
+		HoursValid:        cfg.Certs.HoursValid,
 		RsaBits:           cfg.Certs.RsaBits,
 		HTTPAdapterPrefix: "http",
 		MsgContentType:    "application/json",
@@ -194,10 +194,10 @@ func loadConfig() (provision.Config, error) {
 			TLS:            tls,
 		},
 		Certs: provision.Certs{
-			CAPath:    mainflux.Env(envCertsCA, defCACerts),
-			CAKeyPath: mainflux.Env(envCertsCAKey, defCertsCAKey),
-			DaysValid: mainflux.Env(envCertsDaysValid, defCertsDaysValid),
-			RsaBits:   rsaBits,
+			CAPath:     mainflux.Env(envCertsCA, defCACerts),
+			CAKeyPath:  mainflux.Env(envCertsCAKey, defCertsCAKey),
+			HoursValid: mainflux.Env(envCertsHoursValid, defCertsHoursValid),
+			RsaBits:    rsaBits,
 		},
 		Bootstrap: provision.Bootstrap{
 			X509Provision: provisionX509,

@@ -19,6 +19,7 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis"
+	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
 	"github.com/mainflux/mainflux/certs"
@@ -66,10 +67,10 @@ const (
 	defAuthnURL       = "localhost:8181"
 	defAuthnTimeout   = "1s"
 
-	defSigningCAPath     = "ca.crt"
-	defSigningCertPath   = "ca.key"
-	defSigningHoursValid = "2048h"
-	defSigningRSABits    = ""
+	defSignCAPath     = "ca.crt"
+	defSignCAKeyPath  = "ca.key"
+	defSignHoursValid = "2048h"
+	defSignRSABits    = ""
 
 	defVaultHost = "http://127.0.0.1:8200/v1/"
 	//defVaultRole = "mainflux"
@@ -106,16 +107,16 @@ const (
 	envAuthnURL       = "MF_AUTHN_GRPC_URL"
 	envAuthnTimeout   = "MF_AUTHN_GRPC_TIMEOUT"
 
-	envSigningCAPath     = "MF_CERTS_SIGN_CA_PATH"
-	envSigningCertPath   = "MF_CERTS_SIGN_CERT_PATH"
-	envSigningHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
-	envSigningRSABits    = "MF_CERTS_SIGN_RSA_BITS"
+	envSignCAPath     = "MF_CERTS_SIGN_CA_PATH"
+	envSignCAKey      = "MF_CERTS_SIGN_CA_KEY_PATH"
+	envSignHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
+	envSignRSABits    = "MF_CERTS_SIGN_RSA_BITS"
 
 	envVaultHost     = "MF_CERTS_VAULT_HOST"
 	envVaultIssueURL = "MF_CERTS_VAULT_ISSUE_URL"
 	envVaultRole     = "MF_CERTS_VAULT_ROLE"
 	//envVaultRole = "example-dot-com"
-	evnVaultToken = "MF_CERTS_VAULT_TOKEN"
+	envVaultToken = "MF_CERTS_VAULT_TOKEN"
 
 	// VAULT_HOST = "http://127.0.0.1:8200/v1/"
 	// ISSUE_URL  = "pki_int/issue/"
@@ -158,6 +159,8 @@ type config struct {
 	authnTimeout   time.Duration
 	signCAPath     string
 	signCAKeyPath  string
+	signRSABits    int
+	signHoursValid string
 	pkiIssueURL    string
 	pkiAccessToken string
 	pkiHost        string
@@ -177,11 +180,16 @@ func main() {
 		logger.Error("Failed to load CA certificates for issuing client certs")
 	}
 
+	pkiClient, err := initVaultClient(cfg)
+	if err != nil {
+		logger.Error("Failed to init vault client")
+	}
+
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
-	esClient := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
-	defer esClient.Close()
+	// esClient := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
+	// defer esClient.Close()
 
 	authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)
 	defer authCloser.Close()
@@ -191,7 +199,7 @@ func main() {
 
 	auth := authapi.NewClient(authTracer, authConn, cfg.authnTimeout)
 
-	svc := newService(auth, db, logger, esClient, tlsCert, caCert, cfg)
+	svc := newService(auth, db, logger, nil, tlsCert, caCert, cfg, pkiClient)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
@@ -249,10 +257,29 @@ func loadConfig() config {
 		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
 		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
 		authnTimeout:   authnTimeout,
+		signCAKeyPath:  mainflux.Env(envSignCAKey, defSignCAKeyPath),
+		signCAPath:     mainflux.Env(envSignCAPath, defSignCAPath),
+		signHoursValid: mainflux.Env(envSignHoursValid, defSignHoursValid),
+		pkiAccessToken: mainflux.Env(envVaultToken, defVaultToken),
+		pkiIssueURL:    mainflux.Env(envVaultIssueURL, defVaultIssueURL),
+		pkiRole:        mainflux.Env(envVaultRole, defVaultRole),
+		pkiHost:        mainflux.Env(envVaultHost, defVaultHost),
 	}
 
 }
+func initVaultClient(cfg config) (*vaultapi.Client, error) {
+	conf := &vaultapi.Config{
+		Address: cfg.pkiHost,
+	}
 
+	c, err := vaultapi.NewClient(conf)
+	if err != nil {
+		return nil, err
+	}
+	c.SetToken(cfg.pkiAccessToken)
+	return c, nil
+
+}
 func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *redis.Client {
 	db, err := strconv.Atoi(redisDB)
 	if err != nil {
@@ -325,7 +352,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config) certs.Service {
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiClient *vaultapi.Client) certs.Service {
 	certsRepo := postgres.NewCertsRepository(db, logger)
 
 	certsConfig := certs.Config{
@@ -349,6 +376,12 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 		AuthnTimeout:   cfg.authnTimeout,
 		SignTLSCert:    tlsCert,
 		SignX509Cert:   x509Cert,
+		SignHoursValid: cfg.signHoursValid,
+		SignRSABits:    cfg.signRSABits,
+		PkiAccessToken: cfg.pkiAccessToken,
+		PkiHost:        cfg.pkiHost,
+		PkiIssueURL:    cfg.pkiIssueURL,
+		PkiRole:        cfg.pkiRole,
 	}
 
 	config := mfsdk.Config{
@@ -358,7 +391,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 
 	sdk := mfsdk.NewSDK(config)
 
-	svc := certs.New(auth, certsRepo, sdk, certsConfig)
+	svc := certs.New(auth, certsRepo, sdk, certsConfig, pkiClient)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

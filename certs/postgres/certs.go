@@ -41,7 +41,7 @@ var _ certs.CertsRepository = (*certsRepository)(nil)
 type Cert struct {
 	ThingID string
 	Serial  string
-	Expire  time.Time
+	Expire  time.Duration
 }
 
 type certsRepository struct {
@@ -104,9 +104,9 @@ func nullString(s string) sql.NullString {
 }
 
 type dbCert struct {
-	ThingID string    `db:"thing_id"`
-	Serial  string    `db:"serial"`
-	Expire  time.Time `db:"expire"`
+	ThingID string        `db:"thing_id"`
+	Serial  string        `db:"serial"`
+	Expire  time.Duration `db:"expire"`
 }
 
 func toDBConfig(c certs.Cert) dbCert {
