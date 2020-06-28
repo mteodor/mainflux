@@ -16,22 +16,13 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const (
-	duplicateErr      = "unique_violation"
-	uuidErr           = "invalid input syntax for type uuid"
-	connConstraintErr = "connections_config_id_fkey"
-	fkViolation       = "foreign_key_violation"
-	configFieldsNum   = 8
-)
+const duplicateErr = "unique_violation"
 
 var (
-	errSaveDB           = errors.New("failed to save certs to database")
-	errMarshalChannel   = errors.New("failed to marshal channel into json")
-	errUnmarshalChannel = errors.New("failed to unmarshal json to channel")
-	errRetrieve         = errors.New("failed to retrieve certs  from database")
-	errEmptyThingID     = errors.New("failed to retrieve, thing id empty")
-	errUpdate           = errors.New("failed to update certs in database")
-	errRemove           = errors.New("failed to remove certs from database")
+	errSaveDB       = errors.New("failed to save certs to database")
+	errRetrieve     = errors.New("failed to retrieve certs  from database")
+	errEmptyThingID = errors.New("failed to retrieve, thing id empty")
+	errRemove       = errors.New("failed to remove certs from database")
 )
 
 var _ certs.CertsRepository = (*certsRepository)(nil)

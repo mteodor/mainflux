@@ -97,7 +97,10 @@ var _ Service = (*certsService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// IssueCert issues certificate for given thing id if access is granted with token
-	IssueCert(thingID, daysValid string, keyBits int, keyType string, token string) (Cert, error)
+	IssueCert(ctx context.Context, token, thingID, daysValid string, keyBits int, keyType string) (Cert, error)
+
+	// ListCertificates lists all certificates issued for given thing
+	ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (CertsPage, error)
 }
 
 type Config struct {
@@ -181,7 +184,7 @@ func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK,
 	}
 }
 
-func (cs *certsService) IssueCert(thingID string, daysValid string, keyBits int, keyType string, token string) (Cert, error) {
+func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (Cert, error) {
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
 		return Cert{}, errors.Wrap(ErrCertsCreation, err)
@@ -246,7 +249,15 @@ func (cs *certsService) IssueCert(thingID string, daysValid string, keyBits int,
 	return c, err
 }
 
-func (cs *certsService) RetrieveAll ()
+func (cs *certsService) ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (CertsPage, error) {
+	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return CertsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return cs.certsRepo.RetrieveAll(ctx, thingID, offset, limit)
+}
+
 func (cs *certsService) getIssueUrl() string {
 	url := cs.conf.PkiIssueURL + cs.conf.PkiRole
 	return url

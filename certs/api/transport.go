@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -17,11 +18,17 @@ import (
 
 const (
 	contentType = "application/json"
+	offset      = "offset"
+	limit       = "limit"
+
+	defOffset = 0
+	defLimit  = 10
 )
 
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
 	errUnauthorized           = errors.New("missing or invalid credentials provided")
+	errInvalidQueryParams     = errors.New("invalid query params")
 	errMalformedEntity        = errors.New("malformed entity")
 	errConflict               = errors.New("entity already exists")
 )
@@ -37,6 +44,13 @@ func MakeHandler(svc certs.Service) http.Handler {
 
 	r.Post("/certs", kithttp.NewServer(
 		doIssueCert(svc),
+		decodeCerts,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/certs/:id", kithttp.NewServer(
+		doListCertificates(svc),
 		decodeCerts,
 		encodeResponse,
 		opts...,
@@ -64,6 +78,55 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	}
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	l, err := readUintQuery(r, limit, defLimit)
+	if err != nil {
+		return nil, err
+	}
+	o, err := readUintQuery(r, offset, defOffset)
+	if err != nil {
+		return nil, err
+	}
+	req := listReq{
+		token:  r.Header.Get("Authorization"),
+		limit:  l,
+		offset: o,
+	}
+	return req, nil
+}
+
+func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return 0, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return def, nil
+	}
+
+	strval := vals[0]
+	val, err := strconv.ParseUint(strval, 10, 64)
+	if err != nil {
+		return 0, errInvalidQueryParams
+	}
+
+	return val, nil
+}
+
+func readStringQuery(r *http.Request, key string) (string, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return "", errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return "", nil
+	}
+
+	return vals[0], nil
 }
 
 func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {

@@ -8,21 +8,49 @@ import (
 )
 
 func doIssueCert(svc certs.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
-
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(addCertsReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		token := req.token
-
-		res, err := svc.IssueCert(req.ThingID, req.Valid, req.RsaBits, token)
-
+		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Valid, req.RsaBits, req.KeyType)
 		if err != nil {
 			return certsResponse{Error: err.Error()}, nil
 		}
+		return res, nil
+	}
+}
+
+func doListCertificates(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		page, err := svc.ListCertificates(ctx, req.token, req.thingID, req.offset, req.limit)
+		if err != nil {
+			return certsPageRes{
+				Error: err.Error(),
+			}, err
+		}
+		res := certsPageRes{
+			pageRes: pageRes{
+				Total:  page.Total,
+				Offset: page.Offset,
+				Limit:  page.Limit,
+			},
+			Certs: []certsResponse{},
+		}
+
+		for _, cert := range page.Certs {
+			view := certsResponse{
+				Serial:  cert.Serial,
+				ThingID: cert.ThingID,
+			}
+			res.Certs = append(res.Certs, view)
+		}
 
 		return res, nil
-
 	}
 }
