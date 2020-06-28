@@ -35,24 +35,3 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 
 	}
 }
-
-func doCert(svc provision.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(addCertReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		token := req.token
-		cert, key, err := svc.Cert(token, req.ThingID, req.HoursValid, req.RsaBits)
-		if err != nil {
-			return provisionRes{Error: err.Error()}, nil
-		}
-
-		res := certRes{
-			ThingCert:    cert,
-			ThingCertKey: key,
-		}
-		return res, nil
-	}
-}

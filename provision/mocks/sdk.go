@@ -1,8 +1,6 @@
 package mocks
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"sync"
 
 	"github.com/gofrs/uuid"
@@ -333,15 +331,4 @@ func (s *mockSDK) RemoveBootstrap(token, id string) error {
 
 func (s *mockSDK) Cert(thingID, daysValid string, rsaBits int, token string) (mfSDK.Cert, error) {
 	return mfSDK.Cert{}, nil
-}
-
-func (s *mockSDK) RemoveCert(key string, token string) error {
-	if key == invalid {
-		return mfSDK.ErrCertsRemove
-	}
-	return nil
-}
-
-func (s *mockSDK) LoadCertificates(conf mfSDK.Config) (tls.Certificate, *x509.Certificate, error) {
-	return s.sdk.LoadCertificates(conf)
 }

@@ -42,14 +42,8 @@ func MakeHandler(svc provision.Service) http.Handler {
 		opts...,
 	))
 
-	r.Post("/certs", kithttp.NewServer(
-		doCert(svc),
-		decodeCertsCreation,
-		encodeResponse,
-		opts...,
-	))
-
 	r.Handle("/metrics", promhttp.Handler())
+	r.GetFunc("/version", mainflux.Version("provision"))
 
 	return r
 }
@@ -78,19 +72,6 @@ func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := addThingReq{token: r.Header.Get("Authorization")}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-func decodeCertsCreation(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
-		return nil, errUnsupportedContentType
-	}
-
-	req := addCertReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
