@@ -15,9 +15,12 @@ type CertsPage struct {
 
 // CertsRepository specifies a Config persistence API.
 type CertsRepository interface {
-	//Save  saves cert for thing into database
+	// Save  saves cert for thing into database
 	Save(ctx context.Context, cert Cert) (string, error)
 
-	//RetrieveAll retrieve all issued certificates for given thing
+	// RetrieveAll retrieve all issued certificates for given thing
 	RetrieveAll(ctx context.Context, thingID string, offset, limit uint64) (CertsPage, error)
+
+	// Remove
+	Remove(ctx context.Context, cert Cert) error
 }

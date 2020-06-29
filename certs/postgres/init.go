@@ -66,6 +66,7 @@ func migrateDB(db *sqlx.DB) error {
 						thing_id	TEXT UNIQUE NOT NULL,
 						certs_id    TEXT UNIQUE NOT NULL,
 						expire		TIMESTAMPTZ NOT NULL,
+						serial      TEXT NOT NULL,
 						PRIMARY KEY (thing_id)
 					);`,
 				},

@@ -54,3 +54,15 @@ func doListCertificates(svc certs.Service) endpoint.Endpoint {
 		return res, nil
 	}
 }
+
+func doRevokeCertificate(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(revokeReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		return svc.RevokeCert(ctx, req.token, req.ThingID, req.CertSerial)
+
+	}
+}

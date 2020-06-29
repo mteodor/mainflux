@@ -56,6 +56,13 @@ func MakeHandler(svc certs.Service) http.Handler {
 		opts...,
 	))
 
+	r.Post("/certs/revoke", kithttp.NewServer(
+		doRevokeCertificate(svc),
+		decodeCerts,
+		encodeResponse,
+		opts...,
+	))
+
 	r.Handle("/metrics", promhttp.Handler())
 	r.GetFunc("/version", mainflux.Version("certs"))
 

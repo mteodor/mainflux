@@ -187,7 +187,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		if ps.conf.Bootstrap.X509Provision {
 			var cert SDK.Cert
 
-			cert, err = ps.sdk.Cert(thing.ID, ps.conf.Certs.HoursValid, ps.conf.Certs.RsaBits, token)
+			cert, err = ps.sdk.IssueCert(thing.ID, ps.conf.Certs.RsaBits, ps.conf.Certs.KeyType, ps.conf.Certs.HoursValid, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
@@ -226,7 +226,7 @@ func (ps *provisionService) Cert(token, thingId, daysValid string, rsaBits int) 
 	if err != nil {
 		return "", "", errors.Wrap(SDK.ErrUnauthorized, err)
 	}
-	cert, err := ps.sdk.Cert(th.ID, daysValid, rsaBits, token)
+	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Certs.RsaBits, ps.conf.Certs.KeyType, ps.conf.Certs.HoursValid, token)
 	return cert.ClientCert, cert.ClientKey, err
 }
 

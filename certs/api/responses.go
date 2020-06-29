@@ -13,7 +13,7 @@ type pageRes struct {
 type certsPageRes struct {
 	pageRes
 	Certs []certsResponse `json:"certs"`
-	Error string          `json:"error, omitempty"`
+	Error string          `json:"error,omitempty"`
 }
 
 type certsResponse struct {

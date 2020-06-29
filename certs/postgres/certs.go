@@ -30,7 +30,7 @@ var _ certs.CertsRepository = (*certsRepository)(nil)
 type Cert struct {
 	ThingID string
 	Serial  string
-	Expire  time.Duration
+	Expire  time.Time
 }
 
 type certsRepository struct {
@@ -113,6 +113,16 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 	return cert.Serial, nil
 }
 
+func (cr certsRepository) Remove(ctx context.Context, c certs.Cert) error {
+	q := `DELETE FROM certs WHERE :serial = :serial`
+	dbcrt := toDBConfig(c)
+	if _, err := cr.db.NamedExecContext(ctx, q, dbcrt); err != nil {
+		return errors.Wrap(errRemove, err)
+	}
+
+	return nil
+}
+
 func (cr certsRepository) rollback(content string, tx *sqlx.Tx, err error) {
 	cr.log.Error(fmt.Sprintf("%s %s", content, err))
 
@@ -133,9 +143,9 @@ func nullString(s string) sql.NullString {
 }
 
 type dbCert struct {
-	ThingID string        `db:"thing_id"`
-	Serial  string        `db:"serial"`
-	Expire  time.Duration `db:"expire"`
+	ThingID string    `db:"thing_id"`
+	Serial  string    `db:"serial"`
+	Expire  time.Time `db:"expire"`
 }
 
 func toDBConfig(c certs.Cert) dbCert {

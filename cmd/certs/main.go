@@ -113,7 +113,7 @@ const (
 	envSignRSABits    = "MF_CERTS_SIGN_RSA_BITS"
 
 	envVaultHost     = "MF_CERTS_VAULT_HOST"
-	envVaultIssueURL = "MF_CERTS_VAULT_ISSUE_URL"
+	envVaultIssueURL = "MF_CERTS_VAULT_PKI"
 	envVaultRole     = "MF_CERTS_VAULT_ROLE"
 	//envVaultRole = "example-dot-com"
 	envVaultToken = "MF_CERTS_VAULT_TOKEN"

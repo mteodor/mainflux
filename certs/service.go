@@ -14,9 +14,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/vault/api"
@@ -24,6 +27,11 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mitchellh/mapstructure"
+)
+
+const (
+	issue  = "issue"
+	revoke = "revoke"
 )
 
 var (
@@ -89,6 +97,15 @@ var (
 
 	// ErrPrivateKeyEmpty
 	ErrPrivateKeyEmpty = errors.New("private key is empty")
+
+	// ErrMissingCertSerial
+	ErrMissingCertSerial = errors.New("missing cert serial")
+
+	// ErrFailedToRemoveCertFromDB
+	ErrFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
+
+	// ErrFailedToParseCertificate
+	ErrFailedToParseCertificate = errors.New("failed to parse x509 certificate")
 )
 
 var _ Service = (*certsService)(nil)
@@ -101,6 +118,9 @@ type Service interface {
 
 	// ListCertificates lists all certificates issued for given thing
 	ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (CertsPage, error)
+
+	// RevokeCert
+	RevokeCert(ctx context.Context, token, thingID, certID string) (Revoke, error)
 }
 
 type Config struct {
@@ -142,24 +162,18 @@ type certsService struct {
 }
 
 type Cert struct {
-	ThingID        string        `mapstructure:"-"`
-	ClientCert     string        `mapstructure:"certificate"`
-	IssuingCA      string        `mapstructure:"issuing_ca"`
-	CAChain        []string      `mapstructure:"ca_chain"`
-	ClientKey      string        `mapstructure:"private_key"`
-	PrivateKeyType string        `mapstructure:"private_key_type"`
-	Serial         string        `mapstructure:"serial_number"`
-	Expire         time.Duration `mapstructure:"expiration"`
+	ThingID        string    `mapstructure:"-"`
+	ClientCert     string    `mapstructure:"certificate"`
+	IssuingCA      string    `mapstructure:"issuing_ca"`
+	CAChain        []string  `mapstructure:"ca_chain"`
+	ClientKey      string    `mapstructure:"private_key"`
+	PrivateKeyType string    `mapstructure:"private_key_type"`
+	Serial         string    `mapstructure:"serial_number"`
+	Expire         time.Time `mapstructure:"expiration"`
 }
 
-type pkiResponse struct {
-	ClientCert     string        `mapstructure:"certificate"`
-	IssuingCA      string        `mapstructure:"issuing_ca"`
-	CAChain        []string      `mapstructure:"ca_chain"`
-	ClientKey      string        `mapstructure:"private_key"`
-	PrivateKeyType string        `mapstructure:"private_key_type"`
-	Serial         string        `mapstructure:"serial_number"`
-	Expire         time.Duration `mapstructure:"expiration"`
+type Revoke struct {
+	RevocationTime time.Time `mapstructure:"revocation_time"`
 }
 
 type certReq struct {
@@ -167,6 +181,10 @@ type certReq struct {
 	TTL        string `json:"ttl"`
 	KeyBits    int    `json:"key_bits"`
 	KeyType    string `json:"key_type"`
+}
+
+type certRevokeReq struct {
+	SerialNumber string `json:"serial_number"`
 }
 
 type vaultRes struct {
@@ -230,23 +248,72 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	}
 
 	s, _ := api.ParseSecret(resp.Body)
-	pr := pkiResponse{}
+	cert := Cert{}
 
-	if err := mapstructure.Decode(s.Data, &pr); err != nil {
+	if err := decode(s.Data, &cert); err != nil {
 		return Cert{}, err
 	}
 
-	c = Cert{
-		ClientCert:     pr.ClientCert,
-		ClientKey:      pr.ClientKey,
-		PrivateKeyType: pr.PrivateKeyType,
-		IssuingCA:      pr.IssuingCA,
-		Serial:         pr.Serial,
-		CAChain:        pr.CAChain,
-		ThingID:        thing.ID,
+	// exp, _ := time.Parse(time.RFC3339, s.Data["expiration"].(string))
+	// cert.Expire = exp
+	fmt.Println(fmt.Sprintf("expiration: %v", s.Data["expiration"]))
+	cert.ThingID = thing.ID
+
+	_, err = cs.certsRepo.Save(context.Background(), cert)
+	return cert, err
+}
+
+func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSerial string) (Revoke, error) {
+	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return Revoke{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	_, err = cs.certsRepo.Save(context.Background(), c)
-	return c, err
+
+	cReq := certRevokeReq{
+		SerialNumber: certSerial,
+	}
+
+	r := cs.pkiClient.NewRequest("POST", cs.getRevokeUrl())
+	if err := r.SetJSONBody(cReq); err != nil {
+		return Revoke{}, err
+	}
+
+	resp, err := cs.pkiClient.RawRequest(r)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+
+	if err != nil {
+		return Revoke{}, err
+	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		_, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return Revoke{}, err
+		}
+		return Revoke{}, errors.Wrap(ErrCertsCreation, err)
+	}
+
+	s, err := api.ParseSecret(resp.Body)
+	if err != nil {
+		return Revoke{}, err
+	}
+
+	revoke := Revoke{}
+	if err := decode(s.Data, &revoke); err != nil {
+		return Revoke{}, err
+	}
+
+	c := Cert{
+		Serial: certSerial,
+	}
+
+	if err = cs.certsRepo.Remove(context.Background(), c); err != nil {
+		return Revoke{}, errors.Wrap(ErrFailedToRemoveCertFromDB, err)
+	}
+	return revoke, nil
+
 }
 
 func (cs *certsService) ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (CertsPage, error) {
@@ -259,7 +326,12 @@ func (cs *certsService) ListCertificates(ctx context.Context, token, thingID str
 }
 
 func (cs *certsService) getIssueUrl() string {
-	url := cs.conf.PkiIssueURL + cs.conf.PkiRole
+	url := cs.conf.PkiIssueURL + "/" + cs.conf.PkiRole
+	return url
+}
+
+func (cs *certsService) getRevokeUrl() string {
+	url := strings.Replace(cs.conf.PkiIssueURL, issue, revoke, 1)
 	return url
 }
 
@@ -382,4 +454,44 @@ func request(method, jwt, url string, data []byte) (*http.Response, error) {
 	}
 
 	return res, nil
+}
+
+func ToTimeHookFunc() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if t != reflect.TypeOf(time.Time{}) {
+			return data, nil
+		}
+
+		switch f.Kind() {
+		case reflect.String:
+			return time.Parse(time.RFC3339, data.(string))
+		case reflect.Float64:
+			return time.Unix(0, int64(data.(float64))*int64(time.Millisecond)), nil
+		case reflect.Int64:
+			return time.Unix(0, data.(int64)*int64(time.Millisecond)), nil
+		default:
+			return data, nil
+		}
+		// Convert it by parsing
+	}
+}
+
+func decode(input map[string]interface{}, result interface{}) error {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Metadata: nil,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			ToTimeHookFunc()),
+		Result: result,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(input); err != nil {
+		return err
+	}
+	return err
 }

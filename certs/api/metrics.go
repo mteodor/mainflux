@@ -40,9 +40,18 @@ func (ms *metricsMiddleware) IssueCert(ctx context.Context, token, thingID strin
 
 func (ms *metricsMiddleware) ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (certs.CertsPage, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "issue").Add(1)
-		ms.latency.With("method", "issue").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "list_certificates").Add(1)
+		ms.latency.With("method", "list_certificates").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.ListCertificates(ctx, token, thingID, offset, limit)
+}
+
+func (ms *metricsMiddleware) RevokeCert(ctx context.Context, token, thingID, certSerial string) (certs.Revoke, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "revoke_cert").Add(1)
+		ms.latency.With("method", "revoke_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RevokeCert(ctx, token, thingID, certSerial)
 }

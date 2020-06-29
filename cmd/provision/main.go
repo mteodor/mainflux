@@ -33,7 +33,7 @@ const (
 	defMfAPIKey        = ""
 	defMfBSURL         = "http://localhost:8202/things/configs"
 	defMfWhiteListURL  = "http://localhost:8202/things/state"
-	defMfCertsURL      = ""
+	defMfCertsURL      = "http://localhost:8204/"
 	defProvisionCerts  = "false"
 	defProvisionBS     = "true"
 	defBSAutoWhitelist = "true"
@@ -100,10 +100,6 @@ func main() {
 		BaseURL:           cfg.Server.ThingsLocation,
 		BootstrapURL:      cfg.Server.MfBSURL,
 		CertsURL:          cfg.Server.MfCertsURL,
-		CAPath:            cfg.Certs.CAPath,
-		CAKeyPath:         cfg.Certs.CAKeyPath,
-		HoursValid:        cfg.Certs.HoursValid,
-		RsaBits:           cfg.Certs.RsaBits,
 		HTTPAdapterPrefix: "http",
 		MsgContentType:    "application/json",
 		TLSVerification:   cfg.Server.TLS,
