@@ -1053,7 +1053,7 @@ func getDockerEnv() (*dockerEnv, error) {
 	}, nil
 }
 
-// defaultTranscdport returns a new http.Transport with similar default values to
+// defaultTransport returns a new http.Transport with similar default values to
 // http.DefaultTransport, but with idle connections and keepalives disabled.
 func defaultTransport() *http.Transport {
 	transport := defaultPooledTransport()
