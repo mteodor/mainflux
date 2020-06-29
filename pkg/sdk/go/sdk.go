@@ -5,11 +5,9 @@ package sdk
 
 import (
 	"crypto/tls"
-	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (
@@ -65,6 +63,9 @@ var (
 
 	// ErrCerts indicates error fetching certificates.
 	ErrCerts = errors.New("failed to fetch certs data")
+
+	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
+	ErrCertsRemove = errors.New("failed to remove certificate")
 )
 
 // ContentType represents all possible content types.
@@ -191,6 +192,12 @@ type SDK interface {
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	Whitelist(token string, cfg BootstrapConfig) error
+
+	// Cert issues a certificate for a thing required for mtls.
+	Cert(thingID, thingKey, token string) (Cert, error)
+
+	// RemoveCert remove a certificate
+	RemoveCert(id, token string) error
 }
 
 type mfSDK struct {
@@ -206,14 +213,6 @@ type mfSDK struct {
 	bootstrapPrefix   string
 	msgContentType    ContentType
 	client            *http.Client
-
-	certsCAPath     string
-	certsCertPath   string
-	certsCAKeyPath  string
-	certsHoursValid string
-	certsRsaBits    int
-	certsCA         *x509.Certificate
-	certsCert       tls.Certificate
 }
 
 // Config contains sdk configuration parameters.
@@ -229,17 +228,10 @@ type Config struct {
 	BootstrapPrefix   string
 	MsgContentType    ContentType
 	TLSVerification   bool
-
-	CAPath     string
-	CertPath   string
-	CAKeyPath  string
-	HoursValid string
-	RsaBits    int
 }
 
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
-
 	return &mfSDK{
 		baseURL:           conf.BaseURL,
 		readerURL:         conf.ReaderURL,
@@ -258,9 +250,6 @@ func NewSDK(conf Config) SDK {
 				},
 			},
 		},
-
-		certsHoursValid: conf.HoursValid,
-		certsRsaBits:    conf.RsaBits,
 	}
 }
 
