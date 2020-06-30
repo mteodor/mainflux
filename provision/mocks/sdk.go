@@ -334,5 +334,5 @@ func (s *mockSDK) IssueCert(thingID, daysValid string, rsaBits int, token string
 }
 
 func (s *mockSDK) RevokeCert(thingID, certID, token string) error {
-	return mfSDK.Cert{}, nil
+	panic("RevokeCert not implemented")
 }
