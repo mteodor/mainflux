@@ -39,73 +39,58 @@ import (
 )
 
 const (
-	defLogLevel       = "error"
-	defDBHost         = "localhost"
-	defDBPort         = "5432"
-	defDBUser         = "mainflux"
-	defDBPass         = "mainflux"
-	defDB             = "certs"
-	defDBSSLMode      = "disable"
-	defDBSSLCert      = ""
-	defDBSSLKey       = ""
-	defDBSSLRootCert  = ""
-	defClientTLS      = "false"
-	defCACerts        = ""
-	defPort           = "8204"
-	defServerCert     = ""
-	defServerKey      = ""
-	defBaseURL        = "http://localhost"
-	defThingsPrefix   = ""
-	defThingsESURL    = "localhost:6379"
-	defThingsESPass   = ""
-	defThingsESDB     = "0"
-	defESURL          = "localhost:6379"
-	defESPass         = ""
-	defESDB           = "0"
-	defESConsumerName = "certs"
-	defJaegerURL      = ""
-	defAuthnURL       = "localhost:8181"
-	defAuthnTimeout   = "1s"
+	defLogLevel      = "error"
+	defDBHost        = "localhost"
+	defDBPort        = "5432"
+	defDBUser        = "mainflux"
+	defDBPass        = "mainflux"
+	defDB            = "certs"
+	defDBSSLMode     = "disable"
+	defDBSSLCert     = ""
+	defDBSSLKey      = ""
+	defDBSSLRootCert = ""
+	defClientTLS     = "false"
+	defCACerts       = ""
+	defPort          = "8204"
+	defServerCert    = ""
+	defServerKey     = ""
+	defBaseURL       = "http://localhost"
+	defThingsPrefix  = ""
+	defJaegerURL     = ""
+	defAuthnURL      = "localhost:8181"
+	defAuthnTimeout  = "1s"
 
 	defSignCAPath     = "ca.crt"
 	defSignCAKeyPath  = "ca.key"
 	defSignHoursValid = "2048h"
 	defSignRSABits    = ""
 
-	defVaultHost = "http://127.0.0.1:8200/v1/"
-	//defVaultRole = "mainflux"
-	defVaultRole     = "example-dot-com"
-	defVaultToken    = "s.eN0R5b500gqpP0JEgebhDoth"
-	defVaultIssueURL = "pki_int/issue/"
+	defVaultHost     = ""
+	defVaultRole     = "mainflux"
+	defVaultToken    = ""
+	defVaultIssueURL = "pki_int/issue"
 
-	envLogLevel       = "MF_CERTS_LOG_LEVEL"
-	envDBHost         = "MF_CERTS_DB_HOST"
-	envDBPort         = "MF_CERTS_DB_PORT"
-	envDBUser         = "MF_CERTS_DB_USER"
-	envDBPass         = "MF_CERTS_DB_PASS"
-	envDB             = "MF_CERTS_DB"
-	envDBSSLMode      = "MF_CERTS_DB_SSL_MODE"
-	envDBSSLCert      = "MF_CERTS_DB_SSL_CERT"
-	envDBSSLKey       = "MF_CERTS_DB_SSL_KEY"
-	envDBSSLRootCert  = "MF_CERTS_DB_SSL_ROOT_CERT"
-	envEncryptKey     = "MF_CERTS_ENCRYPT_KEY"
-	envClientTLS      = "MF_CERTS_CLIENT_TLS"
-	envCACerts        = "MF_CERTS_CA_CERTS"
-	envPort           = "MF_CERTS_PORT"
-	envServerCert     = "MF_CERTS_SERVER_CERT"
-	envServerKey      = "MF_CERTS_SERVER_KEY"
-	envBaseURL        = "MF_SDK_BASE_URL"
-	envThingsPrefix   = "MF_SDK_THINGS_PREFIX"
-	envThingsESURL    = "MF_THINGS_ES_URL"
-	envThingsESPass   = "MF_THINGS_ES_PASS"
-	envThingsESDB     = "MF_THINGS_ES_DB"
-	envESURL          = "MF_CERTS_ES_URL"
-	envESPass         = "MF_CERTS_ES_PASS"
-	envESDB           = "MF_CERTS_ES_DB"
-	envESConsumerName = "MF_CERTS_EVENT_CONSUMER"
-	envJaegerURL      = "MF_JAEGER_URL"
-	envAuthnURL       = "MF_AUTHN_GRPC_URL"
-	envAuthnTimeout   = "MF_AUTHN_GRPC_TIMEOUT"
+	envPort          = "MF_CERTS_HTTP_PORT"
+	envLogLevel      = "MF_CERTS_LOG_LEVEL"
+	envDBHost        = "MF_CERTS_DB_HOST"
+	envDBPort        = "MF_CERTS_DB_PORT"
+	envDBUser        = "MF_CERTS_DB_USER"
+	envDBPass        = "MF_CERTS_DB_PASS"
+	envDB            = "MF_CERTS_DB"
+	envDBSSLMode     = "MF_CERTS_DB_SSL_MODE"
+	envDBSSLCert     = "MF_CERTS_DB_SSL_CERT"
+	envDBSSLKey      = "MF_CERTS_DB_SSL_KEY"
+	envDBSSLRootCert = "MF_CERTS_DB_SSL_ROOT_CERT"
+	envEncryptKey    = "MF_CERTS_ENCRYPT_KEY"
+	envClientTLS     = "MF_CERTS_CLIENT_TLS"
+	envCACerts       = "MF_CERTS_CA_CERTS"
+	envServerCert    = "MF_CERTS_SERVER_CERT"
+	envServerKey     = "MF_CERTS_SERVER_KEY"
+	envBaseURL       = "MF_SDK_BASE_URL"
+	envThingsPrefix  = "MF_SDK_THINGS_PREFIX"
+	envJaegerURL     = "MF_JAEGER_URL"
+	envAuthnURL      = "MF_AUTHN_GRPC_URL"
+	envAuthnTimeout  = "MF_AUTHN_GRPC_TIMEOUT"
 
 	envSignCAPath     = "MF_CERTS_SIGN_CA_PATH"
 	envSignCAKey      = "MF_CERTS_SIGN_CA_KEY_PATH"
@@ -115,14 +100,7 @@ const (
 	envVaultHost     = "MF_CERTS_VAULT_HOST"
 	envVaultIssueURL = "MF_CERTS_VAULT_PKI"
 	envVaultRole     = "MF_CERTS_VAULT_ROLE"
-	//envVaultRole = "example-dot-com"
-	envVaultToken = "MF_CERTS_VAULT_TOKEN"
-
-	// VAULT_HOST = "http://127.0.0.1:8200/v1/"
-	// ISSUE_URL  = "pki_int/issue/"
-	// ROLE       = "example-dot-com"
-	// VAULT_TOKEN = "s.eN0R5b500gqpP0JEgebhDoth"
-
+	envVaultToken    = "MF_CERTS_VAULT_TOKEN"
 )
 
 var (
@@ -147,13 +125,6 @@ type config struct {
 	serverKey      string
 	baseURL        string
 	thingsPrefix   string
-	esThingsURL    string
-	esThingsPass   string
-	esThingsDB     string
-	esURL          string
-	esPass         string
-	esDB           string
-	esConsumerName string
 	jaegerURL      string
 	authnURL       string
 	authnTimeout   time.Duration
@@ -231,6 +202,9 @@ func loadConfig() config {
 		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
+	log.Println("Dbport:" + dbConfig.Port)
+	log.Println("User:" + dbConfig.User)
+	log.Println("Pass:" + dbConfig.Pass)
 
 	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
@@ -247,13 +221,6 @@ func loadConfig() config {
 		serverKey:      mainflux.Env(envServerKey, defServerKey),
 		baseURL:        mainflux.Env(envBaseURL, defBaseURL),
 		thingsPrefix:   mainflux.Env(envThingsPrefix, defThingsPrefix),
-		esThingsURL:    mainflux.Env(envThingsESURL, defThingsESURL),
-		esThingsPass:   mainflux.Env(envThingsESPass, defThingsESPass),
-		esThingsDB:     mainflux.Env(envThingsESDB, defThingsESDB),
-		esURL:          mainflux.Env(envESURL, defESURL),
-		esPass:         mainflux.Env(envESPass, defESPass),
-		esDB:           mainflux.Env(envESDB, defESDB),
-		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
 		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
 		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
 		authnTimeout:   authnTimeout,
@@ -364,13 +331,6 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 		ServerKey:      cfg.serverKey,
 		BaseURL:        cfg.baseURL,
 		ThingsPrefix:   cfg.thingsPrefix,
-		EsThingsURL:    cfg.esThingsURL,
-		EsThingsPass:   cfg.esThingsPass,
-		EsThingsDB:     cfg.esThingsDB,
-		EsURL:          cfg.esURL,
-		EsPass:         cfg.esPass,
-		EsDB:           cfg.esDB,
-		EsConsumerName: cfg.esConsumerName,
 		JaegerURL:      cfg.jaegerURL,
 		AuthnURL:       cfg.authnURL,
 		AuthnTimeout:   cfg.authnTimeout,

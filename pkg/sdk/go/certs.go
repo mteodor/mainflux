@@ -15,11 +15,13 @@ type Cert struct {
 	ClientCert string `json:"client_cert,omitempty"`
 }
 
-func (sdk mfSDK) Cert(thingID, thingKey, token string) (Cert, error) {
+func (sdk mfSDK) IssueCert(thingID string, rsaBits int, keyType, valid, token string) (Cert, error) {
 	var c Cert
 	r := certReq{
-		ThingID:  thingID,
-		ThingKey: thingKey,
+		ThingID: thingID,
+		RsaBits: rsaBits,
+		KeyType: keyType,
+		Valid:   valid,
 	}
 	d, err := json.Marshal(r)
 	if err != nil {
@@ -62,6 +64,10 @@ func (sdk mfSDK) RemoveCert(id, token string) error {
 	}
 }
 
+func (sdk mfSDK) RevokeCert(thingID, certID string, token string) error {
+	panic("not implemented")
+}
+
 func request(method, jwt, url string, data []byte) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
@@ -79,6 +85,9 @@ func request(method, jwt, url string, data []byte) (*http.Response, error) {
 }
 
 type certReq struct {
-	ThingID  string `json:"thing_id,omitempty"`
-	ThingKey string `json:"thing_key,omitempty"`
+	ThingID    string `json:"thing_id"`
+	RsaBits    int    `json:"key_bits"`
+	KeyType    string `json:"key_type"`
+	Encryption string `json:"encryption"`
+	Valid      string `json:"valid"`
 }
