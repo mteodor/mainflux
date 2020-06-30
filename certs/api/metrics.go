@@ -31,8 +31,8 @@ func MetricsMiddleware(svc certs.Service, counter metrics.Counter, latency metri
 
 func (ms *metricsMiddleware) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (certs.Cert, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "issue").Add(1)
-		ms.latency.With("method", "issue").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "issue_cert").Add(1)
+		ms.latency.With("method", "issue_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.IssueCert(ctx, token, thingID, daysValid, keyBits, keyType)

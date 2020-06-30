@@ -336,8 +336,6 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 		return "", "", errors.Wrap(ErrFailedCertCreation, ErrRsaBitsValueWrong)
 	}
 	var priv interface{}
-	// p224 := elliptic.P224()
-	// priv, err := elliptic.GenerateKey(p224, rand.Reader)
 	priv, err := rsa.GenerateKey(rand.Reader, keyBits)
 
 	if daysValid == "" {

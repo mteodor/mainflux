@@ -49,7 +49,7 @@ func (lm *loggingMiddleware) ListCertificates(ctx context.Context, token, thingI
 
 func (lm *loggingMiddleware) RevokeCert(ctx context.Context, token, thingID, certSerial string) (c certs.Revoke, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_certificates for token: %s and thing: %s took %s to complete", token, thingID, time.Since(begin))
+		message := fmt.Sprintf("Method revoke_certificates for token: %s and thing: %s took %s to complete", token, thingID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
