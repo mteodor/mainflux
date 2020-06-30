@@ -195,6 +195,7 @@ type SDK interface {
 
 	// IssueCert issues a certificate for a thing required for mtls.
 	IssueCert(thingID string, rsaBits int, keyType, valid, token string) (Cert, error)
+
 	// RemoveCert removes a certificate
 	RemoveCert(id, token string) error
 
