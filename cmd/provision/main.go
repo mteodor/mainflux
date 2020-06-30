@@ -38,8 +38,6 @@ const (
 	defProvisionBS     = "true"
 	defBSAutoWhitelist = "true"
 	defBSContent       = ""
-	defCACerts         = ""
-	defCertsCAKey      = ""
 	defCertsHoursValid = "2400h"
 	defCertsRsaBits    = "4096"
 
@@ -64,8 +62,6 @@ const (
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
 	envCertsHoursValid  = "MF_PROVISION_CERTS_DAYS_VALID"
 	envCertsRsaBits     = "MF_PROVISION_CERTS_RSA_BITS"
-	envCertsCA          = "MF_PROVISION_CERTS_CA"
-	envCertsCAKey       = "MF_PROVISION_CERTS_CA_KEY"
 )
 
 var (
@@ -190,8 +186,6 @@ func loadConfig() (provision.Config, error) {
 			TLS:            tls,
 		},
 		Certs: provision.Certs{
-			CAPath:     mainflux.Env(envCertsCA, defCACerts),
-			CAKeyPath:  mainflux.Env(envCertsCAKey, defCertsCAKey),
 			HoursValid: mainflux.Env(envCertsHoursValid, defCertsHoursValid),
 			RsaBits:    rsaBits,
 		},

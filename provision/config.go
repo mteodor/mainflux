@@ -4,8 +4,6 @@
 package provision
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 
@@ -58,14 +56,9 @@ type Gateway struct {
 }
 
 type Certs struct {
-	CAPath     string            `json:"ca_path" toml:"ca_path" `
-	CertPath   string            `json:"cert_path" toml:"cert_path" `
-	CAKeyPath  string            `json:"priv_key_path" toml:"priv_key_path"`
-	HoursValid string            `json:"days_valid" toml:"days_valid"`
-	RsaBits    int               `json:"rsa_bits", toml:"rsa_bits"`
-	KeyType    string            `json:"key_type"`
-	CA         *x509.Certificate `json:"-" toml:"-"`
-	Cert       tls.Certificate   `json:"-" toml:"-"`
+	HoursValid string `json:"days_valid" toml:"days_valid"`
+	RsaBits    int    `json:"rsa_bits", toml:"rsa_bits"`
+	KeyType    string `json:"key_type"`
 }
 
 // Config struct of Provision
