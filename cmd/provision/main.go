@@ -60,7 +60,7 @@ const (
 	envProvisionBS      = "MF_PROVISION_BS_CONFIG_PROVISIONING"
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
-	envCertsHoursValid  = "MF_PROVISION_CERTS_DAYS_VALID"
+	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
 	envCertsRsaBits     = "MF_PROVISION_CERTS_RSA_BITS"
 )
 

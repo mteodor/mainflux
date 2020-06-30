@@ -45,7 +45,7 @@ default values.
 | MF_PROVISION_CERTS_CA               | Mainflux CA cert for generating certificates      | ""                             |
 | MF_PROVISION_CERTS_CA_KEY           | Mainflux CA cert private key                      | ""                             |
 | MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                           |
-| MF_PROVISION_CERTS_DAYS_VALID       | Number of days that certificate is valid          | "2400h"                        |
+| MF_PROVISION_CERTS_HOURS_VALID       | Number of days that certificate is valid          | "2400h"                        |
 
 By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. 
 
