@@ -13,12 +13,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
@@ -132,13 +131,6 @@ type Config struct {
 	ServerKey      string
 	BaseURL        string
 	ThingsPrefix   string
-	EsThingsURL    string
-	EsThingsPass   string
-	EsThingsDB     string
-	EsURL          string
-	EsPass         string
-	EsDB           string
-	EsConsumerName string
 	JaegerURL      string
 	AuthnURL       string
 	AuthnTimeout   time.Duration
@@ -146,7 +138,6 @@ type Config struct {
 	SignX509Cert   *x509.Certificate
 	SignRSABits    int
 	SignHoursValid string
-
 	PkiHost        string
 	PkiIssueURL    string
 	PkiAccessToken string
@@ -162,14 +153,14 @@ type certsService struct {
 }
 
 type Cert struct {
-	ThingID        string    `mapstructure:"-"`
-	ClientCert     string    `mapstructure:"certificate"`
-	IssuingCA      string    `mapstructure:"issuing_ca"`
-	CAChain        []string  `mapstructure:"ca_chain"`
-	ClientKey      string    `mapstructure:"private_key"`
-	PrivateKeyType string    `mapstructure:"private_key_type"`
-	Serial         string    `mapstructure:"serial_number"`
-	Expire         time.Time `mapstructure:"expiration"`
+	ThingID        string    `json:"thing_id" mapstructure:"-"`
+	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
+	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
+	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
+	ClientKey      string    `json:"client_key" mapstructure:"private_key"`
+	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
+	Serial         string    `json:"serial" mapstructure:"serial_number"`
+	Expire         time.Time `json:"expire" mapstructure:"-"`
 }
 
 type Revoke struct {
@@ -210,7 +201,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	var c Cert
 
 	// If pkiClient == nil we don't use 3rd party PKI service.
-	if cs.pkiClient == nil {
+	if cs.conf.PkiHost == "" {
 		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, keyBits)
 		if err != nil {
 			return Cert{}, errors.Wrap(ErrCertsCreation, err)
@@ -250,13 +241,14 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	s, _ := api.ParseSecret(resp.Body)
 	cert := Cert{}
 
-	if err := decode(s.Data, &cert); err != nil {
-		return Cert{}, err
-	}
+	mapstructure.Decode(s.Data, &cert)
 
-	// exp, _ := time.Parse(time.RFC3339, s.Data["expiration"].(string))
-	// cert.Expire = exp
-	fmt.Println(fmt.Sprintf("expiration: %v", s.Data["expiration"]))
+	// Expire time calc must be revised
+	// value doesnt look correct
+	exp, err := s.Data["expiration"].(json.Number).Float64()
+	expTime := time.Unix(0, int64(exp)*int64(time.Millisecond))
+	cert.Expire = expTime
+
 	cert.ThingID = thing.ID
 
 	_, err = cs.certsRepo.Save(context.Background(), cert)
@@ -300,9 +292,10 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSeri
 		return Revoke{}, err
 	}
 
-	revoke := Revoke{}
-	if err := decode(s.Data, &revoke); err != nil {
-		return Revoke{}, err
+	rev, err := s.Data["revocation_time"].(json.Number).Float64()
+	revTime := time.Unix(0, int64(rev)*int64(time.Millisecond))
+	revoke := Revoke{
+		RevocationTime: revTime,
 	}
 
 	c := Cert{
@@ -454,44 +447,4 @@ func request(method, jwt, url string, data []byte) (*http.Response, error) {
 	}
 
 	return res, nil
-}
-
-func ToTimeHookFunc() mapstructure.DecodeHookFunc {
-	return func(
-		f reflect.Type,
-		t reflect.Type,
-		data interface{}) (interface{}, error) {
-		if t != reflect.TypeOf(time.Time{}) {
-			return data, nil
-		}
-
-		switch f.Kind() {
-		case reflect.String:
-			return time.Parse(time.RFC3339, data.(string))
-		case reflect.Float64:
-			return time.Unix(0, int64(data.(float64))*int64(time.Millisecond)), nil
-		case reflect.Int64:
-			return time.Unix(0, data.(int64)*int64(time.Millisecond)), nil
-		default:
-			return data, nil
-		}
-		// Convert it by parsing
-	}
-}
-
-func decode(input map[string]interface{}, result interface{}) error {
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Metadata: nil,
-		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			ToTimeHookFunc()),
-		Result: result,
-	})
-	if err != nil {
-		return err
-	}
-
-	if err := decoder.Decode(input); err != nil {
-		return err
-	}
-	return err
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/mainflux/mainflux/certs"
 )
 
-func doIssueCert(svc certs.Service) endpoint.Endpoint {
+func issueCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(addCertsReq)
 		if err := req.validate(); err != nil {
@@ -17,11 +17,12 @@ func doIssueCert(svc certs.Service) endpoint.Endpoint {
 		if err != nil {
 			return certsResponse{Error: err.Error()}, nil
 		}
+
 		return res, nil
 	}
 }
 
-func doListCertificates(svc certs.Service) endpoint.Endpoint {
+func listCertificates(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)
 		if err := req.validate(); err != nil {
@@ -55,7 +56,7 @@ func doListCertificates(svc certs.Service) endpoint.Endpoint {
 	}
 }
 
-func doRevokeCertificate(svc certs.Service) endpoint.Endpoint {
+func revokeCertificate(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(revokeReq)
 		if err := req.validate(); err != nil {

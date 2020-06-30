@@ -43,22 +43,22 @@ func MakeHandler(svc certs.Service) http.Handler {
 	r := bone.New()
 
 	r.Post("/certs", kithttp.NewServer(
-		doIssueCert(svc),
+		issueCert(svc),
 		decodeCerts,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/certs/:id", kithttp.NewServer(
-		doListCertificates(svc),
-		decodeCerts,
+		listCertificates(svc),
+		decodeListCerts,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Post("/certs/revoke", kithttp.NewServer(
-		doRevokeCertificate(svc),
-		decodeCerts,
+		revokeCertificate(svc),
+		decodeRevokeCerts,
 		encodeResponse,
 		opts...,
 	))
@@ -87,7 +87,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	return json.NewEncoder(w).Encode(response)
 }
 
-func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	l, err := readUintQuery(r, limit, defLimit)
 	if err != nil {
 		return nil, err
@@ -142,6 +142,19 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := addCertsReq{token: r.Header.Get("Authorization")}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
+	if r.Header.Get("Content-Type") != contentType {
+		return nil, errUnsupportedContentType
+	}
+
+	req := revokeReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
