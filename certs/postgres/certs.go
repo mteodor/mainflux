@@ -19,10 +19,10 @@ import (
 const duplicateErr = "unique_violation"
 
 var (
-	errSaveDB       = errors.New("failed to save certs to database")
-	errRetrieve     = errors.New("failed to retrieve certs  from database")
-	errEmptyThingID = errors.New("failed to retrieve, thing id empty")
-	errRemove       = errors.New("failed to remove certs from database")
+	errSaveDB       = errors.New("failed to save certificate to database")
+	errRetrieve     = errors.New("failed to read certificate from database")
+	errEmptyThingID = errors.New("failed to read certificate, thing id empty")
+	errRemove       = errors.New("failed to remove certificate from database")
 )
 
 var _ certs.CertsRepository = (*certsRepository)(nil)
