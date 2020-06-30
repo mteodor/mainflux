@@ -329,6 +329,10 @@ func (s *mockSDK) RemoveBootstrap(token, id string) error {
 	return nil
 }
 
-func (s *mockSDK) Cert(thingID, daysValid string, rsaBits int, token string) (mfSDK.Cert, error) {
+func (s *mockSDK) IssueCert(thingID, daysValid string, rsaBits int, token string) (mfSDK.Cert, error) {
+	return mfSDK.Cert{}, nil
+}
+
+func (s *mockSDK) RevokeCert(thingID, certID, token string) error {
 	return mfSDK.Cert{}, nil
 }
