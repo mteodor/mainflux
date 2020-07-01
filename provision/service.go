@@ -50,8 +50,8 @@ type Service interface {
 	// A duration string is a possibly signed sequence of decimal numbers,
 	// each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-	// rsaBits for certificate key
-	Cert(token, thingId, duration string, rsaBits int) (string, string, error)
+	// keyBits for certificate key
+	Cert(token, thingId, duration string, keyBits int) (string, string, error)
 }
 
 type provisionService struct {
@@ -187,7 +187,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		if ps.conf.Bootstrap.X509Provision {
 			var cert SDK.Cert
 
-			cert, err = ps.sdk.IssueCert(thing.ID, ps.conf.Certs.RsaBits, ps.conf.Certs.KeyType, ps.conf.Certs.HoursValid, token)
+			cert, err = ps.sdk.IssueCert(thing.ID, ps.conf.Certs.KeyBits, ps.conf.Certs.KeyType, ps.conf.Certs.HoursValid, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
@@ -216,7 +216,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 	return res, nil
 }
 
-func (ps *provisionService) Cert(token, thingId, daysValid string, rsaBits int) (string, string, error) {
+func (ps *provisionService) Cert(token, thingId, daysValid string, keyBits int) (string, string, error) {
 	token, err := ps.createTokenIfEmpty(token)
 	if err != nil {
 		return "", "", err
@@ -226,7 +226,7 @@ func (ps *provisionService) Cert(token, thingId, daysValid string, rsaBits int) 
 	if err != nil {
 		return "", "", errors.Wrap(SDK.ErrUnauthorized, err)
 	}
-	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Certs.RsaBits, ps.conf.Certs.KeyType, ps.conf.Certs.HoursValid, token)
+	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Certs.KeyBits, ps.conf.Certs.KeyType, ps.conf.Certs.HoursValid, token)
 	return cert.ClientCert, cert.ClientKey, err
 }
 

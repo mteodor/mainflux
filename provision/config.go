@@ -57,7 +57,7 @@ type Gateway struct {
 
 type Certs struct {
 	HoursValid string `json:"days_valid" toml:"days_valid"`
-	RsaBits    int    `json:"rsa_bits", toml:"rsa_bits"`
+	KeyBits    int    `json:"rsa_bits", toml:"rsa_bits"`
 	KeyType    string `json:"key_type"`
 }
 
