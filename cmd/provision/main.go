@@ -39,7 +39,7 @@ const (
 	defBSAutoWhitelist = "true"
 	defBSContent       = ""
 	defCertsHoursValid = "2400h"
-	defCertsRsaBits    = "4096"
+	defCertsKeyBits    = "4096"
 
 	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
 	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
@@ -61,7 +61,7 @@ const (
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
 	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
-	envCertsRsaBits     = "MF_PROVISION_CERTS_RSA_BITS"
+	envCertsKeyBits     = "MF_PROVISION_CERTS_RSA_BITS"
 )
 
 var (
@@ -71,7 +71,7 @@ var (
 	errFailGettingCertSettings  = errors.New("failed to get certificate file setting")
 	errFailGettingTLSConf       = errors.New("failed to get TLS setting")
 	errFailGettingProvBS        = errors.New("failed to get BS url setting")
-	errFailSettingRsaBits       = errors.New("failed to set rsa number of bits")
+	errFailSettingKeyBits       = errors.New("failed to set rsa number of bits")
 )
 
 func main() {
@@ -164,9 +164,9 @@ func loadConfig() (provision.Config, error) {
 	if autoWhiteList && !provisionBS {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
-	rsaBits, err := strconv.Atoi(mainflux.Env(envCertsRsaBits, defCertsRsaBits))
+	keyBits, err := strconv.Atoi(mainflux.Env(envCertsKeyBits, defCertsKeyBits))
 	if err != nil && provisionX509 == true {
-		return provision.Config{}, errFailSettingRsaBits
+		return provision.Config{}, errFailSettingKeyBits
 	}
 
 	cfg := provision.Config{
@@ -187,7 +187,7 @@ func loadConfig() (provision.Config, error) {
 		},
 		Certs: provision.Certs{
 			HoursValid: mainflux.Env(envCertsHoursValid, defCertsHoursValid),
-			RsaBits:    rsaBits,
+			KeyBits:    keyBits,
 		},
 		Bootstrap: provision.Bootstrap{
 			X509Provision: provisionX509,
