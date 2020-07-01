@@ -65,10 +65,10 @@ const (
 	defSignHoursValid = "2048h"
 	defSignRSABits    = ""
 
-	defVaultHost     = ""
-	defVaultRole     = "mainflux"
-	defVaultToken    = ""
-	defVaultIssueURL = "pki_int/issue"
+	defVaultHost    = ""
+	defVaultRole    = "mainflux"
+	defVaultToken   = ""
+	defVaultPKIPath = "pki_int"
 
 	envPort          = "MF_CERTS_HTTP_PORT"
 	envLogLevel      = "MF_CERTS_LOG_LEVEL"
@@ -97,10 +97,10 @@ const (
 	envSignHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
 	envSignRSABits    = "MF_CERTS_SIGN_RSA_BITS"
 
-	envVaultHost     = "MF_CERTS_VAULT_HOST"
-	envVaultIssueURL = "MF_CERTS_VAULT_PKI"
-	envVaultRole     = "MF_CERTS_VAULT_ROLE"
-	envVaultToken    = "MF_CERTS_VAULT_TOKEN"
+	envVaultHost    = "MF_CERTS_VAULT_HOST"
+	envVaultPKIPath = "MF_CERTS_VAULT_PKI_PATH"
+	envVaultRole    = "MF_CERTS_VAULT_ROLE"
+	envVaultToken   = "MF_CERTS_VAULT_TOKEN"
 )
 
 var (
@@ -115,27 +115,30 @@ var (
 )
 
 type config struct {
-	logLevel       string
-	dbConfig       postgres.Config
-	clientTLS      bool
-	encKey         []byte
-	caCerts        string
-	httpPort       string
-	serverCert     string
-	serverKey      string
-	baseURL        string
-	thingsPrefix   string
-	jaegerURL      string
-	authnURL       string
-	authnTimeout   time.Duration
+	logLevel     string
+	dbConfig     postgres.Config
+	clientTLS    bool
+	encKey       []byte
+	caCerts      string
+	httpPort     string
+	serverCert   string
+	serverKey    string
+	baseURL      string
+	thingsPrefix string
+	jaegerURL    string
+	authnURL     string
+	authnTimeout time.Duration
+	// Sign and issue certificates
+	// without 3rd party PKI
 	signCAPath     string
 	signCAKeyPath  string
 	signRSABits    int
 	signHoursValid string
-	pkiIssueURL    string
-	pkiAccessToken string
-	pkiHost        string
-	pkiRole        string
+	// 3rd party PKI API access settings
+	pkiPath  string
+	pkiToken string
+	pkiHost  string
+	pkiRole  string
 }
 
 func main() {
@@ -159,9 +162,6 @@ func main() {
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
-	// esClient := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
-	// defer esClient.Close()
-
 	authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)
 	defer authCloser.Close()
 
@@ -174,7 +174,6 @@ func main() {
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
-	//go subscribeToThingsES(svc, thingsESConn, cfg.esConsumerName, logger)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -202,35 +201,40 @@ func loadConfig() config {
 		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
-	log.Println("Dbport:" + dbConfig.Port)
-	log.Println("User:" + dbConfig.User)
-	log.Println("Pass:" + dbConfig.Pass)
 
 	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
 
+	signRSABits, err := strconv.Atoi(mainflux.Env(envSignRSABits, defSignRSABits))
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envSignRSABits, err.Error())
+	}
+
 	return config{
-		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
-		dbConfig:       dbConfig,
-		clientTLS:      tls,
-		caCerts:        mainflux.Env(envCACerts, defCACerts),
-		httpPort:       mainflux.Env(envPort, defPort),
-		serverCert:     mainflux.Env(envServerCert, defServerCert),
-		serverKey:      mainflux.Env(envServerKey, defServerKey),
-		baseURL:        mainflux.Env(envBaseURL, defBaseURL),
-		thingsPrefix:   mainflux.Env(envThingsPrefix, defThingsPrefix),
-		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
-		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:   authnTimeout,
+		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
+		dbConfig:     dbConfig,
+		clientTLS:    tls,
+		caCerts:      mainflux.Env(envCACerts, defCACerts),
+		httpPort:     mainflux.Env(envPort, defPort),
+		serverCert:   mainflux.Env(envServerCert, defServerCert),
+		serverKey:    mainflux.Env(envServerKey, defServerKey),
+		baseURL:      mainflux.Env(envBaseURL, defBaseURL),
+		thingsPrefix: mainflux.Env(envThingsPrefix, defThingsPrefix),
+		jaegerURL:    mainflux.Env(envJaegerURL, defJaegerURL),
+		authnURL:     mainflux.Env(envAuthnURL, defAuthnURL),
+		authnTimeout: authnTimeout,
+
 		signCAKeyPath:  mainflux.Env(envSignCAKey, defSignCAKeyPath),
 		signCAPath:     mainflux.Env(envSignCAPath, defSignCAPath),
 		signHoursValid: mainflux.Env(envSignHoursValid, defSignHoursValid),
-		pkiAccessToken: mainflux.Env(envVaultToken, defVaultToken),
-		pkiIssueURL:    mainflux.Env(envVaultIssueURL, defVaultIssueURL),
-		pkiRole:        mainflux.Env(envVaultRole, defVaultRole),
-		pkiHost:        mainflux.Env(envVaultHost, defVaultHost),
+		signRSABits:    signRSABits,
+
+		pkiToken: mainflux.Env(envVaultToken, defVaultToken),
+		pkiPath:  mainflux.Env(envVaultPKIPath, defVaultPKIPath),
+		pkiRole:  mainflux.Env(envVaultRole, defVaultRole),
+		pkiHost:  mainflux.Env(envVaultHost, defVaultHost),
 	}
 
 }
@@ -243,7 +247,7 @@ func initVaultClient(cfg config) (*vaultapi.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.SetToken(cfg.pkiAccessToken)
+	c.SetToken(cfg.pkiToken)
 	return c, nil
 
 }
@@ -326,7 +330,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 		LogLevel:       cfg.logLevel,
 		ClientTLS:      cfg.clientTLS,
 		CaCerts:        cfg.caCerts,
-		HttpPort:       cfg.httpPort,
+		HTTPPort:       cfg.httpPort,
 		ServerCert:     cfg.serverCert,
 		ServerKey:      cfg.serverKey,
 		BaseURL:        cfg.baseURL,
@@ -338,10 +342,10 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 		SignX509Cert:   x509Cert,
 		SignHoursValid: cfg.signHoursValid,
 		SignRSABits:    cfg.signRSABits,
-		PkiAccessToken: cfg.pkiAccessToken,
-		PkiHost:        cfg.pkiHost,
-		PkiIssueURL:    cfg.pkiIssueURL,
-		PkiRole:        cfg.pkiRole,
+		PKIToken:       cfg.pkiToken,
+		PKIHost:        cfg.pkiHost,
+		PKIPath:        cfg.pkiPath,
+		PKIRole:        cfg.pkiRole,
 	}
 
 	config := mfsdk.Config{
@@ -421,11 +425,3 @@ func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {
 
 	return tlsCert, caCert, nil
 }
-
-// func subscribeToThingsES(svc certs.Service, client *redis.Client, consumer string, logger mflog.Logger) {
-// 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
-// 	logger.Info("Subscribed to Redis Event Store")
-// 	if err := eventStore.Subscribe("mainflux.things"); err != nil {
-// 		logger.Warn(fmt.Sprintf("Certs service failed to subscribe to event sourcing: %s", err))
-// 	}
-// }
