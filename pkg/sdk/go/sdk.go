@@ -194,7 +194,7 @@ type SDK interface {
 	Whitelist(token string, cfg BootstrapConfig) error
 
 	// IssueCert issues a certificate for a thing required for mtls.
-	IssueCert(thingID string, rsaBits int, keyType, valid, token string) (Cert, error)
+	IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, error)
 
 	// RemoveCert removes a certificate
 	RemoveCert(id, token string) error
@@ -211,6 +211,7 @@ type mfSDK struct {
 	readerPrefix      string
 	usersPrefix       string
 	thingsPrefix      string
+	certsPrefix       string
 	channelsPrefix    string
 	httpAdapterPrefix string
 	bootstrapPrefix   string

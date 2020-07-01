@@ -8,18 +8,20 @@ import (
 	"net/http"
 )
 
+const certsEndpoint = "certs"
+
 // Cert represents certs data.
 type Cert struct {
-	CACert     string `json:"ca_cert,omitempty"`
+	CACert     string `json:"issuing_ca,omitempty"`
 	ClientKey  string `json:"client_key,omitempty"`
 	ClientCert string `json:"client_cert,omitempty"`
 }
 
-func (sdk mfSDK) IssueCert(thingID string, rsaBits int, keyType, valid, token string) (Cert, error) {
+func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, error) {
 	var c Cert
 	r := certReq{
 		ThingID: thingID,
-		RsaBits: rsaBits,
+		KeyBits: keyBits,
 		KeyType: keyType,
 		Valid:   valid,
 	}
@@ -27,12 +29,13 @@ func (sdk mfSDK) IssueCert(thingID string, rsaBits int, keyType, valid, token st
 	if err != nil {
 		return Cert{}, err
 	}
-	res, err := request(http.MethodPost, token, sdk.certsURL, d)
+	url := createURL(sdk.certsURL, sdk.certsPrefix, certsEndpoint)
+	res, err := request(http.MethodPost, token, url, d)
 	if err != nil {
 		return Cert{}, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusCreated {
+	if res.StatusCode != http.StatusOK {
 		return Cert{}, ErrCerts
 	}
 	body, err := ioutil.ReadAll(res.Body)
@@ -40,6 +43,7 @@ func (sdk mfSDK) IssueCert(thingID string, rsaBits int, keyType, valid, token st
 		println(err.Error())
 		return Cert{}, err
 	}
+	fmt.Println(string(body))
 	if err := json.Unmarshal(body, &c); err != nil {
 		return Cert{}, err
 	}
@@ -86,7 +90,7 @@ func request(method, jwt, url string, data []byte) (*http.Response, error) {
 
 type certReq struct {
 	ThingID    string `json:"thing_id"`
-	RsaBits    int    `json:"key_bits"`
+	KeyBits    int    `json:"key_bits"`
 	KeyType    string `json:"key_type"`
 	Encryption string `json:"encryption"`
 	Valid      string `json:"valid"`
