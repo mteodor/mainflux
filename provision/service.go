@@ -51,7 +51,7 @@ type Service interface {
 	// each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// keyBits for certificate key
-	Cert(token, thingId, duration string, keyBits int) (string, string, error)
+	Cert(token, thingID, duration string, keyBits int) (string, string, error)
 }
 
 type provisionService struct {
@@ -212,17 +212,19 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 
 	}
 
-	ps.updateGateway(token, bs, channels)
+	if err = ps.updateGateway(token, bs, channels); err != nil {
+		return res, err
+	}
 	return res, nil
 }
 
-func (ps *provisionService) Cert(token, thingId, daysValid string, keyBits int) (string, string, error) {
+func (ps *provisionService) Cert(token, thingID, daysValid string, keyBits int) (string, string, error) {
 	token, err := ps.createTokenIfEmpty(token)
 	if err != nil {
 		return "", "", err
 	}
 
-	th, err := ps.sdk.Thing(thingId, token)
+	th, err := ps.sdk.Thing(thingID, token)
 	if err != nil {
 		return "", "", errors.Wrap(SDK.ErrUnauthorized, err)
 	}
