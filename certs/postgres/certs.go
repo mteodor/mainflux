@@ -5,7 +5,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -20,12 +19,11 @@ const duplicateErr = "unique_violation"
 
 var (
 	errSaveDB       = errors.New("failed to save certificate to database")
-	errRetrieve     = errors.New("failed to read certificate from database")
 	errEmptyThingID = errors.New("failed to read certificate, thing id empty")
 	errRemove       = errors.New("failed to remove certificate from database")
 )
 
-var _ certs.CertsRepository = (*certsRepository)(nil)
+var _ certs.Repository = (*certsRepository)(nil)
 
 type Cert struct {
 	ThingID string
@@ -38,21 +36,21 @@ type certsRepository struct {
 	log logger.Logger
 }
 
-// NewCertsRepository instantiates a PostgreSQL implementation of certs
+// NewRepository instantiates a PostgreSQL implementation of certs
 // repository.
-func NewCertsRepository(db *sqlx.DB, log logger.Logger) certs.CertsRepository {
+func NewRepository(db *sqlx.DB, log logger.Logger) certs.Repository {
 	return &certsRepository{db: db, log: log}
 }
 
-func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offset, limit uint64) (certs.CertsPage, error) {
+func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offset, limit uint64) (certs.Page, error) {
 	if thingID == "" {
-		return certs.CertsPage{}, errEmptyThingID
+		return certs.Page{}, errEmptyThingID
 	}
 	q := `SELECT FROM certs WHERE thing_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
 	rows, err := cr.db.Query(q, thingID, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
-		return certs.CertsPage{}, err
+		return certs.Page{}, err
 	}
 	defer rows.Close()
 
@@ -62,7 +60,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offse
 		c := certs.Cert{}
 		if err := rows.Scan(&c.ThingID, &c.Serial, &c.Expire); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
-			return certs.CertsPage{}, err
+			return certs.Page{}, err
 
 		}
 		certificates = append(certificates, c)
@@ -72,10 +70,10 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offse
 	var total uint64
 	if err := cr.db.QueryRow(q, thingID).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
-		return certs.CertsPage{}, err
+		return certs.Page{}, err
 	}
 
-	return certs.CertsPage{
+	return certs.Page{
 		Total:  total,
 		Limit:  limit,
 		Offset: offset,
@@ -93,7 +91,7 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 		return "", errors.Wrap(errSaveDB, err)
 	}
 
-	dbcrt := toDBConfig(cert)
+	dbcrt := toDBCert(cert)
 
 	if _, err := tx.NamedExec(q, dbcrt); err != nil {
 		e := err
@@ -115,7 +113,7 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 func (cr certsRepository) Remove(ctx context.Context, c certs.Cert) error {
 	q := `DELETE FROM certs WHERE serial = :serial`
-	dbcrt := toDBConfig(c)
+	dbcrt := toDBCert(c)
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcrt); err != nil {
 		return errors.Wrap(errRemove, err)
 	}
@@ -131,36 +129,16 @@ func (cr certsRepository) rollback(content string, tx *sqlx.Tx, err error) {
 	}
 }
 
-func nullString(s string) sql.NullString {
-	if s == "" {
-		return sql.NullString{}
-	}
-
-	return sql.NullString{
-		String: s,
-		Valid:  true,
-	}
-}
-
 type dbCert struct {
 	ThingID string    `db:"thing_id"`
 	Serial  string    `db:"serial"`
 	Expire  time.Time `db:"expire"`
 }
 
-func toDBConfig(c certs.Cert) dbCert {
+func toDBCert(c certs.Cert) dbCert {
 	return dbCert{
 		ThingID: c.ThingID,
 		Serial:  c.Serial,
 		Expire:  c.Expire,
 	}
-}
-
-func toConfig(dbcrt dbCert) Cert {
-	c := Cert{
-		ThingID: dbcrt.ThingID,
-		Serial:  dbcrt.Serial,
-		Expire:  dbcrt.Expire,
-	}
-	return c
 }

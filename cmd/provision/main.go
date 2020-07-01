@@ -33,7 +33,7 @@ const (
 	defMfAPIKey        = ""
 	defMfBSURL         = "http://localhost:8202/things/configs"
 	defMfWhiteListURL  = "http://localhost:8202/things/state"
-	defMfCertsURL      = "http://localhost:8204/"
+	defMfCertsURL      = "http://localhost:8204"
 	defProvisionCerts  = "false"
 	defProvisionBS     = "true"
 	defBSAutoWhitelist = "true"

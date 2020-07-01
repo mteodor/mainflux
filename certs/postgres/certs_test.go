@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-const numConfigs = 10
-
 func TestIssueCert(t *testing.T) {
 
 }

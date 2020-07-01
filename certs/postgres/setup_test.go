@@ -5,7 +5,6 @@ package postgres_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"testing"
 
@@ -13,11 +12,6 @@ import (
 	"github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/logger"
 	dockertest "github.com/ory/dockertest/v3"
-)
-
-const (
-	wrongID    = "0"
-	wrongValue = "wrong-value"
 )
 
 var (
@@ -28,7 +22,8 @@ var (
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
+		return
 	}
 
 	cfg := []string{
@@ -38,7 +33,7 @@ func TestMain(m *testing.M) {
 	}
 	container, err := pool.Run("postgres", "10.2-alpine", cfg)
 	if err != nil {
-		log.Fatalf("Could not start container: %s", err)
+		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
 	}
 
 	port := container.GetPort("5432/tcp")
@@ -51,7 +46,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
 	dbConfig := postgres.Config{
@@ -67,7 +62,7 @@ func TestMain(m *testing.M) {
 	}
 
 	if db, err = postgres.Connect(dbConfig); err != nil {
-		log.Fatalf("Could not setup test DB connection: %s", err)
+		testLog.Error(fmt.Sprintf("Could not setup test DB connection: %s", err))
 	}
 
 	code := m.Run()
@@ -75,7 +70,7 @@ func TestMain(m *testing.M) {
 	// defers will not be run when using os.Exit
 	db.Close()
 	if err := pool.Purge(container); err != nil {
-		log.Fatalf("Could not purge container: %s", err)
+		testLog.Error(fmt.Sprintf("Could not purge container: %s", err))
 	}
 
 	os.Exit(code)

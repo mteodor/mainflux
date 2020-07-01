@@ -13,7 +13,6 @@ var cmdCerts = []cobra.Command{
 		Short: "issue <thing_id> <keybits> <keytype> <hoursvalid> <user_auth_token>",
 		Long:  `Issues new certificate for a thing`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logError(errors.New("test:" + strconv.FormatInt(int64(len(args)), 10)))
 			if len(args) != 5 {
 				logUsage(cmd.Short)
 				return
@@ -35,7 +34,6 @@ var cmdCerts = []cobra.Command{
 				return
 			}
 			logJSON(c)
-			logOK()
 		},
 	},
 }

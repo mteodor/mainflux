@@ -324,7 +324,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 }
 
 func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiClient *vaultapi.Client) certs.Service {
-	certsRepo := postgres.NewCertsRepository(db, logger)
+	certsRepo := postgres.NewRepository(db, logger)
 
 	certsConfig := certs.Config{
 		LogLevel:       cfg.logLevel,

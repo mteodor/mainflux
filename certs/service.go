@@ -70,6 +70,9 @@ var (
 	// ErrFailedCertCreation indicates problem in certificate creation
 	ErrFailedCertCreation = errors.New("failed to create client certificate")
 
+	// ErrFailedKeyCreation indicates problem in key creation
+	ErrFailedKeyCreation = errors.New("failed to create client private key")
+
 	// ErrFailedDateSetting failed to set date for certificate
 	ErrFailedDateSetting = errors.New("failed to set date for certificate")
 
@@ -102,6 +105,9 @@ var (
 
 	// ErrFailedToParseCertificate indicates problem parsing certificate
 	ErrFailedToParseCertificate = errors.New("failed to parse x509 certificate")
+
+	// ErrFailedCertDecoding indicates problem with decoding response from PKI service
+	ErrFailedCertDecoding = errors.New("failed to decode response from PKI service")
 )
 
 var _ Service = (*certsService)(nil)
@@ -113,7 +119,7 @@ type Service interface {
 	IssueCert(ctx context.Context, token, thingID, daysValid string, keyBits int, keyType string) (Cert, error)
 
 	// ListCertificates lists all certificates issued for given thing
-	ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (CertsPage, error)
+	ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error)
 
 	// RevokeCert
 	RevokeCert(ctx context.Context, token, thingID, certID string) (Revoke, error)
@@ -143,7 +149,7 @@ type Config struct {
 
 type certsService struct {
 	auth      mainflux.AuthNServiceClient
-	certsRepo CertsRepository
+	certsRepo Repository
 	sdk       mfsdk.SDK
 	conf      Config
 	PKIClient *api.Client
@@ -175,12 +181,8 @@ type certRevokeReq struct {
 	SerialNumber string `json:"serial_number"`
 }
 
-type vaultRes struct {
-	Data map[string]interface{} `json:"data" mapstructure:"data"`
-}
-
 // New returns new Certs service.
-func New(auth mainflux.AuthNServiceClient, certs CertsRepository, sdk mfsdk.SDK, config Config, c *api.Client) Service {
+func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, config Config, c *api.Client) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,
@@ -238,11 +240,17 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	s, _ := api.ParseSecret(resp.Body)
 	cert := Cert{}
 
-	mapstructure.Decode(s.Data, &cert)
+	if err = mapstructure.Decode(s.Data, &cert); err != nil {
+		return Cert{}, errors.Wrap(ErrFailedCertDecoding, err)
+	}
 
 	// Expire time calc must be revised
 	// value doesnt look correct
 	exp, err := s.Data["expiration"].(json.Number).Float64()
+	if err != nil {
+		return cert, err
+	}
+
 	expTime := time.Unix(0, int64(exp)*int64(time.Millisecond))
 	cert.Expire = expTime
 
@@ -290,6 +298,9 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSeri
 	}
 
 	rev, err := s.Data["revocation_time"].(json.Number).Float64()
+	if err != nil {
+		return Revoke{}, err
+	}
 	revTime := time.Unix(0, int64(rev)*int64(time.Millisecond))
 	revoke := Revoke{
 		RevocationTime: revTime,
@@ -306,10 +317,10 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSeri
 
 }
 
-func (cs *certsService) ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (CertsPage, error) {
+func (cs *certsService) ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return CertsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	return cs.certsRepo.RetrieveAll(ctx, thingID, offset, limit)
@@ -332,6 +343,9 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 	}
 	var priv interface{}
 	priv, err := rsa.GenerateKey(rand.Reader, keyBits)
+	if err != nil {
+		return "", "", errors.Wrap(ErrFailedKeyCreation, err)
+	}
 
 	if daysValid == "" {
 		daysValid = cs.conf.SignHoursValid
@@ -424,20 +438,4 @@ func pemBlockForKey(priv interface{}) (*pem.Block, error) {
 	default:
 		return nil, nil
 	}
-}
-
-func request(method, jwt, url string, data []byte) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", jwt)
-	c := &http.Client{}
-	res, err := c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }

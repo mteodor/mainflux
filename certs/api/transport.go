@@ -123,19 +123,6 @@ func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
 	return val, nil
 }
 
-func readStringQuery(r *http.Request, key string) (string, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return "", errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return "", nil
-	}
-
-	return vals[0], nil
-}
-
 func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, errUnsupportedContentType
