@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/certs"
@@ -13,7 +14,8 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Valid, req.RsaBits, req.KeyType)
+		fmt.Println(fmt.Sprintf("request %v", req))
+		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Valid, req.KeyBits, req.KeyType)
 		if err != nil {
 			return certsResponse{Error: err.Error()}, nil
 		}

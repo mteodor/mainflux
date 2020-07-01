@@ -73,8 +73,8 @@ var (
 	// ErrFailedDateSetting failed to set date for certificate
 	ErrFailedDateSetting = errors.New("failed to set date for certificate")
 
-	// ErrRsaBitsValueWrong indicates missing RSA bits for certificate creation
-	ErrRsaBitsValueWrong = errors.New("missing RSA bits for certificate creation")
+	// ErrKeyBitsValueWrong indicates missing RSA bits for certificate creation
+	ErrKeyBitsValueWrong = errors.New("missing RSA bits for certificate creation")
 
 	// ErrMissingCACertificate indicates missing CA certificate for certificate signing
 	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
@@ -328,7 +328,7 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 		return "", "", errors.Wrap(ErrFailedCertCreation, ErrMissingCACertificate)
 	}
 	if keyBits == 0 {
-		return "", "", errors.Wrap(ErrFailedCertCreation, ErrRsaBitsValueWrong)
+		return "", "", errors.Wrap(ErrFailedCertCreation, ErrKeyBitsValueWrong)
 	}
 	var priv interface{}
 	priv, err := rsa.GenerateKey(rand.Reader, keyBits)
