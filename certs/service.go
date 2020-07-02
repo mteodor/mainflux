@@ -37,77 +37,80 @@ var (
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
 
-	// ErrMalformedEntity indicates malformed entity specification.
+	// errMalformedEntity indicates malformed entity specification.
 	ErrMalformedEntity = errors.New("malformed entity specification")
 
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	// ErrConflict indicates that entity with the same ID or external ID already exists.
-	ErrConflict = errors.New("entity already exists")
-
-	// ErrThings indicates failure to communicate with Mainflux Things service.
-	// It can be due to networking error or invalid/unauthorized request.
-	ErrThings = errors.New("failed to receive response from Things service")
-
-	// ErrExternalKeyNotFound indicates a non-existent certs configuration for given external key
-	ErrExternalKeyNotFound = errors.New("failed to get certs configuration for given external key")
-
-	// ErrFailedLoadingTrustedCA indicates problem with trusted certificates
-	ErrFailedLoadingTrustedCA = errors.New("failed to load trusted certificates")
-
-	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
-	ErrCertsRemove = errors.New("failed to remove certificate")
-
-	// ErrCACertificateDoesntExist indicates missing CA certificate required for
-	// creating mTLS client certificates
-	ErrCACertificateDoesntExist = errors.New("CA certificate doesnt exist")
-
-	// ErrCAKeyDoesntExist indicates missing CA private key
-	ErrCAKeyDoesntExist = errors.New("CA certificate key doesnt exist")
-
-	// ErrFailedCertCreation indicates problem in certificate creation
-	ErrFailedCertCreation = errors.New("failed to create client certificate")
-
-	// ErrFailedKeyCreation indicates problem in key creation
-	ErrFailedKeyCreation = errors.New("failed to create client private key")
-
-	// ErrFailedDateSetting failed to set date for certificate
-	ErrFailedDateSetting = errors.New("failed to set date for certificate")
-
-	// ErrKeyBitsValueWrong indicates missing RSA bits for certificate creation
-	ErrKeyBitsValueWrong = errors.New("missing RSA bits for certificate creation")
-
-	// ErrMissingCACertificate indicates missing CA certificate for certificate signing
-	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
-
-	// ErrFailedSerialGeneration failed to generate certificate serial
-	ErrFailedSerialGeneration = errors.New("failed to generate certificate serial")
-
-	// ErrFailedPemKeyWrite indicates problem with writing PEM key
-	ErrFailedPemKeyWrite = errors.New("failed to write PEM key")
-
-	// ErrFailedPemDataWrite failed to write pem data for certificate
-	ErrFailedPemDataWrite = errors.New("failed to write pem data for certificate")
-
-	// ErrPrivateKeyUnsupportedType indicates problem with unsupported  private key type
-	ErrPrivateKeyUnsupportedType = errors.New("private key type is unsupported")
-
-	// ErrPrivateKeyEmpty indicates private key empty
-	ErrPrivateKeyEmpty = errors.New("private key is empty")
-
 	// ErrMissingCertSerial indicates problem with missing certificate serial
 	ErrMissingCertSerial = errors.New("missing cert serial")
 
-	// ErrFailedToRemoveCertFromDB indicates problem in removing cert from db
-	ErrFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
+	// errConflict indicates that entity with the same ID or external ID already exists.
+	errConflict = errors.New("entity already exists")
 
-	// ErrFailedToParseCertificate indicates problem parsing certificate
-	ErrFailedToParseCertificate = errors.New("failed to parse x509 certificate")
+	// errThings indicates failure to communicate with Mainflux Things service.
+	// It can be due to networking error or invalid/unauthorized request.
+	errThings = errors.New("failed to receive response from Things service")
 
-	// ErrFailedCertDecoding indicates problem with decoding response from PKI service
-	ErrFailedCertDecoding = errors.New("failed to decode response from PKI service")
+	// errExternalKeyNotFound indicates a non-existent certs configuration for given external key
+	errExternalKeyNotFound = errors.New("failed to get certs configuration for given external key")
+
+	// errFailedLoadingTrustedCA indicates problem with trusted certificates
+	errFailedLoadingTrustedCA = errors.New("failed to load trusted certificates")
+
+	// errCertsRemove indicates failure while cleaning up from the Certs service.
+	errCertsRemove = errors.New("failed to remove certificate")
+
+	// errCACertificateDoesntExist indicates missing CA certificate required for
+	// creating mTLS client certificates
+	errCACertificateDoesntExist = errors.New("CA certificate doesnt exist")
+
+	// errCAKeyDoesntExist indicates missing CA private key
+	errCAKeyDoesntExist = errors.New("CA certificate key doesnt exist")
+
+	// errFailedCertCreation indicates problem in certificate creation
+	errFailedCertCreation = errors.New("failed to create client certificate")
+
+	// errFailedKeyCreation indicates problem in key creation
+	errFailedKeyCreation = errors.New("failed to create client private key")
+
+	// errFailedDateSetting failed to set date for certificate
+	errFailedDateSetting = errors.New("failed to set date for certificate")
+
+	// errKeyBitsValueWrong indicates missing RSA bits for certificate creation
+	errKeyBitsValueWrong = errors.New("missing RSA bits for certificate creation")
+
+	// errMissingCACertificate indicates missing CA certificate for certificate signing
+	errMissingCACertificate = errors.New("missing CA certificate for certificate signing")
+
+	// errFailedSerialGeneration failed to generate certificate serial
+	errFailedSerialGeneration = errors.New("failed to generate certificate serial")
+
+	// errFailedPemKeyWrite indicates problem with writing PEM key
+	errFailedPemKeyWrite = errors.New("failed to write PEM key")
+
+	// errFailedPemDataWrite failed to write pem data for certificate
+	errFailedPemDataWrite = errors.New("failed to write pem data for certificate")
+
+	// errPrivateKeyUnsupportedType indicates problem with unsupported  private key type
+	errPrivateKeyUnsupportedType = errors.New("private key type is unsupported")
+
+	// errPrivateKeyEmpty indicates private key empty
+	errPrivateKeyEmpty = errors.New("private key is empty")
+
+	// errFailedToRemoveCertFromDB indicates problem in removing cert from db
+	errFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
+
+	// errFailedToParseCertificate indicates problem parsing certificate
+	errFailedToParseCertificate = errors.New("failed to parse x509 certificate")
+
+	// errFailedCertDecoding indicates problem with decoding response from PKI service
+	errFailedCertDecoding = errors.New("failed to decode response from PKI service")
+
+	// errEmptyThingID indicates empty thing id
+	errEmptyThingID = errors.New("failed to read certificate, thing id empty")
 )
 
 var _ Service = (*certsService)(nil)
@@ -118,8 +121,8 @@ type Service interface {
 	// IssueCert issues certificate for given thing id if access is granted with token
 	IssueCert(ctx context.Context, token, thingID, daysValid string, keyBits int, keyType string) (Cert, error)
 
-	// ListCertificates lists all certificates issued for given thing
-	ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error)
+	// ListCerts lists all certificates issued for given owner
+	ListCerts(ctx context.Context, token, ownerID string, offset, limit uint64) (Page, error)
 
 	// RevokeCert
 	RevokeCert(ctx context.Context, token, thingID, certID string) (Revoke, error)
@@ -195,7 +198,7 @@ func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, conf
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (Cert, error) {
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
-		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
+		return Cert{}, errors.Wrap(errFailedCertCreation, err)
 	}
 	var c Cert
 
@@ -203,7 +206,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	if cs.conf.PKIHost == "" {
 		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, keyBits)
 		if err != nil {
-			return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
+			return Cert{}, errors.Wrap(errFailedCertCreation, err)
 		}
 		return c, err
 	}
@@ -234,14 +237,14 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 		if err != nil {
 			return Cert{}, err
 		}
-		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
+		return Cert{}, errors.Wrap(errFailedCertCreation, err)
 	}
 
 	s, _ := api.ParseSecret(resp.Body)
 	cert := Cert{}
 
 	if err = mapstructure.Decode(s.Data, &cert); err != nil {
-		return Cert{}, errors.Wrap(ErrFailedCertDecoding, err)
+		return Cert{}, errors.Wrap(errFailedCertDecoding, err)
 	}
 
 	// Expire time calc must be revised
@@ -289,7 +292,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSeri
 		if err != nil {
 			return Revoke{}, err
 		}
-		return Revoke{}, errors.Wrap(ErrFailedCertCreation, err)
+		return Revoke{}, errors.Wrap(errFailedCertCreation, err)
 	}
 
 	s, err := api.ParseSecret(resp.Body)
@@ -311,18 +314,20 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSeri
 	}
 
 	if err = cs.certsRepo.Remove(context.Background(), c); err != nil {
-		return Revoke{}, errors.Wrap(ErrFailedToRemoveCertFromDB, err)
+		return Revoke{}, errors.Wrap(errFailedToRemoveCertFromDB, err)
 	}
 	return revoke, nil
 
 }
 
-func (cs *certsService) ListCertificates(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
+func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
+	if thingID == "" {
+		return Page{}, errEmptyThingID
+	}
 	return cs.certsRepo.RetrieveAll(ctx, thingID, offset, limit)
 }
 
@@ -336,15 +341,15 @@ func (cs *certsService) getRevokeURL() string {
 
 func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, string, error) {
 	if cs.conf.SignX509Cert == nil {
-		return "", "", errors.Wrap(ErrFailedCertCreation, ErrMissingCACertificate)
+		return "", "", errors.Wrap(errFailedCertCreation, errMissingCACertificate)
 	}
 	if keyBits == 0 {
-		return "", "", errors.Wrap(ErrFailedCertCreation, ErrKeyBitsValueWrong)
+		return "", "", errors.Wrap(errFailedCertCreation, errKeyBitsValueWrong)
 	}
 	var priv interface{}
 	priv, err := rsa.GenerateKey(rand.Reader, keyBits)
 	if err != nil {
-		return "", "", errors.Wrap(ErrFailedKeyCreation, err)
+		return "", "", errors.Wrap(errFailedKeyCreation, err)
 	}
 
 	if daysValid == "" {
@@ -354,14 +359,14 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 	notBefore := time.Now()
 	validFor, err := time.ParseDuration(daysValid)
 	if err != nil {
-		return "", "", errors.Wrap(ErrFailedDateSetting, err)
+		return "", "", errors.Wrap(errFailedDateSetting, err)
 	}
 	notAfter := notBefore.Add(validFor)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return "", "", errors.Wrap(ErrFailedSerialGeneration, err)
+		return "", "", errors.Wrap(errFailedSerialGeneration, err)
 	}
 
 	tmpl := x509.Certificate{
@@ -381,11 +386,11 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 
 	pubKey, err := publicKey(priv)
 	if err != nil {
-		return "", "", errors.Wrap(ErrFailedCertCreation, err)
+		return "", "", errors.Wrap(errFailedCertCreation, err)
 	}
 	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, cs.conf.SignX509Cert, pubKey, cs.conf.SignTLSCert.PrivateKey)
 	if err != nil {
-		return "", "", errors.Wrap(ErrFailedCertCreation, err)
+		return "", "", errors.Wrap(errFailedCertCreation, err)
 	}
 
 	var bw, keyOut bytes.Buffer
@@ -393,17 +398,17 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 	buffKeyOut := bufio.NewWriter(&keyOut)
 
 	if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-		return "", "", errors.Wrap(ErrFailedPemDataWrite, err)
+		return "", "", errors.Wrap(errFailedPemDataWrite, err)
 	}
 	buffWriter.Flush()
 	cert := bw.String()
 
 	block, err := pemBlockForKey(priv)
 	if err != nil {
-		return "", "", errors.Wrap(ErrFailedPemKeyWrite, err)
+		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
 	}
 	if err := pem.Encode(buffKeyOut, block); err != nil {
-		return "", "", errors.Wrap(ErrFailedPemKeyWrite, err)
+		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
 	}
 	buffKeyOut.Flush()
 	key := keyOut.String()
@@ -413,7 +418,7 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 
 func publicKey(priv interface{}) (interface{}, error) {
 	if priv == nil {
-		return nil, ErrPrivateKeyEmpty
+		return nil, errPrivateKeyEmpty
 	}
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
@@ -421,7 +426,7 @@ func publicKey(priv interface{}) (interface{}, error) {
 	case *ecdsa.PrivateKey:
 		return &k.PublicKey, nil
 	default:
-		return nil, ErrPrivateKeyUnsupportedType
+		return nil, errPrivateKeyUnsupportedType
 	}
 }
 

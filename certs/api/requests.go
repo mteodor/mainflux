@@ -19,21 +19,32 @@ func (req addCertsReq) validate() error {
 	return nil
 }
 
-type listReq struct {
+type viewReq struct {
 	thingID string
 	token   string
+}
+
+type listReq struct {
+	token   string
+	ownerID string
 	offset  uint64
 	limit   uint64
 }
 
-func (req *listReq) validate() error {
+func (req *viewReq) validate() error {
 	if req.token == "" || req.thingID == "" {
+		return certs.ErrUnauthorizedAccess
+	}
+	return nil
+}
+
+func (req *listReq) validate() error {
+	if req.token == "" || req.ownerID == "" {
 		return certs.ErrUnauthorizedAccess
 	}
 	if req.limit == 0 || req.limit > maxLimitSize {
 		return certs.ErrMalformedEntity
 	}
-
 	return nil
 }
 

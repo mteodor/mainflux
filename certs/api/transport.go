@@ -50,14 +50,14 @@ func MakeHandler(svc certs.Service) http.Handler {
 	))
 
 	r.Get("/certs/:id", kithttp.NewServer(
-		listCertificates(svc),
+		listCerts(svc),
 		decodeListCerts,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Post("/certs/revoke", kithttp.NewServer(
-		revokeCertificate(svc),
+		revokeCert(svc),
 		decodeRevokeCerts,
 		encodeResponse,
 		opts...,

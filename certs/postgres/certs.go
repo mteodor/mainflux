@@ -18,9 +18,8 @@ import (
 const duplicateErr = "unique_violation"
 
 var (
-	errSaveDB       = errors.New("failed to save certificate to database")
-	errEmptyThingID = errors.New("failed to read certificate, thing id empty")
-	errRemove       = errors.New("failed to remove certificate from database")
+	errSaveDB = errors.New("failed to save certificate to database")
+	errRemove = errors.New("failed to remove certificate from database")
 )
 
 var _ certs.Repository = (*certsRepository)(nil)
@@ -42,12 +41,46 @@ func NewRepository(db *sqlx.DB, log logger.Logger) certs.Repository {
 	return &certsRepository{db: db, log: log}
 }
 
-func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offset, limit uint64) (certs.Page, error) {
-	if thingID == "" {
-		return certs.Page{}, errEmptyThingID
+func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (certs.Page, error) {
+	q := `SELECT FROM certs WHERE owner_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
+	rows, err := cr.db.Query(q, ownerID, limit, offset)
+	if err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
+		return certs.Page{}, err
 	}
+	defer rows.Close()
+
+	certificates := []certs.Cert{}
+
+	for rows.Next() {
+		c := certs.Cert{}
+		if err := rows.Scan(&c.ThingID, &c.Serial, &c.Expire); err != nil {
+			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
+			return certs.Page{}, err
+
+		}
+		certificates = append(certificates, c)
+	}
+
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM certs WHERE owner_id = $1`)
+	var total uint64
+	if err := cr.db.QueryRow(q, c.ThingID).Scan(&total); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
+		return certs.Page{}, err
+	}
+
+	return certs.Page{
+		Total:  total,
+		Limit:  limit,
+		Offset: offset,
+		Certs:  certificates,
+	}, nil
+
+}
+
+func (cr certsRepository) Retrieve(ctx context.Context, c certs.Cert, offset, limit uint64) (certs.Page, error) {
 	q := `SELECT FROM certs WHERE thing_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
-	rows, err := cr.db.Query(q, thingID, limit, offset)
+	rows, err := cr.db.Query(q, c.ThingID, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return certs.Page{}, err
@@ -68,7 +101,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, thingID string, offse
 
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM certs WHERE thing_id = $1`)
 	var total uint64
-	if err := cr.db.QueryRow(q, thingID).Scan(&total); err != nil {
+	if err := cr.db.QueryRow(q, c.ThingID).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
 		return certs.Page{}, err
 	}

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/certs"
@@ -14,24 +13,36 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		fmt.Println(fmt.Sprintf("request %v", req))
 		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Valid, req.KeyBits, req.KeyType)
 		if err != nil {
 			return certsResponse{Error: err.Error()}, nil
 		}
-
 		return res, nil
 	}
 }
+func viewCert(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		page, err := svc.ViewCert(ctx, req.token, req.ownerID, req.offset, req.limit)
+		if err != nil {
+			return certsPageRes{
+				Error: err.Error(),
+			}, err
+		}
 
-func listCertificates(svc certs.Service) endpoint.Endpoint {
+	}
+}
+func listCerts(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		page, err := svc.ListCertificates(ctx, req.token, req.thingID, req.offset, req.limit)
+		page, err := svc.ListCerts(ctx, req.token, req.ownerID, req.offset, req.limit)
 		if err != nil {
 			return certsPageRes{
 				Error: err.Error(),
@@ -53,19 +64,16 @@ func listCertificates(svc certs.Service) endpoint.Endpoint {
 			}
 			res.Certs = append(res.Certs, view)
 		}
-
 		return res, nil
 	}
 }
 
-func revokeCertificate(svc certs.Service) endpoint.Endpoint {
+func revokeCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(revokeReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		return svc.RevokeCert(ctx, req.token, req.ThingID, req.CertSerial)
-
 	}
 }
