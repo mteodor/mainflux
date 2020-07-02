@@ -28,7 +28,7 @@ func listCerts(svc certs.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListCerts(ctx, req.token, req.ownerID, req.offset, req.limit)
+		page, err := svc.ListCerts(ctx, req.token, req.offset, req.limit)
 		if err != nil {
 			return certsPageRes{
 				Error: err.Error(),

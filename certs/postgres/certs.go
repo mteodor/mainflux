@@ -42,7 +42,7 @@ func NewRepository(db *sqlx.DB, log logger.Logger) certs.Repository {
 }
 
 func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (certs.Page, error) {
-	q := `SELECT FROM certs WHERE owner_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
+	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE owner_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
 	rows, err := cr.db.Query(q, ownerID, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
@@ -54,7 +54,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 
 	for rows.Next() {
 		c := certs.Cert{}
-		if err := rows.Scan(&c.ThingID, &c.Serial, &c.Expire); err != nil {
+		if err := rows.Scan(&c.ThingID, &c.OwnerID, &c.Serial, &c.Expire); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return certs.Page{}, err
 
@@ -78,8 +78,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 }
 
 func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, error) {
-	q := `INSERT INTO certs (thing_id, serial, expire)
-		  VALUES (:thing_id, :serial, :expire)`
+	q := `INSERT INTO certs (thing_id, owner_id, serial, expire) VALUES (:thing_id, :owner_id, :serial, :expire)`
 
 	tx, err := cr.db.Beginx()
 	if err != nil {
@@ -128,11 +127,13 @@ type dbCert struct {
 	ThingID string    `db:"thing_id"`
 	Serial  string    `db:"serial"`
 	Expire  time.Time `db:"expire"`
+	OwnerID string    `db:"owner_id"`
 }
 
 func toDBCert(c certs.Cert) dbCert {
 	return dbCert{
 		ThingID: c.ThingID,
+		OwnerID: c.OwnerID,
 		Serial:  c.Serial,
 		Expire:  c.Expire,
 	}

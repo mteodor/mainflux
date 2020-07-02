@@ -122,7 +122,7 @@ type Service interface {
 	IssueCert(ctx context.Context, token, thingID, daysValid string, keyBits int, keyType string) (Cert, error)
 
 	// ListCerts lists all certificates issued for given owner
-	ListCerts(ctx context.Context, token, ownerID string, offset, limit uint64) (Page, error)
+	ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error)
 
 	// RevokeCert
 	RevokeCert(ctx context.Context, token, thingID, certID string) (Revoke, error)
@@ -160,6 +160,7 @@ type certsService struct {
 
 type Cert struct {
 	ThingID        string    `json:"thing_id" mapstructure:"-"`
+	OwnerID        string    `json:"-" mapstructure:"-"`
 	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
 	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
 	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
@@ -196,6 +197,11 @@ func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, conf
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (Cert, error) {
+	owner, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return Cert{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
 		return Cert{}, errors.Wrap(errFailedCertCreation, err)
@@ -253,11 +259,10 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	if err != nil {
 		return cert, err
 	}
-
 	expTime := time.Unix(0, int64(exp)*int64(time.Millisecond))
 	cert.Expire = expTime
-
 	cert.ThingID = thing.ID
+	cert.OwnerID = owner.GetValue()
 
 	_, err = cs.certsRepo.Save(context.Background(), cert)
 	return cert, err
@@ -320,23 +325,21 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSeri
 
 }
 
-func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
-	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+func (cs *certsService) ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error) {
+	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	if thingID == "" {
-		return Page{}, errEmptyThingID
-	}
-	return cs.certsRepo.RetrieveAll(ctx, thingID, offset, limit)
+
+	return cs.certsRepo.RetrieveAll(ctx, u.GetValue(), offset, limit)
 }
 
 func (cs *certsService) getIssueURL() string {
-	return cs.conf.PKIHost + "/" + apiVer + "/" + cs.conf.PKIPath + "/" + issue + "/" + cs.conf.PKIRole
+	return "/" + apiVer + "/" + cs.conf.PKIPath + "/" + issue + "/" + cs.conf.PKIRole
 }
 
 func (cs *certsService) getRevokeURL() string {
-	return cs.conf.PKIHost + "/" + apiVer + "/" + cs.conf.PKIPath + "/" + revoke
+	return "/" + apiVer + "/" + cs.conf.PKIPath + "/" + revoke
 }
 
 func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, string, error) {

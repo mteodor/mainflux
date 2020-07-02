@@ -20,14 +20,13 @@ func (req addCertsReq) validate() error {
 }
 
 type listReq struct {
-	token   string
-	ownerID string
-	offset  uint64
-	limit   uint64
+	token  string
+	offset uint64
+	limit  uint64
 }
 
 func (req *listReq) validate() error {
-	if req.token == "" || req.ownerID == "" {
+	if req.token == "" {
 		return certs.ErrUnauthorizedAccess
 	}
 	if req.limit == 0 || req.limit > maxLimitSize {

@@ -49,7 +49,7 @@ func MakeHandler(svc certs.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/certs/:id", kithttp.NewServer(
+	r.Get("/certs", kithttp.NewServer(
 		listCerts(svc),
 		decodeListCerts,
 		encodeResponse,
