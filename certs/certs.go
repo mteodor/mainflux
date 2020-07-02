@@ -21,9 +21,6 @@ type Repository interface {
 	// RetrieveAll retrieve all issued certificates for given owner
 	RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (Page, error)
 
-	// Retrieve retrieve issued certificates for given thing
-	Retrieve(ctx context.Context, cert Cert, offset, limit uint64) (Page, error)
-
 	// Remove certificate from DB
 	Remove(ctx context.Context, cert Cert) error
 }

@@ -19,23 +19,11 @@ func (req addCertsReq) validate() error {
 	return nil
 }
 
-type viewReq struct {
-	thingID string
-	token   string
-}
-
 type listReq struct {
 	token   string
 	ownerID string
 	offset  uint64
 	limit   uint64
-}
-
-func (req *viewReq) validate() error {
-	if req.token == "" || req.thingID == "" {
-		return certs.ErrUnauthorizedAccess
-	}
-	return nil
 }
 
 func (req *listReq) validate() error {

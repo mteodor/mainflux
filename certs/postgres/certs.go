@@ -64,7 +64,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM certs WHERE owner_id = $1`)
 	var total uint64
-	if err := cr.db.QueryRow(q, c.ThingID).Scan(&total); err != nil {
+	if err := cr.db.QueryRow(q, ownerID).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
 		return certs.Page{}, err
 	}
@@ -75,44 +75,6 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 		Offset: offset,
 		Certs:  certificates,
 	}, nil
-
-}
-
-func (cr certsRepository) Retrieve(ctx context.Context, c certs.Cert, offset, limit uint64) (certs.Page, error) {
-	q := `SELECT FROM certs WHERE thing_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
-	rows, err := cr.db.Query(q, c.ThingID, limit, offset)
-	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
-		return certs.Page{}, err
-	}
-	defer rows.Close()
-
-	certificates := []certs.Cert{}
-
-	for rows.Next() {
-		c := certs.Cert{}
-		if err := rows.Scan(&c.ThingID, &c.Serial, &c.Expire); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
-			return certs.Page{}, err
-
-		}
-		certificates = append(certificates, c)
-	}
-
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM certs WHERE thing_id = $1`)
-	var total uint64
-	if err := cr.db.QueryRow(q, c.ThingID).Scan(&total); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
-		return certs.Page{}, err
-	}
-
-	return certs.Page{
-		Total:  total,
-		Limit:  limit,
-		Offset: offset,
-		Certs:  certificates,
-	}, nil
-
 }
 
 func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, error) {

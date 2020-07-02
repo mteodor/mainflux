@@ -20,21 +20,7 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		return res, nil
 	}
 }
-func viewCert(svc certs.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-		page, err := svc.ViewCert(ctx, req.token, req.ownerID, req.offset, req.limit)
-		if err != nil {
-			return certsPageRes{
-				Error: err.Error(),
-			}, err
-		}
 
-	}
-}
 func listCerts(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)
