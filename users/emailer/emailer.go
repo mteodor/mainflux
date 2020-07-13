@@ -20,7 +20,7 @@ type emailer struct {
 func New(url string, c *email.Config) (users.Emailer, error) {
 	e, err := email.New(c)
 	if err != nil {
-		return nil, err
+		return &emailer{resetURL: url, agent: e}, err
 	}
 	return &emailer{resetURL: url, agent: e}, nil
 }
