@@ -37,7 +37,7 @@ var (
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
 
-	// errMalformedEntity indicates malformed entity specification.
+	// ErrMalformedEntity indicates malformed entity specification.
 	ErrMalformedEntity = errors.New("malformed entity specification")
 
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
@@ -47,70 +47,18 @@ var (
 	// ErrMissingCertSerial indicates problem with missing certificate serial
 	ErrMissingCertSerial = errors.New("missing cert serial")
 
-	// errConflict indicates that entity with the same ID or external ID already exists.
-	errConflict = errors.New("entity already exists")
-
-	// errThings indicates failure to communicate with Mainflux Things service.
-	// It can be due to networking error or invalid/unauthorized request.
-	errThings = errors.New("failed to receive response from Things service")
-
-	// errExternalKeyNotFound indicates a non-existent certs configuration for given external key
-	errExternalKeyNotFound = errors.New("failed to get certs configuration for given external key")
-
-	// errFailedLoadingTrustedCA indicates problem with trusted certificates
-	errFailedLoadingTrustedCA = errors.New("failed to load trusted certificates")
-
-	// errCertsRemove indicates failure while cleaning up from the Certs service.
-	errCertsRemove = errors.New("failed to remove certificate")
-
-	// errCACertificateDoesntExist indicates missing CA certificate required for
-	// creating mTLS client certificates
-	errCACertificateDoesntExist = errors.New("CA certificate doesnt exist")
-
-	// errCAKeyDoesntExist indicates missing CA private key
-	errCAKeyDoesntExist = errors.New("CA certificate key doesnt exist")
-
-	// errFailedCertCreation indicates problem in certificate creation
-	errFailedCertCreation = errors.New("failed to create client certificate")
-
-	// errFailedKeyCreation indicates problem in key creation
-	errFailedKeyCreation = errors.New("failed to create client private key")
-
-	// errFailedDateSetting failed to set date for certificate
-	errFailedDateSetting = errors.New("failed to set date for certificate")
-
-	// errKeyBitsValueWrong indicates missing RSA bits for certificate creation
-	errKeyBitsValueWrong = errors.New("missing RSA bits for certificate creation")
-
-	// errMissingCACertificate indicates missing CA certificate for certificate signing
-	errMissingCACertificate = errors.New("missing CA certificate for certificate signing")
-
-	// errFailedSerialGeneration failed to generate certificate serial
-	errFailedSerialGeneration = errors.New("failed to generate certificate serial")
-
-	// errFailedPemKeyWrite indicates problem with writing PEM key
-	errFailedPemKeyWrite = errors.New("failed to write PEM key")
-
-	// errFailedPemDataWrite failed to write pem data for certificate
-	errFailedPemDataWrite = errors.New("failed to write pem data for certificate")
-
-	// errPrivateKeyUnsupportedType indicates problem with unsupported  private key type
+	errFailedCertCreation        = errors.New("failed to create client certificate")
+	errFailedKeyCreation         = errors.New("failed to create client private key")
+	errFailedDateSetting         = errors.New("failed to set date for certificate")
+	errKeyBitsValueWrong         = errors.New("missing RSA bits for certificate creation")
+	errMissingCACertificate      = errors.New("missing CA certificate for certificate signing")
+	errFailedSerialGeneration    = errors.New("failed to generate certificate serial")
+	errFailedPemKeyWrite         = errors.New("failed to write PEM key")
+	errFailedPemDataWrite        = errors.New("failed to write pem data for certificate")
 	errPrivateKeyUnsupportedType = errors.New("private key type is unsupported")
-
-	// errPrivateKeyEmpty indicates private key empty
-	errPrivateKeyEmpty = errors.New("private key is empty")
-
-	// errFailedToRemoveCertFromDB indicates problem in removing cert from db
-	errFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
-
-	// errFailedToParseCertificate indicates problem parsing certificate
-	errFailedToParseCertificate = errors.New("failed to parse x509 certificate")
-
-	// errFailedCertDecoding indicates problem with decoding response from PKI service
-	errFailedCertDecoding = errors.New("failed to decode response from PKI service")
-
-	// errEmptyThingID indicates empty thing id
-	errEmptyThingID = errors.New("failed to read certificate, thing id empty")
+	errPrivateKeyEmpty           = errors.New("private key is empty")
+	errFailedToRemoveCertFromDB  = errors.New("failed to remove cert serial from db")
+	errFailedCertDecoding        = errors.New("failed to decode response from PKI service")
 )
 
 var _ Service = (*certsService)(nil)
