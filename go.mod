@@ -16,11 +16,12 @@ require (
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.2
+	github.com/golangci/golangci-lint v1.27.0 // indirect
 	github.com/gopcua/opcua v0.1.6
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
 	github.com/influxdata/influxdb v1.8.1
-	github.com/jmoiron/sqlx v1.2.1-0.20190319043955-cdf62fdf55f6
+	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/lib/pq v1.7.0
 	github.com/mainflux/mproxy v0.2.1
 	github.com/mainflux/senml v1.5.0
