@@ -17,12 +17,14 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/gopcua/opcua v0.1.6
+	github.com/hashicorp/vault/api v1.0.4
 	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
 	github.com/influxdata/influxdb v1.8.1
 	github.com/jmoiron/sqlx v1.2.1-0.20190319043955-cdf62fdf55f6
 	github.com/lib/pq v1.7.0
 	github.com/mainflux/mproxy v0.2.1
 	github.com/mainflux/senml v1.5.0
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/nats-io/nats.go v1.10.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/ory/dockertest/v3 v3.6.0
