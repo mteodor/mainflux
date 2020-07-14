@@ -16,10 +16,8 @@ import (
 
 const primaryKey = "primary_key"
 
-var (
-	// ErrMigrate indicates error during database migrations.
-	ErrMigrate = errors.New("error executing database migrations")
-)
+// ErrMigrate indicates error during database migrations.
+var ErrMigrate = errors.New("error executing database migrations")
 
 // Config defines the options that are used when connecting to a PostgreSQL instance
 type Config struct {
@@ -63,9 +61,9 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "certs_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS certs (
-						thing_id	 TEXT NOT NULL,
+						thing_id     TEXT NOT NULL,
 						owner_id     TEXT NOT NULL,
-						expire		 TIMESTAMPTZ NOT NULL,
+						expire       TIMESTAMPTZ NOT NULL,
 						serial       TEXT NOT NULL,
 						PRIMARY KEY  (thing_id, owner_id)
 					);`,

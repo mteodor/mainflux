@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/mainflux/mainflux/certs"
+	"github.com/mainflux/mainflux/certs/vault"
 )
 
 var _ certs.Service = (*metricsMiddleware)(nil)
@@ -47,7 +48,7 @@ func (ms *metricsMiddleware) ListCerts(ctx context.Context, token string, offset
 	return ms.svc.ListCerts(ctx, token, offset, limit)
 }
 
-func (ms *metricsMiddleware) RevokeCert(ctx context.Context, token, thingID, certSerial string) (certs.Revoke, error) {
+func (ms *metricsMiddleware) RevokeCert(ctx context.Context, token, thingID, certSerial string) (vault.Revoke, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke_cert").Add(1)
 		ms.latency.With("method", "revoke_cert").Observe(time.Since(begin).Seconds())

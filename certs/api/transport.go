@@ -35,7 +35,6 @@ var (
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc certs.Service) http.Handler {
-
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}

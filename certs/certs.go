@@ -22,5 +22,5 @@ type Repository interface {
 	RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (Page, error)
 
 	// Remove certificate from DB
-	Remove(ctx context.Context, cert Cert) error
+	Remove(ctx context.Context, serialID string) error
 }

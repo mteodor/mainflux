@@ -105,8 +105,10 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 	return cert.Serial, nil
 }
 
-func (cr certsRepository) Remove(ctx context.Context, c certs.Cert) error {
+func (cr certsRepository) Remove(ctx context.Context, serialID string) error {
 	q := `DELETE FROM certs WHERE serial = :serial`
+	var c certs.Cert
+	c.Serial = serialID
 	dbcrt := toDBCert(c)
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcrt); err != nil {
 		return errors.Wrap(errRemove, err)

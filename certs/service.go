@@ -13,24 +13,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
 	"math/big"
-	"net/http"
 	"time"
 
-	"github.com/hashicorp/vault/api"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/certs/vault"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mitchellh/mapstructure"
-)
-
-const (
-	issue  = "issue"
-	revoke = "revoke"
-	apiVer = "v1"
 )
 
 var (
@@ -47,7 +37,6 @@ var (
 	// ErrMissingCertSerial indicates problem with missing certificate serial
 	ErrMissingCertSerial = errors.New("missing cert serial")
 
-	errFailedCertCreation        = errors.New("failed to create client certificate")
 	errFailedKeyCreation         = errors.New("failed to create client private key")
 	errFailedDateSetting         = errors.New("failed to set date for certificate")
 	errKeyBitsValueWrong         = errors.New("missing RSA bits for certificate creation")
@@ -58,7 +47,9 @@ var (
 	errPrivateKeyUnsupportedType = errors.New("private key type is unsupported")
 	errPrivateKeyEmpty           = errors.New("private key is empty")
 	errFailedToRemoveCertFromDB  = errors.New("failed to remove cert serial from db")
+	errFailedCertCreation        = errors.New("failed to create client certificate")
 	errFailedCertDecoding        = errors.New("failed to decode response from PKI service")
+	errFailedCertRevocation      = errors.New("failed to revoke certificate")
 )
 
 var _ Service = (*certsService)(nil)
@@ -73,7 +64,7 @@ type Service interface {
 	ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error)
 
 	// RevokeCert
-	RevokeCert(ctx context.Context, token, thingID, certID string) (Revoke, error)
+	RevokeCert(ctx context.Context, token, thingID, certID string) (vault.Revoke, error)
 }
 
 type Config struct {
@@ -103,173 +94,80 @@ type certsService struct {
 	certsRepo Repository
 	sdk       mfsdk.SDK
 	conf      Config
-	PKIClient *api.Client
+	pki       PKI
 }
 
 type Cert struct {
-	ThingID        string    `json:"thing_id" mapstructure:"-"`
-	OwnerID        string    `json:"-" mapstructure:"-"`
-	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
-	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
-	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
-	ClientKey      string    `json:"client_key" mapstructure:"private_key"`
-	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
-	Serial         string    `json:"serial" mapstructure:"serial_number"`
-	Expire         time.Time `json:"expire" mapstructure:"-"`
-}
-
-type Revoke struct {
-	RevocationTime time.Time `mapstructure:"revocation_time"`
-}
-
-type certReq struct {
-	CommonName string `json:"common_name"`
-	TTL        string `json:"ttl"`
-	KeyBits    int    `json:"key_bits"`
-	KeyType    string `json:"key_type"`
-}
-
-type certRevokeReq struct {
-	SerialNumber string `json:"serial_number"`
+	ThingID string `json:"thing_id" mapstructure:"-"`
+	OwnerID string `json:"-" mapstructure:"-"`
+	vault.Cert
 }
 
 // New returns new Certs service.
-func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, config Config, c *api.Client) Service {
+func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, config Config, pki PKI) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,
 		auth:      auth,
 		conf:      config,
-		PKIClient: c,
+		pki:       pki,
 	}
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (Cert, error) {
+	var c Cert
 	owner, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Cert{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return c, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
-		return Cert{}, errors.Wrap(errFailedCertCreation, err)
+		return c, errors.Wrap(errFailedCertCreation, err)
 	}
-	var c Cert
 
 	// If PKIClient == nil we don't use 3rd party PKI service.
 	if cs.conf.PKIHost == "" {
 		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, keyBits)
 		if err != nil {
-			return Cert{}, errors.Wrap(errFailedCertCreation, err)
+			return c, errors.Wrap(errFailedCertCreation, err)
 		}
 		return c, err
 	}
 
-	cReq := certReq{
-		CommonName: thing.Key,
-		TTL:        daysValid,
-		KeyBits:    keyBits,
-		KeyType:    keyType,
-	}
-
-	r := cs.PKIClient.NewRequest("POST", cs.getIssueURL())
-	if err := r.SetJSONBody(cReq); err != nil {
-		return Cert{}, err
-	}
-
-	resp, err := cs.PKIClient.RawRequest(r)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-
+	cert, err := cs.pki.IssueCert(thingID, daysValid, keyType, keyBits)
 	if err != nil {
-		return Cert{}, err
+		return c, errors.Wrap(errFailedCertCreation, err)
 	}
 
-	if resp.StatusCode >= http.StatusBadRequest {
-		_, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return Cert{}, err
-		}
-		return Cert{}, errors.Wrap(errFailedCertCreation, err)
-	}
+	c.ThingID = thing.ID
+	c.OwnerID = owner.GetValue()
+	c.ClientCert = cert.ClientCert
+	c.IssuingCA = cert.IssuingCA
+	c.CAChain = cert.CAChain
+	c.ClientKey = cert.ClientKey
+	c.PrivateKeyType = cert.PrivateKeyType
+	c.Serial = cert.Serial
+	c.Expire = cert.Expire
 
-	s, _ := api.ParseSecret(resp.Body)
-	cert := Cert{}
-
-	if err = mapstructure.Decode(s.Data, &cert); err != nil {
-		return Cert{}, errors.Wrap(errFailedCertDecoding, err)
-	}
-
-	// Expire time calc must be revised
-	// value doesnt look correct
-	exp, err := s.Data["expiration"].(json.Number).Float64()
-	if err != nil {
-		return cert, err
-	}
-	expTime := time.Unix(0, int64(exp)*int64(time.Millisecond))
-	cert.Expire = expTime
-	cert.ThingID = thing.ID
-	cert.OwnerID = owner.GetValue()
-
-	_, err = cs.certsRepo.Save(context.Background(), cert)
-	return cert, err
+	_, err = cs.certsRepo.Save(context.Background(), c)
+	return c, err
 }
 
-func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSerial string) (Revoke, error) {
+func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSerial string) (vault.Revoke, error) {
 	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Revoke{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return vault.Revoke{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
-	cReq := certRevokeReq{
-		SerialNumber: certSerial,
-	}
-
-	r := cs.PKIClient.NewRequest("POST", cs.getRevokeURL())
-	if err := r.SetJSONBody(cReq); err != nil {
-		return Revoke{}, err
-	}
-
-	resp, err := cs.PKIClient.RawRequest(r)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-
+	r, err := cs.pki.Revoke(certSerial)
 	if err != nil {
-		return Revoke{}, err
+		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
 	}
 
-	if resp.StatusCode >= http.StatusBadRequest {
-		_, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return Revoke{}, err
-		}
-		return Revoke{}, errors.Wrap(errFailedCertCreation, err)
+	if err = cs.certsRepo.Remove(context.Background(), certSerial); err != nil {
+		return r, errors.Wrap(errFailedToRemoveCertFromDB, err)
 	}
-
-	s, err := api.ParseSecret(resp.Body)
-	if err != nil {
-		return Revoke{}, err
-	}
-
-	rev, err := s.Data["revocation_time"].(json.Number).Float64()
-	if err != nil {
-		return Revoke{}, err
-	}
-	revTime := time.Unix(0, int64(rev)*int64(time.Millisecond))
-	revoke := Revoke{
-		RevocationTime: revTime,
-	}
-
-	c := Cert{
-		Serial: certSerial,
-	}
-
-	if err = cs.certsRepo.Remove(context.Background(), c); err != nil {
-		return Revoke{}, errors.Wrap(errFailedToRemoveCertFromDB, err)
-	}
-	return revoke, nil
+	return r, nil
 
 }
 
@@ -280,14 +178,6 @@ func (cs *certsService) ListCerts(ctx context.Context, token string, offset, lim
 	}
 
 	return cs.certsRepo.RetrieveAll(ctx, u.GetValue(), offset, limit)
-}
-
-func (cs *certsService) getIssueURL() string {
-	return "/" + apiVer + "/" + cs.conf.PKIPath + "/" + issue + "/" + cs.conf.PKIRole
-}
-
-func (cs *certsService) getRevokeURL() string {
-	return "/" + apiVer + "/" + cs.conf.PKIPath + "/" + revoke
 }
 
 func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, string, error) {
