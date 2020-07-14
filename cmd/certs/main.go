@@ -19,12 +19,12 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis"
-	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/api"
 	"github.com/mainflux/mainflux/certs/postgres"
+	"github.com/mainflux/mainflux/certs/vault"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -154,7 +154,7 @@ func main() {
 		logger.Error("Failed to load CA certificates for issuing client certs")
 	}
 
-	pkiClient, err := initVaultClient(cfg)
+	pkiClient, err := vault.NewVaultClient(cfg.pkiToken, cfg.pkiHost, cfg.pkiPath, cfg.pkiRole)
 	if err != nil {
 		logger.Error("Failed to init vault client")
 	}
@@ -238,19 +238,7 @@ func loadConfig() config {
 	}
 
 }
-func initVaultClient(cfg config) (*vaultapi.Client, error) {
-	conf := &vaultapi.Config{
-		Address: cfg.pkiHost,
-	}
 
-	c, err := vaultapi.NewClient(conf)
-	if err != nil {
-		return nil, err
-	}
-	c.SetToken(cfg.pkiToken)
-	return c, nil
-
-}
 func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *redis.Client {
 	db, err := strconv.Atoi(redisDB)
 	if err != nil {
@@ -323,7 +311,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiClient *vaultapi.Client) certs.Service {
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiClient certs.PKI) certs.Service {
 	certsRepo := postgres.NewRepository(db, logger)
 
 	certsConfig := certs.Config{
