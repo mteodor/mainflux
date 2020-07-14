@@ -37,12 +37,11 @@ type Cert struct {
 }
 
 type pki struct {
-	issueURL string
-	token    string
-	path     string
-	role     string
-	host     string
-	client   *api.Client
+	token  string
+	path   string
+	role   string
+	host   string
+	client *api.Client
 }
 
 type certReq struct {
