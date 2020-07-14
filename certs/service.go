@@ -45,7 +45,6 @@ var (
 	errPrivateKeyEmpty           = errors.New("private key is empty")
 	errFailedToRemoveCertFromDB  = errors.New("failed to remove cert serial from db")
 	errFailedCertCreation        = errors.New("failed to create client certificate")
-	errFailedCertDecoding        = errors.New("failed to decode response from PKI service")
 	errFailedCertRevocation      = errors.New("failed to revoke certificate")
 )
 
