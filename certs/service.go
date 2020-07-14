@@ -59,7 +59,7 @@ type Service interface {
 	// ListCerts lists all certificates issued for given owner
 	ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error)
 
-	// RevokeCert
+	// RevokeCert revokes certificate for given thing
 	RevokeCert(ctx context.Context, token, thingID string) (Revoke, error)
 }
 
