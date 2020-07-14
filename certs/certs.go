@@ -24,6 +24,6 @@ type Repository interface {
 	// Remove certificate from DB for given thing
 	Remove(ctx context.Context, thingID string) error
 
-	// Retrieve certificate by given thing
+	// RetrieveByThing certificate by given thing
 	RetrieveByThing(ctx context.Context, thingID string) (Cert, error)
 }
