@@ -32,7 +32,6 @@ const EnvVaultCAPath = "VAULT_CAPATH"
 const EnvVaultClientCert = "VAULT_CLIENT_CERT"
 const EnvVaultClientKey = "VAULT_CLIENT_KEY"
 const EnvVaultClientTimeout = "VAULT_CLIENT_TIMEOUT"
-const EnvVaultSRVLookup = "VAULT_SRV_LOOKUP"
 const EnvVaultSkipVerify = "VAULT_SKIP_VERIFY"
 const EnvVaultNamespace = "VAULT_NAMESPACE"
 const EnvVaultTLSServerName = "VAULT_TLS_SERVER_NAME"
@@ -89,9 +88,6 @@ type Config struct {
 	// The Backoff function to use; a default is used if not provided
 	Backoff retryablehttp.Backoff
 
-	// The CheckRetry function to use; a default is used if not provided
-	CheckRetry retryablehttp.CheckRetry
-
 	// Limiter is the rate limiter used by the client.
 	// If this pointer is nil, then there will be no limit set.
 	// In contrast, if this pointer is set, even to an empty struct,
@@ -106,9 +102,6 @@ type Config struct {
 	// Note: It is not thread-safe to set this and make concurrent requests
 	// with the same client. Cloning a client will not clone this value.
 	OutputCurlString bool
-
-	// SRVLookup enables the client to lookup the host through DNS SRV lookup
-	SRVLookup bool
 }
 
 // TLSConfig contains the parameters needed to configure TLS on the HTTP client
@@ -147,8 +140,8 @@ func DefaultConfig() *Config {
 	config := &Config{
 		Address:    "https://127.0.0.1:8200",
 		HttpClient: cleanhttp.DefaultPooledClient(),
-		Timeout:    time.Second * 60,
 	}
+	config.HttpClient.Timeout = time.Second * 60
 
 	transport := config.HttpClient.Transport.(*http.Transport)
 	transport.TLSHandshakeTimeout = 10 * time.Second
@@ -249,7 +242,6 @@ func (c *Config) ReadEnvironment() error {
 	var envInsecure bool
 	var envTLSServerName string
 	var envMaxRetries *uint64
-	var envSRVLookup bool
 	var limit *rate.Limiter
 
 	// Parse the environment variables
@@ -307,13 +299,6 @@ func (c *Config) ReadEnvironment() error {
 			return fmt.Errorf("could not parse VAULT_INSECURE")
 		}
 	}
-	if v := os.Getenv(EnvVaultSRVLookup); v != "" {
-		var err error
-		envSRVLookup, err = strconv.ParseBool(v)
-		if err != nil {
-			return fmt.Errorf("could not parse %s", EnvVaultSRVLookup)
-		}
-	}
 
 	if v := os.Getenv(EnvVaultTLSServerName); v != "" {
 		envTLSServerName = v
@@ -332,7 +317,6 @@ func (c *Config) ReadEnvironment() error {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
 
-	c.SRVLookup = envSRVLookup
 	c.Limiter = limit
 
 	if err := c.ConfigureTLS(t); err != nil {
@@ -443,13 +427,9 @@ func NewClient(c *Config) (*Client, error) {
 	}
 
 	client := &Client{
-		addr:    u,
-		config:  c,
-		headers: make(http.Header),
+		addr:   u,
+		config: c,
 	}
-
-	// Add the VaultRequest SSRF protection header
-	client.headers[consts.RequestHeaderName] = []string{"true"}
 
 	if token := os.Getenv(EnvVaultToken); token != "" {
 		client.token = token
@@ -506,16 +486,6 @@ func (c *Client) SetMaxRetries(retries int) {
 	c.modifyLock.RUnlock()
 
 	c.config.MaxRetries = retries
-}
-
-// SetCheckRetry sets the CheckRetry function to be used for future requests.
-func (c *Client) SetCheckRetry(checkRetry retryablehttp.CheckRetry) {
-	c.modifyLock.RLock()
-	c.config.modifyLock.Lock()
-	defer c.config.modifyLock.Unlock()
-	c.modifyLock.RUnlock()
-
-	c.config.CheckRetry = checkRetry
 }
 
 // SetClientTimeout sets the client request timeout
@@ -616,7 +586,7 @@ func (c *Client) ClearToken() {
 }
 
 // Headers gets the current set of headers used for requests. This returns a
-// copy; to modify it call AddHeader or SetHeaders.
+// copy; to modify it make modifications locally and use SetHeaders.
 func (c *Client) Headers() http.Header {
 	c.modifyLock.RLock()
 	defer c.modifyLock.RUnlock()
@@ -635,19 +605,11 @@ func (c *Client) Headers() http.Header {
 	return ret
 }
 
-// AddHeader allows a single header key/value pair to be added
-// in a race-safe fashion.
-func (c *Client) AddHeader(key, value string) {
-	c.modifyLock.Lock()
-	defer c.modifyLock.Unlock()
-	c.headers.Add(key, value)
-}
-
-// SetHeaders clears all previous headers and uses only the given
-// ones going forward.
+// SetHeaders sets the headers to be used for future requests.
 func (c *Client) SetHeaders(headers http.Header) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
+
 	c.headers = headers
 }
 
@@ -681,7 +643,6 @@ func (c *Client) Clone() (*Client, error) {
 		MaxRetries: config.MaxRetries,
 		Timeout:    config.Timeout,
 		Backoff:    config.Backoff,
-		CheckRetry: config.CheckRetry,
 		Limiter:    config.Limiter,
 	}
 	config.modifyLock.RUnlock()
@@ -708,14 +669,15 @@ func (c *Client) NewRequest(method, requestPath string) *Request {
 	token := c.token
 	mfaCreds := c.mfaCreds
 	wrappingLookupFunc := c.wrappingLookupFunc
+	headers := c.headers
 	policyOverride := c.policyOverride
 	c.modifyLock.RUnlock()
 
-	var host = addr.Host
 	// if SRV records exist (see https://tools.ietf.org/html/draft-andrews-http-srv-02), lookup the SRV
 	// record and take the highest match; this is not designed for high-availability, just discovery
-	// Internet Draft specifies that the SRV record is ignored if a port is given
-	if addr.Port() == "" && c.config.SRVLookup {
+	var host string = addr.Host
+	if addr.Port() == "" {
+		// Internet Draft specifies that the SRV record is ignored if a port is given
 		_, addrs, err := net.LookupSRV("http", "tcp", addr.Hostname())
 		if err == nil && len(addrs) > 0 {
 			host = fmt.Sprintf("%s:%d", addrs[0].Target, addrs[0].Port)
@@ -730,7 +692,6 @@ func (c *Client) NewRequest(method, requestPath string) *Request {
 			Host:   host,
 			Path:   path.Join(addr.Path, requestPath),
 		},
-		Host:        addr.Host,
 		ClientToken: token,
 		Params:      make(map[string][]string),
 	}
@@ -753,7 +714,10 @@ func (c *Client) NewRequest(method, requestPath string) *Request {
 		req.WrapTTL = DefaultWrappingLookupFunc(method, lookupPath)
 	}
 
-	req.Headers = c.Headers()
+	if headers != nil {
+		req.Headers = headers
+	}
+
 	req.PolicyOverride = policyOverride
 
 	return req
@@ -776,7 +740,6 @@ func (c *Client) RawRequestWithContext(ctx context.Context, r *Request) (*Respon
 	c.config.modifyLock.RLock()
 	limiter := c.config.Limiter
 	maxRetries := c.config.MaxRetries
-	checkRetry := c.config.CheckRetry
 	backoff := c.config.Backoff
 	httpClient := c.config.HttpClient
 	timeout := c.config.Timeout
@@ -813,13 +776,6 @@ START:
 	}
 
 	if timeout != 0 {
-		// NOTE: this leaks a timer. But when we defer a cancel call here for
-		// the returned function we see errors in tests with contxt canceled.
-		// Although the request is done by the time we exit this function it is
-		// still causing something else to go wrong. Maybe it ends up being
-		// tied to the response somehow and reading the response body ends up
-		// checking it, or something. I don't know, but until we can chase this
-		// down, keep it not-canceled even though vet complains.
 		ctx, _ = context.WithTimeout(ctx, timeout)
 	}
 	req.Request = req.Request.WithContext(ctx)
@@ -828,17 +784,13 @@ START:
 		backoff = retryablehttp.LinearJitterBackoff
 	}
 
-	if checkRetry == nil {
-		checkRetry = retryablehttp.DefaultRetryPolicy
-	}
-
 	client := &retryablehttp.Client{
 		HTTPClient:   httpClient,
 		RetryWaitMin: 1000 * time.Millisecond,
 		RetryWaitMax: 1500 * time.Millisecond,
 		RetryMax:     maxRetries,
+		CheckRetry:   retryablehttp.DefaultRetryPolicy,
 		Backoff:      backoff,
-		CheckRetry:   checkRetry,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
 	}
 
