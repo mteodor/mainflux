@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/certs/vault"
+	"github.com/mainflux/mainflux/certs/pki"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
@@ -60,7 +60,7 @@ type Service interface {
 	ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error)
 
 	// RevokeCert
-	RevokeCert(ctx context.Context, token, thingID string) (vault.Revoke, error)
+	RevokeCert(ctx context.Context, token, thingID string) (Revoke, error)
 }
 
 type Config struct {
@@ -90,17 +90,11 @@ type certsService struct {
 	certsRepo Repository
 	sdk       mfsdk.SDK
 	conf      Config
-	pki       PKI
-}
-
-type Cert struct {
-	ThingID string `json:"thing_id" mapstructure:"-"`
-	OwnerID string `json:"-" mapstructure:"-"`
-	vault.Cert
+	pki       pki.Agent
 }
 
 // New returns new Certs service.
-func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, config Config, pki PKI) Service {
+func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, config Config, pki pki.Agent) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,
@@ -108,6 +102,22 @@ func New(auth mainflux.AuthNServiceClient, certs Repository, sdk mfsdk.SDK, conf
 		conf:      config,
 		pki:       pki,
 	}
+}
+
+type Revoke struct {
+	RevocationTime time.Time `mapstructure:"revocation_time"`
+}
+
+type Cert struct {
+	OwnerID        string    `json:"owner_id" mapstructure:"owner_id"`
+	ThingID        string    `json:"thing_id" mapstructure:"thing_id"`
+	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
+	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
+	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
+	ClientKey      string    `json:"client_key" mapstructure:"private_key"`
+	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
+	Serial         string    `json:"serial" mapstructure:"serial_number"`
+	Expire         time.Time `json:"expire" mapstructure:"-"`
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (Cert, error) {
@@ -136,7 +146,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 		return c, errors.Wrap(errFailedCertCreation, err)
 	}
 
-	c.ThingID = thing.ID
+	c.ThingID = thingID
 	c.OwnerID = owner.GetValue()
 	c.ClientCert = cert.ClientCert
 	c.IssuingCA = cert.IssuingCA
@@ -150,31 +160,31 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	return c, err
 }
 
-func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (vault.Revoke, error) {
+func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (Revoke, error) {
+	var revoke Revoke
 	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return vault.Revoke{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return revoke, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
-		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
+		return revoke, errors.Wrap(errFailedCertRevocation, err)
 	}
 
 	cert, err := cs.certsRepo.RetrieveByThing(ctx, thing.ID)
 	if err != nil {
-		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
+		return revoke, errors.Wrap(errFailedCertRevocation, err)
 	}
 
 	r, err := cs.pki.Revoke(cert.Serial)
 	if err != nil {
-		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
+		return revoke, errors.Wrap(errFailedCertRevocation, err)
 	}
-
+	revoke.RevocationTime = r.RevocationTime
 	if err = cs.certsRepo.Remove(context.Background(), cert.Serial); err != nil {
-		return r, errors.Wrap(errFailedToRemoveCertFromDB, err)
+		return revoke, errors.Wrap(errFailedToRemoveCertFromDB, err)
 	}
-	return r, nil
-
+	return revoke, nil
 }
 
 func (cs *certsService) ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error) {

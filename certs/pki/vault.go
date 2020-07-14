@@ -1,4 +1,9 @@
-package vault
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+// Package postgres contains repository implementations using PostgreSQL as
+// the underlying database.
+package pki
 
 import (
 	"encoding/json"
@@ -22,21 +27,7 @@ var (
 	errFailedCertDecoding   = errors.New("failed to decode response from vault service")
 )
 
-type Revoke struct {
-	RevocationTime time.Time `mapstructure:"revocation_time"`
-}
-
-type Cert struct {
-	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
-	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
-	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
-	ClientKey      string    `json:"client_key" mapstructure:"private_key"`
-	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
-	Serial         string    `json:"serial" mapstructure:"serial_number"`
-	Expire         time.Time `json:"expire" mapstructure:"-"`
-}
-
-type pki struct {
+type pkiAgent struct {
 	token  string
 	path   string
 	role   string
@@ -55,7 +46,7 @@ type certRevokeReq struct {
 	SerialNumber string `json:"serial_number"`
 }
 
-func NewVaultClient(token, host, path, role string) (*pki, error) {
+func NewVaultClient(token, host, path, role string) (Agent, error) {
 	conf := &api.Config{
 		Address: host,
 	}
@@ -65,7 +56,7 @@ func NewVaultClient(token, host, path, role string) (*pki, error) {
 		return nil, err
 	}
 	client.SetToken(token)
-	p := pki{
+	p := pkiAgent{
 		token:  token,
 		host:   host,
 		role:   role,
@@ -75,7 +66,7 @@ func NewVaultClient(token, host, path, role string) (*pki, error) {
 	return &p, nil
 }
 
-func (p *pki) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, error) {
+func (p *pkiAgent) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, error) {
 	cReq := certReq{
 		CommonName: cn,
 		TTL:        ttl,
@@ -124,7 +115,7 @@ func (p *pki) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, erro
 
 }
 
-func (p *pki) Revoke(serial string) (Revoke, error) {
+func (p *pkiAgent) Revoke(serial string) (Revoke, error) {
 	cReq := certRevokeReq{
 		SerialNumber: serial,
 	}
@@ -167,10 +158,10 @@ func (p *pki) Revoke(serial string) (Revoke, error) {
 
 }
 
-func (p *pki) getIssueURL() string {
+func (p *pkiAgent) getIssueURL() string {
 	return "/" + apiVer + "/" + p.path + "/" + issue + "/" + p.role
 }
 
-func (p *pki) getRevokeURL() string {
+func (p *pkiAgent) getRevokeURL() string {
 	return "/" + apiVer + "/" + p.path + "/" + revoke
 }

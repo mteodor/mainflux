@@ -66,7 +66,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 		certificates = append(certificates, c)
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM certs WHERE owner_id = $1`)
+	q = `SELECT COUNT(*) FROM certs WHERE owner_id = $1`
 	var total uint64
 	if err := cr.db.QueryRow(q, ownerID).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
