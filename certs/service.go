@@ -34,9 +34,6 @@ var (
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	// ErrMissingCertSerial indicates problem with missing certificate serial
-	ErrMissingCertSerial = errors.New("missing cert serial")
-
 	errFailedKeyCreation         = errors.New("failed to create client private key")
 	errFailedDateSetting         = errors.New("failed to set date for certificate")
 	errKeyBitsValueWrong         = errors.New("missing RSA bits for certificate creation")
@@ -64,7 +61,7 @@ type Service interface {
 	ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error)
 
 	// RevokeCert
-	RevokeCert(ctx context.Context, token, thingID, certID string) (vault.Revoke, error)
+	RevokeCert(ctx context.Context, token, thingID string) (vault.Revoke, error)
 }
 
 type Config struct {
@@ -154,17 +151,27 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	return c, err
 }
 
-func (cs *certsService) RevokeCert(ctx context.Context, token, thingID, certSerial string) (vault.Revoke, error) {
+func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (vault.Revoke, error) {
 	_, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return vault.Revoke{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	r, err := cs.pki.Revoke(certSerial)
+	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
 		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
 	}
 
-	if err = cs.certsRepo.Remove(context.Background(), certSerial); err != nil {
+	cert, err := cs.certsRepo.RetrieveByThing(ctx, thing.ID)
+	if err != nil {
+		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
+	}
+
+	r, err := cs.pki.Revoke(cert.Serial)
+	if err != nil {
+		return vault.Revoke{}, errors.Wrap(errFailedCertRevocation, err)
+	}
+
+	if err = cs.certsRepo.Remove(context.Background(), cert.Serial); err != nil {
 		return r, errors.Wrap(errFailedToRemoveCertFromDB, err)
 	}
 	return r, nil

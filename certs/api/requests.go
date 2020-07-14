@@ -36,18 +36,13 @@ func (req *listReq) validate() error {
 }
 
 type revokeReq struct {
-	token      string
-	ThingID    string `json:"thing_id"`
-	CertSerial string `json:"cert_serial"`
+	token   string
+	ThingID string `json:"thing_id"`
 }
 
 func (req *revokeReq) validate() error {
 	if req.token == "" || req.ThingID == "" {
 		return certs.ErrUnauthorizedAccess
-	}
-
-	if req.CertSerial == "" {
-		return certs.ErrMissingCertSerial
 	}
 
 	return nil

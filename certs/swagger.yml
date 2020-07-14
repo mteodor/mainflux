@@ -55,12 +55,30 @@ paths:
         200:
           description: Data retrieved.
           schema:
-            $ref: "#/definitions/BootstrapRes"
+            $ref: "#/definitions/CertsRes"
         404:
           description: |
-            Failed to retrieve corresponding config. Thing which attempted
-            to bootstrap is saved as an unknown Thing and can be listed and
-            added to the service later.
+            Failed to retrieve corresponding certificate. 
+        500:
+          $ref: "#/responses/ServiceError"
+  /certs/revoke:
+    delete:
+      summary: Revokes certificate
+      description: |
+        Revokes a certificates for given thing ID .
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/ConfigAuth"
+        - $ref: "#/parameters/ThingID"
+      responses:
+        200:
+          description: Certificate revoked.
+          schema:
+            $ref: "#/definitions/RevokeRes"
+        404:
+          description: |
+            Failed to revoke corresponding certificate. 
         500:
           $ref: "#/responses/ServiceError"
 parameters:
@@ -76,7 +94,6 @@ parameters:
     in: path
     type: string
     required: true
-
 definitions:
   CertsRes:
     type: object
@@ -84,24 +101,26 @@ definitions:
       thing_id:
         type: string
         description: Corresponding Mainflux Thing ID.
-      mainflux_key:
-        type: string
-        description: Corresponding Mainflux Thing key.
-      mainflux_channels:
-        type: array
-        minItems: 0
-        items:
-          type: string
-      content:
-        type: string
-        description: Free-form custom configuration.
       client_cert:
         type: string
         description: Client Certificate.
       client_key:
         type: string
         description: Key for the client_cert.
-      ca_cert:
+      issuing_ca:
         type: string
-        description: Issuing CA certificate.
+        description: 
+      serial:
+        type: string
+        description: Certificate serial
+      expire:
+        type: string
+        description: Certificate expiry date
+  RevokeRes:
+    type: object
+    properties:
+      revocation_time:
+        type: string
+        description: Certificate revocation time
+      
   

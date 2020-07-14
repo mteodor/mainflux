@@ -5,6 +5,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -13,13 +14,16 @@ import (
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/things"
 )
 
 const duplicateErr = "unique_violation"
 
 var (
-	errSaveDB = errors.New("failed to save certificate to database")
-	errRemove = errors.New("failed to remove certificate from database")
+	errSaveDB     = errors.New("failed to save certificate to database")
+	errRetrieveDB = errors.New("failed to retrieve certificate from db")
+	errRemove     = errors.New("failed to remove certificate from database")
+	errInvalid    = "invalid_text_representation"
 )
 
 var _ certs.Repository = (*certsRepository)(nil)
@@ -105,16 +109,56 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 	return cert.Serial, nil
 }
 
-func (cr certsRepository) Remove(ctx context.Context, serialID string) error {
+func (cr certsRepository) Remove(ctx context.Context, serial string) error {
+	if _, err := cr.retrieveBySerial(ctx, serial); err != nil {
+		return errors.Wrap(errRemove, err)
+	}
 	q := `DELETE FROM certs WHERE serial = :serial`
 	var c certs.Cert
-	c.Serial = serialID
+	c.Serial = serial
 	dbcrt := toDBCert(c)
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcrt); err != nil {
 		return errors.Wrap(errRemove, err)
 	}
-
 	return nil
+}
+
+func (cr certsRepository) RetrieveByThing(ctx context.Context, thingID string) (certs.Cert, error) {
+	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE thing_id = $1`
+	var dbcrt dbCert
+	var c certs.Cert
+
+	if err := cr.db.QueryRowxContext(ctx, q, thingID).StructScan(&dbcrt); err != nil {
+
+		pqErr, ok := err.(*pq.Error)
+		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
+			return c, errors.Wrap(things.ErrNotFound, err)
+		}
+
+		return c, errors.Wrap(errRetrieveDB, err)
+	}
+	c = toCert(dbcrt)
+
+	return c, nil
+}
+
+func (cr certsRepository) retrieveBySerial(ctx context.Context, serial string) (certs.Cert, error) {
+	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE serial = $1`
+	var dbcrt dbCert
+	var c certs.Cert
+
+	if err := cr.db.QueryRowxContext(ctx, q, serial).StructScan(&dbcrt); err != nil {
+
+		pqErr, ok := err.(*pq.Error)
+		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
+			return c, errors.Wrap(things.ErrNotFound, err)
+		}
+
+		return c, errors.Wrap(errRetrieveDB, err)
+	}
+	c = toCert(dbcrt)
+
+	return c, nil
 }
 
 func (cr certsRepository) rollback(content string, tx *sqlx.Tx, err error) {
@@ -139,4 +183,13 @@ func toDBCert(c certs.Cert) dbCert {
 		Serial:  c.Serial,
 		Expire:  c.Expire,
 	}
+}
+
+func toCert(cdb dbCert) certs.Cert {
+	var c certs.Cert
+	c.OwnerID = cdb.OwnerID
+	c.ThingID = cdb.ThingID
+	c.Serial = cdb.Serial
+	c.Expire = cdb.Expire
+	return c
 }
