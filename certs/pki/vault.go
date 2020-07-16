@@ -28,11 +28,13 @@ var (
 )
 
 type pkiAgent struct {
-	token  string
-	path   string
-	role   string
-	host   string
-	client *api.Client
+	token     string
+	path      string
+	role      string
+	host      string
+	issueURL  string
+	revokeURL string
+	client    *api.Client
 }
 
 type certReq struct {
@@ -57,11 +59,13 @@ func NewVaultClient(token, host, path, role string) (Agent, error) {
 	}
 	client.SetToken(token)
 	p := pkiAgent{
-		token:  token,
-		host:   host,
-		role:   role,
-		path:   path,
-		client: client,
+		token:     token,
+		host:      host,
+		role:      role,
+		path:      path,
+		client:    client,
+		issueURL:  "/" + apiVer + "/" + path + "/" + issue + "/" + role,
+		revokeURL: "/" + apiVer + "/" + path + "/" + revoke,
 	}
 	return &p, nil
 }
@@ -74,7 +78,7 @@ func (p *pkiAgent) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert,
 		KeyType:    keyType,
 	}
 
-	r := p.client.NewRequest("POST", p.getIssueURL())
+	r := p.client.NewRequest("POST", p.issueURL)
 	if err := r.SetJSONBody(cReq); err != nil {
 		return Cert{}, err
 	}
@@ -120,7 +124,7 @@ func (p *pkiAgent) Revoke(serial string) (Revoke, error) {
 		SerialNumber: serial,
 	}
 
-	r := p.client.NewRequest("POST", p.getRevokeURL())
+	r := p.client.NewRequest("POST", p.revokeURL)
 	if err := r.SetJSONBody(cReq); err != nil {
 		return Revoke{}, err
 	}
@@ -156,12 +160,4 @@ func (p *pkiAgent) Revoke(serial string) (Revoke, error) {
 		RevocationTime: revTime,
 	}, nil
 
-}
-
-func (p *pkiAgent) getIssueURL() string {
-	return "/" + apiVer + "/" + p.path + "/" + issue + "/" + p.role
-}
-
-func (p *pkiAgent) getRevokeURL() string {
-	return "/" + apiVer + "/" + p.path + "/" + revoke
 }
