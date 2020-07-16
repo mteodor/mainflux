@@ -122,5 +122,4 @@ definitions:
       revocation_time:
         type: string
         description: Certificate revocation time
-      
   
