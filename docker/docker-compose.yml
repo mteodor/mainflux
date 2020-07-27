@@ -63,7 +63,7 @@ services:
       - mainflux-auth-redis-volume:/data
 
   things:
-    image: mainflux/things-arm:latest
+    image: arm32v7/mainflux/things:latest
     container_name: mainflux-things
     restart: on-failure
     environment:
@@ -92,7 +92,7 @@ services:
 
 
   mqtt-adapter:
-    image: mainflux/mqtt-arm:latest
+    image: arm32v7/mainflux/mqtt:latest
     container_name: mainflux-mqtt
     depends_on:
       - mosquitto
@@ -117,7 +117,44 @@ services:
     ports:
       - ${MF_MQTT_ADAPTER_MQTT_PORT}:${MF_MQTT_ADAPTER_MQTT_PORT}
 
+  influxdb:
+    image: arm32v7/influxdb:1.6.4-alpine
+    container_name: mainflux-influxdb
+    restart: on-failure
+    environment:
+      INFLUXDB_DB: ${MF_INFLUX_WRITER_DB}
+      INFLUXDB_ADMIN_USER: ${MF_INFLUX_WRITER_DB_USER}
+      INFLUXDB_ADMIN_PASSWORD: ${MF_INFLUX_WRITER_DB_PASS}
+    networks:
+      - docker_mainflux-base-net
+    ports:
+      - ${MF_INFLUX_WRITER_DB_PORT}:${MF_INFLUX_WRITER_DB_PORT}
+    volumes:
+      - mainflux-influxdb-volume:/var/lib/influxdb
 
+  influxdb-writer:
+    image: arm32v7/mainflux/influxdb-writer:latest
+    container_name: mainflux-influxdb-writer
+    depends_on:
+      - influxdb
+    restart: on-failure
+    environment:
+      MF_INFLUX_WRITER_LOG_LEVEL: debug
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_INFLUX_WRITER_PORT: ${MF_INFLUX_WRITER_PORT}
+      MF_INFLUX_WRITER_BATCH_SIZE: ${MF_INFLUX_WRITER_BATCH_SIZE}
+      MF_INFLUX_WRITER_BATCH_TIMEOUT: ${MF_INFLUX_WRITER_BATCH_TIMEOUT}
+      MF_INFLUX_WRITER_DB: ${MF_INFLUX_WRITER_DB}
+      MF_INFLUX_WRITER_DB_HOST: mainflux-influxdb
+      MF_INFLUX_WRITER_DB_PORT: ${MF_INFLUX_WRITER_DB_PORT}
+      MF_INFLUX_WRITER_DB_USER: ${MF_INFLUX_WRITER_DB_USER}
+      MF_INFLUX_WRITER_DB_PASS: ${MF_INFLUX_WRITER_DB_PASS}
+    ports:
+      - ${MF_INFLUX_WRITER_PORT}:${MF_INFLUX_WRITER_PORT}
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - ./subjects.toml:/config/subjects.toml
 
   es-redis:
     image: arm32v7/redis:5.0-alpine
