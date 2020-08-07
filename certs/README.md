@@ -3,7 +3,48 @@ Issues certificates for things. `Certs` service can create certificates to be us
 Certificate service can create certificates in two modes:
 1. Development mode - to be used when no PKI is deployed, this works similar to the [make thing_cert](../docker/ssl/Makefile)
 2. PKI mode - certificates issued by PKI, when you deploy `Vault` as PKI certificate management `cert` service will proxy requests to `Vault` previously checking access rights and saving info on successfully created certificate. 
-   
+
+
+
+## Configuration
+
+The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
+
+| Variable                      | Description                                                             | Default                          |
+|-------------------------------|-------------------------------------------------------------------------|----------------------------------|
+| MF_CERTS_LOG_LEVEL            | Log level for Certs (debug, info, warn, error)                          | error                            |
+| MF_CERTS_DB_HOST              | Database host address                                                   | localhost                        |
+| MF_CERTS_DB_PORT              | Database host port                                                      | 5432                             |
+| MF_CERTS_DB_USER              | Database user                                                           | mainflux                         |
+| MF_CERTS_DB_PASS              | Database password                                                       | mainflux                         |
+| MF_CERTS_DB                   | Name of the database used by the service                                | certs                            |
+| MF_CERTS_DB_SSL_MODE          | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                          |
+| MF_CERTS_DB_SSL_CERT          | Path to the PEM encoded certificate file                                |                                  |
+| MF_CERTS_DB_SSL_KEY           | Path to the PEM encoded key file                                        |                                  |
+| MF_CERTS_DB_SSL_ROOT_CERT     | Path to the PEM encoded root certificate file                           |                                  |
+| MF_CERTS_CLIENT_TLS           | Flag that indicates if TLS should be turned on                          | false                            |
+| MF_CERTS_CA_CERTS             | Path to trusted CAs in PEM format                                       |                                  |
+| MF_CERTS_PORT                 | Certs service HTTP port                                                 | 8204                             |
+| MF_CERTS_SERVER_CERT          | Path to server certificate in pem format                                |                                  |
+| MF_CERTS_SERVER_KEY           | Path to server key in pem format                                        |                                  |
+| MF_SDK_BASE_URL               | Base url for Mainflux SDK                                               | http://localhost                 |
+| MF_SDK_THINGS_PREFIX          | SDK prefix for Things service                                           |                                  |
+| MF_THINGS_ES_URL              | Things service event source URL                                         | localhost:6379                   |
+| MF_THINGS_ES_PASS             | Things service event source password                                    |                                  |
+| MF_THINGS_ES_DB               | Things service event source database                                    | 0                                |
+| MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
+| MF_AUTHN_GRPC_URL             | AuthN service gRPC URL                                                  | localhost:8181                   |
+| MF_AUTHN_GRPC_TIMEOUT         | AuthN service gRPC request timeout in seconds                           | 1s                               |
+| MF_CERTS_SIGN_CA_PATH         | CA certificate for signing in Development mode                          | "ca.crt"                         |
+| MF_CERTS_SIGN_CA_KEY_PATH     | CA certificate signing key for signing in Development mode              | "ca.key"                         |
+| MF_CERTS_SIGN_HOURS_VALID     | Default certificate valid period                                        | 2048h                            |
+| MF_CERTS_SIGN_RSA_BITS        | Default number of RSA bits for certificate                              | 2048                             |
+| MF_CERTS_VAULT_HOST           | Vault host address, if not set Development mode is used                 | ""                               |
+| MF_CERTS_VAULT_PKI_PATH       | Vault PKI path, path where certificates are issued                      | pki_int                          |
+| MF_CERTS_VAULT_ROLE           | Vault PKI role that is used for issuing certificate                     | mainflux                         |
+| MF_CERTS_VAULT_TOKEN          | Vault API access token                                                  | ""                               |
+
+
 ## Development mode
 If `MF_CERTS_VAULT_HOST` is empty than Development mode is on.
 
