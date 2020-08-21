@@ -80,8 +80,17 @@ var _ SDK = (*mfSDK)(nil)
 type User struct {
 	ID       string                 `json:"id,omitempty"`
 	Email    string                 `json:"email,omitempty"`
+	Groups   []string               `json:"groups,omitempty"`
 	Password string                 `json:"password,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// Group represents mainflux users group.
+type Group struct {
+	ID          string                 `json:"id,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Thing represents mainflux thing.
@@ -137,6 +146,21 @@ type SDK interface {
 
 	// DeleteThing removes existing thing.
 	DeleteThing(id, token string) error
+
+	// CreateGroup creates new group and returns its id.
+	CreateGroup(group Group, token string) (string, error)
+
+	// Groups returns page of groups.
+	Groups(token string, offset, limit uint64, name string) (GroupsPage, error)
+
+	// Group returns group object by id.
+	Group(id, token string) (Group, error)
+
+	// DeleteGroup deletes group.
+	DeleteGroup(id, token string) error
+
+	// UpdateGroup updates existing group.
+	UpdateGroup(group Group, token string) error
 
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) error
@@ -216,6 +240,7 @@ type mfSDK struct {
 	certsURL          string
 	readerPrefix      string
 	usersPrefix       string
+	groupsPrefix      string
 	thingsPrefix      string
 	certsPrefix       string
 	channelsPrefix    string
@@ -233,6 +258,7 @@ type Config struct {
 	CertsURL          string
 	ReaderPrefix      string
 	UsersPrefix       string
+	GroupsPrefix      string
 	ThingsPrefix      string
 	HTTPAdapterPrefix string
 	BootstrapPrefix   string
@@ -249,6 +275,7 @@ func NewSDK(conf Config) SDK {
 		certsURL:          conf.CertsURL,
 		readerPrefix:      conf.ReaderPrefix,
 		usersPrefix:       conf.UsersPrefix,
+		groupsPrefix:      conf.GroupsPrefix,
 		thingsPrefix:      conf.ThingsPrefix,
 		httpAdapterPrefix: conf.HTTPAdapterPrefix,
 		bootstrapPrefix:   conf.BootstrapPrefix,

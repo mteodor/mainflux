@@ -48,6 +48,7 @@ func TestCreateUser(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -111,6 +112,7 @@ func TestCreateToken(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
