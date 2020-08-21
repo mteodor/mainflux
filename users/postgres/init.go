@@ -49,8 +49,22 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "users_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS users (
-					email VARCHAR(254) PRIMARY KEY,
-					password CHAR(60) NOT NULL)`,
+					    email    VARCHAR(254) PRIMARY KEY,
+						password CHAR(60)     NOT  NULL
+					)`,
+					`CREATE TABLE IF NOT EXISTS groups (
+						id          UUID PRIMARY KEY,
+						name        VARCHAR(254) NOT NULL,
+						description VARCHAR(1024),
+						metadata    JSONB,
+					)`,
+					`CREATE TABLE IF NOT EXISTS group_relations (
+						user_id UUID NOT NULL,
+						group_id UUID NOT NULL,
+						FOREIGN KEY user_id  REFERENCES users  id ON DELETE CASCADE ON UPDATE CASCADE,
+						FOREIGN KEY group_id REFERENCES groups id ON DELETE CASCADE ON UPDATE CASCADE,
+						PRIMARY KEY (user_id, group_id),
+					)`,
 				},
 				Down: []string{"DROP TABLE users"},
 			},

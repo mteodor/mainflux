@@ -70,13 +70,34 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error 
 	return nil
 }
 
-func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
+func (ur userRepository) RetrieveByEmail(ctx context.Context, email string, groups bool) (users.User, error) {
+	// TO-DO retrieve groups for user if groups TRUE
 	q := `SELECT id, password, metadata FROM users WHERE email = $1`
 
 	dbu := dbUser{
 		Email: email,
 	}
 	if err := ur.db.QueryRowxContext(ctx, q, email).StructScan(&dbu); err != nil {
+		if err == sql.ErrNoRows {
+			return users.User{}, errors.Wrap(users.ErrNotFound, err)
+
+		}
+		return users.User{}, errors.Wrap(errRetrieveDB, err)
+	}
+
+	user := toUser(dbu)
+
+	return user, nil
+}
+
+func (ur userRepository) RetrieveByID(ctx context.Context, id string, groups bool) (users.User, error) {
+	// TO-DO retrieve groups for user if groups TRUE
+	q := `SELECT id, password, metadata FROM users WHERE id = $1`
+
+	dbu := dbUser{
+		ID: id,
+	}
+	if err := ur.db.QueryRowxContext(ctx, q, id).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
 			return users.User{}, errors.Wrap(users.ErrNotFound, err)
 

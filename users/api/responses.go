@@ -5,6 +5,7 @@ package api
 
 import (
 	"net/http"
+	"os/user"
 
 	"github.com/mainflux/mainflux"
 )
@@ -51,6 +52,7 @@ func (res updateUserRes) Empty() bool {
 type viewUserRes struct {
 	ID       string                 `json:"id"`
 	Email    string                 `json:"email"`
+	Groups   []user.Group           `json:"groups"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 

@@ -13,8 +13,9 @@ import (
 var _ users.UserRepository = (*userRepositoryMock)(nil)
 
 type userRepositoryMock struct {
-	mu    sync.Mutex
-	users map[string]users.User
+	mu        sync.Mutex
+	users     map[string]users.User
+	usersByID map[string]users.User
 }
 
 // NewUserRepository creates in-memory user repository
@@ -33,6 +34,7 @@ func (urm *userRepositoryMock) Save(ctx context.Context, user users.User) error 
 	}
 
 	urm.users[user.Email] = user
+	urm.usersByID[user.ID] = user
 	return nil
 }
 
@@ -60,11 +62,23 @@ func (urm *userRepositoryMock) UpdateUser(ctx context.Context, user users.User) 
 	return nil
 }
 
-func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
+func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string, groups bool) (users.User, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 
 	val, ok := urm.users[email]
+	if !ok {
+		return users.User{}, users.ErrNotFound
+	}
+
+	return val, nil
+}
+
+func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, id string, groups bool) (users.User, error) {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
+
+	val, ok := urm.usersByID[id]
 	if !ok {
 		return users.User{}, users.ErrNotFound
 	}

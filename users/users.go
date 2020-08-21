@@ -34,6 +34,7 @@ type User struct {
 	ID       string
 	Email    string
 	Password string
+	Groups   []Group
 	Metadata map[string]interface{}
 }
 
@@ -60,7 +61,12 @@ type UserRepository interface {
 	UpdateUser(ctx context.Context, u User) error
 
 	// RetrieveByEmail retrieves user by its unique identifier (i.e. email).
-	RetrieveByEmail(ctx context.Context, email string) (User, error)
+	// If groups = TRUE retrieve groups for given User
+	RetrieveByEmail(ctx context.Context, email string, groups bool) (User, error)
+
+	// RetrieveByID retrieves user by its unique identifier ID.
+	// If groups = TRUE retrieve groups for given User
+	RetrieveByID(ctx context.Context, id string, groups bool) (User, error)
 
 	// UpdatePassword updates password for user with given email
 	UpdatePassword(ctx context.Context, email, password string) error

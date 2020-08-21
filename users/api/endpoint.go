@@ -145,3 +145,153 @@ func loginEndpoint(svc users.Service) endpoint.Endpoint {
 		return tokenRes{token}, nil
 	}
 }
+
+
+func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(createThingReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		th := things.Thing{
+			Key:      req.Key,
+			Name:     req.Name,
+			Metadata: req.Metadata,
+		}
+		saved, err := svc.CreateThings(ctx, req.token, th)
+		if err != nil {
+			return nil, err
+		}
+
+		res := thingRes{
+			ID:      saved[0].ID,
+			created: true,
+		}
+
+		return res, nil
+	}
+}
+
+
+func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateGroupReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		thing := things.Group{
+			ID:       req.id,
+			Name:     req.Name,
+			Metadata: req.Metadata,
+		}
+
+		if err := svc.UpdateGroup(ctx, req.token, thing); err != nil {
+			return nil, err
+		}
+
+		res := thingRes{ID: req.id, created: false}
+		return res, nil
+	}
+}
+
+func updateKeyEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateKeyReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.UpdateKey(ctx, req.token, req.id, req.Key); err != nil {
+			return nil, err
+		}
+
+		res := thingRes{ID: req.id, created: false}
+		return res, nil
+	}
+}
+
+func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewResourceReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		thing, err := svc.ViewGroup(ctx, req.token, req.id)
+		if err != nil {
+			return nil, err
+		}
+
+		res := viewGroupRes{
+			ID:       thing.ID,
+			Owner:    thing.Owner,
+			Name:     thing.Name,
+			Key:      thing.Key,
+			Metadata: thing.Metadata,
+		}
+		return res, nil
+	}
+}
+
+func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listResourcesReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		page, err := svc.ListGroups(ctx, req.token, req.offset, req.limit, req.name, req.metadata)
+		if err != nil {
+			return nil, err
+		}
+
+		res := thingsPageRes{
+			pageRes: pageRes{
+				Total:  page.Total,
+				Offset: page.Offset,
+				Limit:  page.Limit,
+			},
+			Groups: []viewGroupRes{},
+		}
+		for _, thing := range page.Groups {
+			view := viewGroupRes{
+				ID:       thing.ID,
+				Owner:    thing.Owner,
+				Name:     thing.Name,
+				Key:      thing.Key,
+				Metadata: thing.Metadata,
+			}
+			res.Groups = append(res.Groups, view)
+		}
+
+		return res, nil
+	}
+}
+
+func removeThingEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewResourceReq)
+
+		err := req.validate()
+		if err == things.ErrNotFound {
+			return removeRes{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if err := svc.RemoveThing(ctx, req.token, req.id); err != nil {
+			return nil, err
+		}
+
+		return removeRes{}, nil
+	}
+}
