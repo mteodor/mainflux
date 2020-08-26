@@ -268,14 +268,14 @@ func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger)
 
 func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthNServiceClient, c config, logger logger.Logger) users.Service {
 	database := postgres.NewDatabase(db)
-	repo := tracing.UserRepositoryMiddleware(postgres.New(database), tracer)
+	repo := tracing.UserRepositoryMiddleware(postgres.NewUserRepo(database), tracer)
 	hasher := bcrypt.New()
 	emailer, err := emailer.New(c.resetURL, &c.emailConf)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	svc := users.New(repo, hasher, auth, emailer)
+	svc := users.New(repo, postgres.NewGroupRepo(database), hasher, auth, emailer)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
