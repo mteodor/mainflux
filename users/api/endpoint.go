@@ -146,34 +146,30 @@ func loginEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-
 func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(createThingReq)
+		req := request.(createGroupReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		th := things.Thing{
-			Key:      req.Key,
-			Name:     req.Name,
-			Metadata: req.Metadata,
+		group := users.Group{
+			Name: req.Name,
 		}
-		saved, err := svc.CreateThings(ctx, req.token, th)
+		saved, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
 			return nil, err
 		}
 
-		res := thingRes{
-			ID:      saved[0].ID,
+		res := groupRes{
+			Name:    saved.Name,
 			created: true,
 		}
 
 		return res, nil
 	}
 }
-
 
 func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -183,57 +179,43 @@ func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		thing := things.Group{
-			ID:       req.id,
-			Name:     req.Name,
-			Metadata: req.Metadata,
+		group := users.Group{
+			Name:        req.Name,
+			Description: req.Description,
+			Metadata:    req.Metadata,
 		}
 
-		if err := svc.UpdateGroup(ctx, req.token, thing); err != nil {
+		if err := svc.UpdateGroup(ctx, req.token, group); err != nil {
 			return nil, err
 		}
 
-		res := thingRes{ID: req.id, created: false}
-		return res, nil
-	}
-}
-
-func updateKeyEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(updateKeyReq)
-
-		if err := req.validate(); err != nil {
-			return nil, err
+		res := groupRes{
+			Name:        group.Name,
+			Description: group.Description,
+			Metadata:    group.Metadata,
+			created:     false,
 		}
-
-		if err := svc.UpdateKey(ctx, req.token, req.id, req.Key); err != nil {
-			return nil, err
-		}
-
-		res := thingRes{ID: req.id, created: false}
 		return res, nil
 	}
 }
 
 func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewResourceReq)
+		req := request.(viewGroupReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		thing, err := svc.ViewGroup(ctx, req.token, req.id)
+		group, err := svc.ViewGroup(ctx, req.token, req.Name)
 		if err != nil {
 			return nil, err
 		}
 
 		res := viewGroupRes{
-			ID:       thing.ID,
-			Owner:    thing.Owner,
-			Name:     thing.Name,
-			Key:      thing.Key,
-			Metadata: thing.Metadata,
+			Name:        group.Name,
+			Description: group.Description,
+			Metadata:    group.Metadata,
 		}
 		return res, nil
 	}
@@ -241,7 +223,7 @@ func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 
 func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listResourcesReq)
+		req := request.(listGroupReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
@@ -252,7 +234,7 @@ func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		res := thingsPageRes{
+		res := groupPageRes{
 			pageRes: pageRes{
 				Total:  page.Total,
 				Offset: page.Offset,
@@ -260,38 +242,15 @@ func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 			},
 			Groups: []viewGroupRes{},
 		}
-		for _, thing := range page.Groups {
+		for _, group := range page.Groups {
 			view := viewGroupRes{
-				ID:       thing.ID,
-				Owner:    thing.Owner,
-				Name:     thing.Name,
-				Key:      thing.Key,
-				Metadata: thing.Metadata,
+				Name:        group.Name,
+				Description: group.Description,
+				Metadata:    group.Metadata,
 			}
 			res.Groups = append(res.Groups, view)
 		}
 
 		return res, nil
-	}
-}
-
-func removeThingEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewResourceReq)
-
-		err := req.validate()
-		if err == things.ErrNotFound {
-			return removeRes{}, nil
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		if err := svc.RemoveThing(ctx, req.token, req.id); err != nil {
-			return nil, err
-		}
-
-		return removeRes{}, nil
 	}
 }

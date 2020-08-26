@@ -52,19 +52,6 @@ func migrateDB(db *sqlx.DB) error {
 					    email    VARCHAR(254) PRIMARY KEY,
 						password CHAR(60)     NOT  NULL
 					)`,
-					`CREATE TABLE IF NOT EXISTS groups (
-						id          UUID PRIMARY KEY,
-						name        VARCHAR(254) NOT NULL,
-						description VARCHAR(1024),
-						metadata    JSONB,
-					)`,
-					`CREATE TABLE IF NOT EXISTS group_relations (
-						user_id UUID NOT NULL,
-						group_id UUID NOT NULL,
-						FOREIGN KEY user_id  REFERENCES users  id ON DELETE CASCADE ON UPDATE CASCADE,
-						FOREIGN KEY group_id REFERENCES groups id ON DELETE CASCADE ON UPDATE CASCADE,
-						PRIMARY KEY (user_id, group_id),
-					)`,
 				},
 				Down: []string{"DROP TABLE users"},
 			},
@@ -80,6 +67,28 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 					ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS
 					id UUID NOT NULL DEFAULT gen_random_uuid()`,
+				},
+			},
+			{
+				Id: "users_4",
+				Up: []string{
+					`ALTER TABLE IF EXISTS users DROP CONSTRAINT users_pkey`,
+					`ALTER TABLE IF EXISTS users ADD PRIMARY KEY (id)`,
+					`CREATE TABLE IF NOT EXISTS groups ( 
+					id          UUID PRIMARY KEY,
+					parent_id   UUID, 
+					name        VARCHAR(254) NOT NULL,
+					description VARCHAR(1024),
+					metadata    JSONB,
+					FOREIGN KEY (parent_id) REFERENCES groups (id)  ON DELETE CASCADE ON UPDATE CASCADE
+				)`,
+					`CREATE TABLE IF NOT EXISTS group_relations (
+					user_id UUID NOT NULL,
+					group_id UUID NOT NULL,
+					FOREIGN KEY (user_id)  REFERENCES users  (id) ON DELETE CASCADE ON UPDATE CASCADE,
+					FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+					PRIMARY KEY (user_id, group_id)
+				)`,
 				},
 			},
 		},

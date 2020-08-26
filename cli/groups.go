@@ -14,7 +14,7 @@ var cmdGroups = []cobra.Command{
 		Short: "create <name> <description> <user_auth_token>",
 		Long:  `Creates new group`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsage(cmd.Short)
 				return
 			}

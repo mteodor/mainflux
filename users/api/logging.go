@@ -128,3 +128,23 @@ func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email,
 
 	return lm.svc.SendPasswordReset(ctx, host, email, token)
 }
+
+func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group users.Group) (users.Group, error) {
+	return lm.svc.CreateGroup(ctx, token, group)
+}
+
+func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta users.Metadata) (users.GroupPage, error) {
+	return lm.svc.ListGroups(ctx, token, offset, limit, name, meta)
+}
+
+func (lm *loggingMiddleware) RemoveGroup(ctx context.Context, token, id string) error {
+	return lm.svc.RemoveGroup(ctx, token, id)
+}
+
+func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, group users.Group) error {
+	return lm.svc.UpdateGroup(ctx, token, group)
+}
+
+func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (users.Group, error) {
+	return lm.svc.ViewGroup(ctx, token, id)
+}

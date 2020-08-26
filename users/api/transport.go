@@ -87,6 +87,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
+	mux.Post("/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "add_group")(createGroupEndpoint(svc)),
+		decodePasswordChange,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Post("/tokens", kithttp.NewServer(
 		kitot.TraceServer(tracer, "login")(loginEndpoint(svc)),
 		decodeCredentials,

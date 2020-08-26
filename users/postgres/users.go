@@ -19,6 +19,8 @@ var (
 	errUpdateUserDB     = errors.New("Update user metadata to DB failed")
 	errRetrieveDB       = errors.New("Retreiving from DB failed")
 	errUpdatePasswordDB = errors.New("Update password to DB failed")
+	errMarshal          = errors.New("Failed to marshal metadata")
+	errUnmarshal        = errors.New("Failed to unmarshal metadata")
 )
 
 var _ users.UserRepository = (*userRepository)(nil)
@@ -31,7 +33,7 @@ type userRepository struct {
 
 // New instantiates a PostgreSQL implementation of user
 // repository.
-func New(db Database) users.UserRepository {
+func NewUserRepo(db Database) users.UserRepository {
 	return &userRepository{
 		db: db,
 	}
@@ -40,7 +42,10 @@ func New(db Database) users.UserRepository {
 func (ur userRepository) Save(ctx context.Context, user users.User) error {
 	q := `INSERT INTO users (id, email, password, metadata) VALUES (:id, :email, :password, :metadata)`
 
-	dbu := toDBUser(user)
+	dbu, err := toDBUser(user)
+	if err != nil {
+		return errors.Wrap(errSaveUserDB, err)
+	}
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
 		return errors.Wrap(errSaveUserDB, err)
 	}
@@ -51,7 +56,10 @@ func (ur userRepository) Save(ctx context.Context, user users.User) error {
 func (ur userRepository) Update(ctx context.Context, user users.User) error {
 	q := `UPDATE users SET(email, password, metadata) VALUES (:email, :password, :metadata) WHERE email = :email`
 
-	dbu := toDBUser(user)
+	dbu, err := toDBUser(user)
+	if err != nil {
+		return errors.Wrap(errUpdateDB, err)
+	}
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
@@ -62,7 +70,10 @@ func (ur userRepository) Update(ctx context.Context, user users.User) error {
 func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error {
 	q := `UPDATE users SET metadata = :metadata WHERE email = :email`
 
-	dbu := toDBUser(user)
+	dbu, err := toDBUser(user)
+	if err != nil {
+		return errors.Wrap(errUpdateUserDB, err)
+	}
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
 		return errors.Wrap(errUpdateUserDB, err)
 	}
@@ -85,9 +96,7 @@ func (ur userRepository) RetrieveByEmail(ctx context.Context, email string, grou
 		return users.User{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	user := toUser(dbu)
-
-	return user, nil
+	return toUser(dbu)
 }
 
 func (ur userRepository) RetrieveByID(ctx context.Context, id string, groups bool) (users.User, error) {
@@ -105,9 +114,7 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string, groups boo
 		return users.User{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	user := toUser(dbu)
-
-	return user, nil
+	return toUser(dbu)
 }
 
 func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) error {
@@ -162,26 +169,40 @@ func (m dbMetadata) Value() (driver.Value, error) {
 }
 
 type dbUser struct {
-	ID       string     `db:"id"`
-	Email    string     `db:"email"`
-	Password string     `db:"password"`
-	Metadata dbMetadata `db:"metadata"`
+	ID       string `db:"id"`
+	Email    string `db:"email"`
+	Password string `db:"password"`
+	Metadata []byte `db:"metadata"`
 }
 
-func toDBUser(u users.User) dbUser {
+func toDBUser(u users.User) (dbUser, error) {
+	data := []byte("{}")
+	if len(u.Metadata) > 0 {
+		b, err := json.Marshal(u.Metadata)
+		if err != nil {
+			return dbUser{}, errors.Wrap(errMarshal, err)
+		}
+		data = b
+	}
+
 	return dbUser{
 		ID:       u.ID,
 		Email:    u.Email,
 		Password: u.Password,
-		Metadata: u.Metadata,
-	}
+		Metadata: data,
+	}, nil
 }
 
-func toUser(dbu dbUser) users.User {
+func toUser(dbu dbUser) (users.User, error) {
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(dbu.Metadata), &metadata); err != nil {
+		return users.User{}, errors.Wrap(errUnmarshal, err)
+	}
+
 	return users.User{
 		ID:       dbu.ID,
 		Email:    dbu.Email,
 		Password: dbu.Password,
-		Metadata: dbu.Metadata,
-	}
+		Metadata: metadata,
+	}, nil
 }

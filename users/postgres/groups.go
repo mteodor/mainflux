@@ -22,6 +22,14 @@ type groupRepository struct {
 	db Database
 }
 
+// New instantiates a PostgreSQL implementation of user
+// repository.
+func NewGroupRepo(db Database) users.GroupRepository {
+	return &groupRepository{
+		db: db,
+	}
+}
+
 func (gr groupRepository) SaveGroup(ctx context.Context, group users.Group) error {
 	q := `INSERT INTO groups (id, email, password, metadata) VALUES (:id, :email, :password, :metadata)`
 

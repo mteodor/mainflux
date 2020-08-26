@@ -26,7 +26,7 @@ type GroupRepository interface {
 	// Update updates the user metadata.
 	UpdateGroup(ctx context.Context, g Group) error
 
-	// RetrieveByID retrieves user by its unique identifier.
+	// RetrieveGroupByID retrieves user by its unique identifier.
 	RetrieveByID(ctx context.Context, id string) (Group, error)
 
 	// RetrieveByName

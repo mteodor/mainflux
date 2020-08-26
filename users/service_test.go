@@ -31,7 +31,7 @@ func newService() users.Service {
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
 
-	return users.New(repo, hasher, auth, e)
+	return users.New(repo, nil, hasher, auth, e)
 }
 
 func TestRegister(t *testing.T) {

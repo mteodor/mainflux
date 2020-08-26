@@ -36,6 +36,7 @@ func UserRepositoryMiddleware(repo users.UserRepository, tracer opentracing.Trac
 	}
 }
 
+
 func (urm userRepositoryMiddleware) Save(ctx context.Context, user users.User) error {
 	span := createSpan(ctx, urm.tracer, saveOp)
 	defer span.Finish()

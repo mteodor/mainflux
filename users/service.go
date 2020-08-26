@@ -82,21 +82,55 @@ type Service interface {
 
 	//SendPasswordReset sends reset password link to email.
 	SendPasswordReset(ctx context.Context, host, email, token string) error
+
+	// CreateGroup adds a list of groups to the user identified by the provided key.
+	CreateGroup(ctx context.Context, token string, group Group) (Group, error)
+
+	// UpdateGroup updates the group identified by the provided ID, that
+	// belongs to the user identified by the provided key.
+	UpdateGroup(ctx context.Context, token string, group Group) error
+
+	// ViewGroup retrieves data about the group identified with the provided
+	// name, that belongs to the user identified by the provided key.
+	ViewGroup(ctx context.Context, token, name string) (Group, error)
+
+	// ListGroups retrieves data about subset of groups that belongs to the
+	// user identified by the provided key.
+	ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta Metadata) (GroupPage, error)
+
+	// RemoveGroup removes the group identified with the provided ID, that
+	// belongs to the user identified by the provided key.
+	RemoveGroup(ctx context.Context, token, id string) error
+}
+
+// PageMetadata contains page metadata that helps navigation.
+type PageMetadata struct {
+	Total  uint64
+	Offset uint64
+	Limit  uint64
+	Name   string
+}
+
+type GroupPage struct {
+	PageMetadata
+	Groups []Group
 }
 
 var _ Service = (*usersService)(nil)
 
 type usersService struct {
 	users  UserRepository
+	groups GroupRepository
 	hasher Hasher
 	email  Emailer
 	auth   mainflux.AuthNServiceClient
 }
 
 // New instantiates the users service implementation
-func New(users UserRepository, hasher Hasher, auth mainflux.AuthNServiceClient, m Emailer) Service {
+func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainflux.AuthNServiceClient, m Emailer) Service {
 	return &usersService{
 		users:  users,
+		groups: groups,
 		hasher: hasher,
 		auth:   auth,
 		email:  m,
@@ -235,6 +269,33 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return email.GetValue(), nil
+}
+
+// CreateGroup adds a list of groups to the user identified by the provided key.
+func (svc usersService) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	svc.groups.SaveGroup(ctx, token, group)
+	return Group{}, nil
+}
+
+func (svc usersService) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta Metadata) (GroupPage, error) {
+	return GroupPage{}, nil
+}
+
+func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error {
+	return nil
+}
+
+func (svc usersService) UpdateGroup(ctx context.Context, token string, group Group) error {
+	return nil
+}
+
+func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group, error) {
+	return Group{}, nil
 }
 
 func (svc usersService) issue(ctx context.Context, email string, keyType uint32) (string, error) {

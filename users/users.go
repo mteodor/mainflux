@@ -28,6 +28,10 @@ var (
 	userDotRegexp = regexp.MustCompile("(^[.]{1})|([.]{1}$)|([.]{2,})")
 )
 
+// Metadata to be used for mainflux thing or channel for customized
+// describing of particular thing or channel.
+type Metadata map[string]interface{}
+
 // User represents a Mainflux user account. Each user is identified given its
 // email and password.
 type User struct {
@@ -35,7 +39,7 @@ type User struct {
 	Email    string
 	Password string
 	Groups   []Group
-	Metadata map[string]interface{}
+	Metadata Metadata
 }
 
 // Validate returns an error if user representation is invalid.

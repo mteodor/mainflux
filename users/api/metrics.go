@@ -100,3 +100,24 @@ func (ms *metricsMiddleware) SendPasswordReset(ctx context.Context, host, email,
 
 	return ms.svc.SendPasswordReset(ctx, host, email, token)
 }
+
+func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, group users.Group) (users.Group, error) {
+	return ms.svc.CreateGroup(ctx, token, group)
+}
+
+func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta users.Metadata) (users.GroupPage, error) {
+
+	return ms.svc.ListGroups(ctx, token, offset, limit, name, meta)
+}
+
+func (ms *metricsMiddleware) RemoveGroup(ctx context.Context, token, id string) error {
+	return ms.svc.RemoveGroup(ctx, token, id)
+}
+
+func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group users.Group) error {
+	return ms.svc.UpdateGroup(ctx, token, group)
+}
+
+func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, name string) (users.Group, error) {
+	return ms.svc.ViewGroup(ctx, token, name)
+}
