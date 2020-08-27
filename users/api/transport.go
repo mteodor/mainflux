@@ -89,7 +89,14 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Post("/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "add_group")(createGroupEndpoint(svc)),
-		decodePasswordChange,
+		decodeGroupCreate,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:name", kithttp.NewServer(
+		kitot.TraceServer(tracer, "add_group")(listGroupsEndpoint(svc)),
+		decodeGroupView,
 		encodeResponse,
 		opts...,
 	))
@@ -176,6 +183,34 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 	}
 
 	req.Token = r.Header.Get("Authorization")
+
+	return req, nil
+}
+
+func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+
+	var req createGroupReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(ErrFailedDecode, err)
+	}
+
+	req.token = r.Header.Get("Authorization")
+
+	return req, nil
+}
+
+func decodeGroupView(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+
+	req := viewGroupReq{
+		token: r.Header.Get("Authorization"),
+		Name:  bone.GetValue(r, "name"),
+	}
 
 	return req, nil
 }

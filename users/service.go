@@ -116,6 +116,11 @@ type GroupPage struct {
 	Groups []Group
 }
 
+type UserPage struct {
+	PageMetadata
+	Users []User
+}
+
 var _ Service = (*usersService)(nil)
 
 type usersService struct {
@@ -277,13 +282,16 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
-	svc.groups.SaveGroup(ctx, token, group)
-	return Group{}, nil
+	return svc.groups.Save(ctx, group)
 }
 
 func (svc usersService) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta Metadata) (GroupPage, error) {
-	return GroupPage{}, nil
+	userID, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return svc.groups.RetrieveAll(ctx, userID.Value, name, offset, limit, meta)
 }
 
 func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error {
@@ -294,8 +302,13 @@ func (svc usersService) UpdateGroup(ctx context.Context, token string, group Gro
 	return nil
 }
 
-func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group, error) {
-	return Group{}, nil
+func (svc usersService) ViewGroup(ctx context.Context, token, name string) (Group, error) {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return svc.groups.RetrieveByName(ctx, name)
 }
 
 func (svc usersService) issue(ctx context.Context, email string, keyType uint32) (string, error) {

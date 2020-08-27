@@ -155,7 +155,8 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		}
 
 		group := users.Group{
-			Name: req.Name,
+			Name:        req.Name,
+			Description: req.Description,
 		}
 		saved, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {

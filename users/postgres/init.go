@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/mainflux/mainflux/users"
 
 	_ "github.com/lib/pq" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
@@ -23,6 +24,7 @@ type Config struct {
 	SSLCert     string
 	SSLKey      string
 	SSLRootCert string
+	Admin       users.User
 }
 
 // Connect creates a connection to the PostgreSQL instance and applies any
@@ -77,10 +79,12 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE TABLE IF NOT EXISTS groups ( 
 					id          UUID PRIMARY KEY,
 					parent_id   UUID, 
+					owner_id    UUID,
 					name        VARCHAR(254) NOT NULL,
 					description VARCHAR(1024),
 					metadata    JSONB,
-					FOREIGN KEY (parent_id) REFERENCES groups (id)  ON DELETE CASCADE ON UPDATE CASCADE
+					FOREIGN KEY (parent_id) REFERENCES groups (id)  ON DELETE CASCADE ON UPDATE CASCADE,
+					FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 				)`,
 					`CREATE TABLE IF NOT EXISTS group_relations (
 					user_id UUID NOT NULL,

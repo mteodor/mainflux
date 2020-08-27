@@ -98,7 +98,7 @@ func (req passwChangeReq) validate() error {
 type createGroupReq struct {
 	token       string
 	Name        string                 `json:"name,omitempty"`
-	Description string                 `json:"key,omitempty"`
+	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -136,7 +136,7 @@ func (req updateGroupReq) validate() error {
 
 type viewGroupReq struct {
 	token string
-	Name  string
+	Name  string `json:"name,omitempty"`
 }
 
 func (req viewGroupReq) validate() error {

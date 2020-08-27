@@ -12,6 +12,8 @@ import (
 type Group struct {
 	ID          string
 	Name        string
+	Owner       User
+	Parent      *Group
 	Description string
 	Attributes  map[string]interface{}
 	//Policies   map[string]Policy
@@ -20,18 +22,24 @@ type Group struct {
 
 // GroupRepository specifies an group persistence API.
 type GroupRepository interface {
-	// SaveGroup persists the group.
-	SaveGroup(ctx context.Context, g Group) error
+	// Save persists the group.
+	Save(ctx context.Context, g Group) (Group, error)
 
-	// Update updates the user metadata.
-	UpdateGroup(ctx context.Context, g Group) error
+	// Update updates the group data.
+	Update(ctx context.Context, g Group) error
 
-	// RetrieveGroupByID retrieves user by its unique identifier.
+	// RetrieveByID retrieves group by its unique identifier.
 	RetrieveByID(ctx context.Context, id string) (Group, error)
 
-	// RetrieveByName
+	// RetrieveByName retrieves group by name
 	RetrieveByName(ctx context.Context, name string) (Group, error)
 
-	// AssignUserGroup adds user to group
-	AssignUserGroup(ctx context.Context, u User, g Group) error
+	// RetrieveAll retrieves a group subtree created by owner starting from group with groupName
+	RetrieveAll(ctx context.Context, ownerID, groupName string, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// RetrieveAllForUser retrieves all groups that user belongs to
+	RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// AssignUser adds user to group.
+	AssignUser(ctx context.Context, u User, g Group) error
 }

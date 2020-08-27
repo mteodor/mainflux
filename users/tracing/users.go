@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	saveOp             = "save_op"
-	retrieveByEmailOp  = "retrieve_by_email"
-	generateResetToken = "generate_reset_token"
-	updatePassword     = "update_password"
-	sendPasswordReset  = "send_reset_password"
+	saveOp              = "save_op"
+	retrieveByEmailOp   = "retrieve_by_email"
+	generateResetToken  = "generate_reset_token"
+	updatePassword      = "update_password"
+	sendPasswordReset   = "send_reset_password"
+	retrieveAllForGroup = "retrieve_all_for_group"
 )
 
 var _ users.UserRepository = (*userRepositoryMiddleware)(nil)
@@ -35,7 +36,6 @@ func UserRepositoryMiddleware(repo users.UserRepository, tracer opentracing.Trac
 		repo:   repo,
 	}
 }
-
 
 func (urm userRepositoryMiddleware) Save(ctx context.Context, user users.User) error {
 	span := createSpan(ctx, urm.tracer, saveOp)
@@ -75,6 +75,14 @@ func (urm userRepositoryMiddleware) UpdatePassword(ctx context.Context, email, p
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return urm.repo.UpdatePassword(ctx, email, password)
+}
+
+func (urm userRepositoryMiddleware) RetrieveAllForGroup(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
+	span := createSpan(ctx, urm.tracer, retrieveAllForGroup)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	return urm.repo.RetrieveAllForGroup(ctx, groupID, offset, limit, gm)
 }
 
 func createSpan(ctx context.Context, tracer opentracing.Tracer, opName string) opentracing.Span {

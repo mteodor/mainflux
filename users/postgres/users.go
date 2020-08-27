@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
@@ -130,6 +131,63 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	}
 
 	return nil
+}
+
+func (ur userRepository) RetrieveAllForGroup(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
+	m, mq, err := getMetadataQuery(gm)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
+	}
+
+	q := fmt.Sprintf(`SELECT u.id, u.email, u.name, u.metadata FROM users u, groups g
+					  WHERE u.id = g.user_id AND g.group_id = :group 
+		  	          %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
+
+	params := map[string]interface{}{
+		"group":    groupID,
+		"limit":    limit,
+		"offset":   offset,
+		"metadata": m,
+	}
+
+	rows, err := ur.db.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errSelectDb, err)
+	}
+	defer rows.Close()
+
+	var items []users.User
+	for rows.Next() {
+		dbusr := dbUser{}
+		if err := rows.StructScan(&dbusr); err != nil {
+			return users.UserPage{}, errors.Wrap(errSelectDb, err)
+		}
+
+		user, err := toUser(dbusr)
+		if err != nil {
+			return users.UserPage{}, err
+		}
+
+		items = append(items, user)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) u.metadata FROM users u, groups g
+	WHERE u.id = g.user_id AND g.group_id = :group  %s;`, mq)
+
+	total, err := total(ctx, ur.db, cq, params)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errSelectDb, err)
+	}
+
+	page := users.UserPage{
+		Users: items,
+		PageMetadata: users.PageMetadata{
+			Total:  total,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page, nil
 }
 
 // dbMetadata type for handling metadata properly in database/sql
