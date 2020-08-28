@@ -67,11 +67,10 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func newService() users.Service {
 	repo := mocks.NewUserRepository()
-	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	email := mocks.NewEmailer()
 
-	return users.New(repo, hasher, auth, email)
+	return users.New(repo, auth, email)
 }
 
 func newServer(svc users.Service) *httptest.Server {

@@ -13,9 +13,10 @@ import (
 var _ users.UserRepository = (*userRepositoryMock)(nil)
 
 type userRepositoryMock struct {
-	mu        sync.Mutex
-	users     map[string]users.User
-	usersByID map[string]users.User
+	mu             sync.Mutex
+	users          map[string]users.User
+	usersByID      map[string]users.User
+	usersByGroupID map[string]users.User
 }
 
 // NewUserRepository creates in-memory user repository
@@ -84,6 +85,18 @@ func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, id string, grou
 	}
 
 	return val, nil
+}
+
+func (urm *userRepositoryMock) RetrieveAllForGroup(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
+
+	_, ok := urm.usersByGroupID[groupID]
+	if !ok {
+		return users.UserPage{}, users.ErrNotFound
+	}
+
+	return users.UserPage{}, nil
 }
 
 func (urm *userRepositoryMock) UpdatePassword(_ context.Context, token, password string) error {

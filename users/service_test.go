@@ -26,12 +26,13 @@ var (
 )
 
 func newService() users.Service {
-	repo := mocks.NewUserRepository()
+	userRepo := mocks.NewUserRepository()
+	//groupRepo := mocks.NewGroupRepository()
 	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
 
-	return users.New(repo, nil, hasher, auth, e)
+	return users.New(userRepo, nil, hasher, auth, e)
 }
 
 func TestRegister(t *testing.T) {

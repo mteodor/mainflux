@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/users"
 
 	_ "github.com/lib/pq" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
@@ -24,7 +23,6 @@ type Config struct {
 	SSLCert     string
 	SSLKey      string
 	SSLRootCert string
-	Admin       users.User
 }
 
 // Connect creates a connection to the PostgreSQL instance and applies any
@@ -45,6 +43,7 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 }
 
 func migrateDB(db *sqlx.DB) error {
+
 	migrations := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
