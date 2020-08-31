@@ -172,6 +172,22 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
+func assignUserToGroup(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(assignUserToGroupReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.AssignUserToGroup(ctx, req.token, req.userID, req.groupID); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+}
+
 func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)

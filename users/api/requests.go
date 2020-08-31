@@ -164,3 +164,24 @@ func (req listGroupReq) validate() error {
 
 	return nil
 }
+
+type assignUserToGroupReq struct {
+	token   string
+	groupID string
+	userID  string
+}
+
+func (req assignUserToGroupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+
+	if req.groupID == "" {
+		return users.ErrMalformedEntity
+	}
+	if req.userID == "" {
+		return users.ErrMalformedEntity
+	}
+
+	return nil
+}

@@ -9,7 +9,6 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/pkg/errors"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 )
 
 var (
@@ -101,6 +100,9 @@ type Service interface {
 	// RemoveGroup removes the group identified with the provided ID, that
 	// belongs to the user identified by the provided key.
 	RemoveGroup(ctx context.Context, token, id string) error
+
+	// AssignUserToGroup adds user into the group
+	AssignUserToGroup(ctx context.Context, token, userID, groupID string) error
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -147,15 +149,7 @@ func (svc usersService) Register(ctx context.Context, user User) error {
 	if err != nil {
 		return errors.Wrap(ErrMalformedEntity, err)
 	}
-
 	user.Password = hash
-
-	uid, err := uuidProvider.New().ID()
-	if err != nil {
-		return errors.Wrap(ErrCreateUser, err)
-	}
-	user.ID = uid
-
 	return svc.users.Save(ctx, user)
 }
 
@@ -278,10 +272,11 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 
 // CreateGroup adds a list of groups to the user identified by the provided key.
 func (svc usersService) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
-	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	userID, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
+	group.Owner.ID = userID.Value
 	return svc.groups.Save(ctx, group)
 }
 
@@ -309,6 +304,20 @@ func (svc usersService) ViewGroup(ctx context.Context, token, name string) (Grou
 	}
 
 	return svc.groups.RetrieveByName(ctx, name)
+}
+
+func (svc usersService) AssignUserToGroup(ctx context.Context, token, userId, groupId string) error {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	group := Group{
+		ID: groupId,
+	}
+	user := User{
+		ID: userId,
+	}
+	return svc.groups.AssignUser(ctx, user, group)
 }
 
 func (svc usersService) issue(ctx context.Context, email string, keyType uint32) (string, error) {

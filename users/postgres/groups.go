@@ -35,7 +35,7 @@ func NewGroupRepo(db Database) users.GroupRepository {
 
 func (gr groupRepository) Save(ctx context.Context, group users.Group) (users.Group, error) {
 	var id string
-	q := `INSERT INTO groups (name, description, metadata) VALUES (:name, :description, :metadata) RETURNING id`
+	q := `INSERT INTO groups (name, description, owner_id, metadata) VALUES (:name, :description, :owner, :metadata) RETURNING id`
 
 	dbu := toDBGroup(group)
 	row, err := gr.db.NamedQueryContext(ctx, q, dbu)

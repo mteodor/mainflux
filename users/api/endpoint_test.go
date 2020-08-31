@@ -19,6 +19,7 @@ import (
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
+	"github.com/mainflux/mainflux/users/bcrypt"
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -66,11 +67,13 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func newService() users.Service {
-	repo := mocks.NewUserRepository()
+	usersRepo := mocks.NewUserRepository()
+	groupRepo := mocks.NewGroupRepository()
+	hasher := bcrypt.New()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	email := mocks.NewEmailer()
 
-	return users.New(repo, auth, email)
+	return users.New(usersRepo, groupRepo, hasher, auth, email)
 }
 
 func newServer(svc users.Service) *httptest.Server {
