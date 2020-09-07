@@ -357,7 +357,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 		return err
 	}
 
-	if err := groupRepo.AssignUser(context.Background(), u, group); err != nil {
+	if err := groupRepo.AssignUser(context.Background(), u.ID, group.ID); err != nil {
 		return err
 	}
 	return nil
