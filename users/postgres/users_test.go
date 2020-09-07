@@ -51,7 +51,7 @@ func TestUserSave(t *testing.T) {
 	repo := postgres.NewUserRepo(dbMiddleware)
 
 	for _, tc := range cases {
-		err := repo.Save(context.Background(), tc.user)
+		_, err := repo.Save(context.Background(), tc.user)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -71,7 +71,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 		Password: "pass",
 	}
 
-	err = repo.Save(context.Background(), user)
+	_, err = repo.Save(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := map[string]struct {
@@ -86,4 +86,64 @@ func TestSingleUserRetrieval(t *testing.T) {
 		_, err := repo.RetrieveByEmail(context.Background(), tc.email, false)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
+}
+
+func TestRetrieveAllForGroup(t *testing.T) {
+
+	dbMiddleware := postgres.NewDatabase(db)
+	groupRepo := postgres.NewGroupRepo(dbMiddleware)
+	userRepo := postgres.NewUserRepo(dbMiddleware)
+	var nUsers = uint64(10)
+	var usrs []users.User
+	for i := uint64(0); i < nUsers; i++ {
+		uid, err := uuid.New().ID()
+		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		email := fmt.Sprintf("user%d@example.com", i)
+		user := users.User{
+			ID:       uid,
+			Email:    email,
+			Password: "pass",
+		}
+		_, err = userRepo.Save(context.Background(), user)
+		require.Nil(t, err, fmt.Sprintf("saving user error: %s", err))
+		usrs = append(usrs, user)
+	}
+
+	group := users.Group{
+		Name: groupName,
+	}
+
+	g, err := groupRepo.Save(context.Background(), group)
+	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
+
+	for _, u := range usrs {
+		err := groupRepo.AssignUser(context.Background(), u.ID, g.ID)
+		require.Nil(t, err, fmt.Sprintf("group user assign got unexpected error: %s", err))
+	}
+
+	cases := map[string]struct {
+		group    string
+		offset   uint64
+		limit    uint64
+		size     uint64
+		total    uint64
+		metadata users.Metadata
+	}{
+		"retrieve all users for existing group": {
+			group:  g.ID,
+			offset: 0,
+			limit:  nUsers,
+			size:   nUsers,
+			total:  nUsers,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := userRepo.RetrieveAllForGroup(context.Background(), tc.group, tc.offset, tc.limit, tc.metadata)
+		size := uint64(len(usrs))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+	}
+
 }

@@ -27,7 +27,7 @@ var (
 
 func newService() users.Service {
 	userRepo := mocks.NewUserRepository()
-	//groupRepo := mocks.NewGroupRepository()
+	groupRepo := mocks.NewGroupRepository()
 	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
@@ -256,5 +256,40 @@ func TestSendPasswordReset(t *testing.T) {
 		err := svc.SendPasswordReset(context.Background(), host, tc.email, tc.token)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 
+	}
+}
+
+func TestCreateGroup(t *testing.T) {
+
+	svc := newService()
+
+	cases := []struct {
+		desc  string
+		group users.Group
+		err   error
+	}{
+		{
+			desc: "create new group",
+			user: user,
+			err:  nil,
+		},
+		{
+			desc: "register existing user",
+			user: user,
+			err:  users.ErrConflict,
+		},
+		{
+			desc: "register new user with empty password",
+			user: users.User{
+				Email:    user.Email,
+				Password: "",
+			},
+			err: users.ErrMalformedEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.CreateGroup(context.Background(), tc.user)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

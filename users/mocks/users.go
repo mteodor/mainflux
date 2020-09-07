@@ -26,17 +26,17 @@ func NewUserRepository() users.UserRepository {
 	}
 }
 
-func (urm *userRepositoryMock) Save(ctx context.Context, user users.User) error {
+func (urm *userRepositoryMock) Save(ctx context.Context, user users.User) (users.User, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 
 	if _, ok := urm.users[user.Email]; ok {
-		return users.ErrConflict
+		return users.User{}, users.ErrConflict
 	}
 
 	urm.users[user.Email] = user
 	urm.usersByID[user.ID] = user
-	return nil
+	return user, nil
 }
 
 func (urm *userRepositoryMock) Update(ctx context.Context, user users.User) error {

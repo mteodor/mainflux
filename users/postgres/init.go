@@ -76,12 +76,13 @@ func migrateDB(db *sqlx.DB) error {
 					`ALTER TABLE IF EXISTS users DROP CONSTRAINT users_pkey`,
 					`ALTER TABLE IF EXISTS users ADD PRIMARY KEY (id)`,
 					`CREATE TABLE IF NOT EXISTS groups ( 
-					id          UUID PRIMARY KEY,
+					id          UUID NOT NULL DEFAULT gen_random_uuid(),
 					parent_id   UUID, 
 					owner_id    UUID,
-					name        VARCHAR(254) NOT NULL,
+					name        VARCHAR(254) UNIQUE NOT NULL,
 					description VARCHAR(1024),
 					metadata    JSONB,
+					PRIMARY KEY (id),
 					FOREIGN KEY (parent_id) REFERENCES groups (id)  ON DELETE CASCADE ON UPDATE CASCADE,
 					FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 				)`,
@@ -92,8 +93,8 @@ func migrateDB(db *sqlx.DB) error {
 					FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
 					PRIMARY KEY (user_id, group_id)
 				)`,
-				`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS owner_id UUID NOT NULL`,
-				`ALTER TABLE IF EXISTS users ADD FOREIGN KEY (owner_id) REFERENCES groups(id)`,
+					`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS owner_id UUID`,
+					`ALTER TABLE IF EXISTS users ADD FOREIGN KEY (owner_id) REFERENCES groups(id)`,
 				},
 			},
 		},

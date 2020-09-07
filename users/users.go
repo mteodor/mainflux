@@ -38,6 +38,8 @@ type User struct {
 	ID       string
 	Email    string
 	Password string
+	OwnerID  string
+	Owner    *User
 	Groups   []Group
 	Metadata Metadata
 }
@@ -59,7 +61,7 @@ func (u User) Validate() error {
 type UserRepository interface {
 	// Save persists the user account. A non-nil error is returned to indicate
 	// operation failure.
-	Save(ctx context.Context, u User) error
+	Save(ctx context.Context, u User) (User, error)
 
 	// Update updates the user metadata.
 	UpdateUser(ctx context.Context, u User) error

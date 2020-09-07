@@ -148,3 +148,11 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, grou
 func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (users.Group, error) {
 	return lm.svc.ViewGroup(ctx, token, id)
 }
+
+func (lm *loggingMiddleware) AssignUserToGroup(ctx context.Context, token, userId, groupId string) error {
+	return lm.svc.AssignUserToGroup(ctx, token, userId, groupId)
+}
+
+func (lm *loggingMiddleware) RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error {
+	return lm.svc.RemoveUserFromGroup(ctx, token, userID, groupID)
+}

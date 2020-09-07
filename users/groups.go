@@ -28,6 +28,9 @@ type GroupRepository interface {
 	// Update updates the group data.
 	Update(ctx context.Context, g Group) error
 
+	// Delete deletes group for given id
+	Delete(ctx context.Context, id string) error
+
 	// RetrieveByID retrieves group by its unique identifier.
 	RetrieveByID(ctx context.Context, id string) (Group, error)
 
@@ -41,5 +44,8 @@ type GroupRepository interface {
 	RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
 	// AssignUser adds user to group.
-	AssignUser(ctx context.Context, u User, g Group) error
+	AssignUser(ctx context.Context, userID, groupID string) error
+
+	// RemoveUser
+	RemoveUser(ctx context.Context, userID, groupID string) error
 }

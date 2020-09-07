@@ -8,15 +8,24 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"regexp"
 
+	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
 var (
-	errSaveGroupDB   = errors.New("Save group to DB failed")
-	errUpdateGroupDB = errors.New("Update group data failed")
+	errSaveGroupDB   = errors.New("save group to DB failed")
+	errUpdateGroupDB = errors.New("update group data failed")
+	errDeleteGroupDB = errors.New("delete group failed")
 	errSelectDb      = errors.New("select thing from db error")
+
+	errFK         = "foreign_key_violation"
+	errInvalid    = "invalid_text_representation"
+	errTruncation = "string_data_right_truncation"
+
+	groupRegexp = regexp.MustCompile("^[a-zA-Z0-9]+$")
 )
 
 var _ users.GroupRepository = (*groupRepository)(nil)
@@ -35,13 +44,28 @@ func NewGroupRepo(db Database) users.GroupRepository {
 
 func (gr groupRepository) Save(ctx context.Context, group users.Group) (users.Group, error) {
 	var id string
-	q := `INSERT INTO groups (name, description, owner_id, metadata) VALUES (:name, :description, :owner, :metadata) RETURNING id`
+	q := `INSERT INTO groups (name, description,  metadata) VALUES (:name, :description,  :metadata) RETURNING id`
+
+	if group.Name == "" || !groupRegexp.MatchString(group.Name) {
+		return users.Group{}, users.ErrMalformedEntity
+	}
 
 	dbu := toDBGroup(group)
 	row, err := gr.db.NamedQueryContext(ctx, q, dbu)
 	if err != nil {
-		return users.Group{}, errors.Wrap(errSaveGroupDB, err)
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return users.Group{}, errors.Wrap(users.ErrMalformedEntity, err)
+			case errDuplicate:
+				return users.Group{}, errors.Wrap(users.ErrGroupConflict, err)
+			}
+		}
+
+		return users.Group{}, errors.Wrap(users.ErrCreateGroup, err)
 	}
+
 	defer row.Close()
 	row.Next()
 	if err := row.Scan(&id); err != nil {
@@ -59,6 +83,57 @@ func (gr groupRepository) Update(ctx context.Context, group users.Group) error {
 		return errors.Wrap(errUpdateDB, err)
 	}
 
+	return nil
+}
+
+func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
+	tx, err := gr.db.BeginTxx(context.Background(), nil)
+	if err != nil {
+		return errors.Wrap(errDeleteGroupDB, err)
+	}
+	defer func() {
+		if err != nil {
+			if txErr := tx.Rollback(); txErr != nil {
+				err = errors.Wrap(err, errors.Wrap(errTransRollback, txErr))
+			}
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
+			err = errors.Wrap(errDeleteGroupDB, err)
+		}
+		return
+	}()
+
+	params := map[string]interface{}{
+		"group": groupID,
+	}
+	q := `SELECT COUNT(*) FROM group_relations WHERE group_id = :group;`
+
+	tot, err := total(ctx, gr.db, q, params)
+	if err != nil {
+		return errors.Wrap(errDeleteGroupDB, err)
+	}
+	if tot > 0 {
+		return errors.Wrap(users.ErrDeleteGroupNotEmpty, err)
+	}
+
+	qd := `DELETE FROM groups WHERE id = :id`
+	dbr := toDBGroup(users.Group{ID: groupID})
+
+	res, err := gr.db.NamedExecContext(ctx, qd, dbr)
+	if err != nil {
+		return errors.Wrap(errDeleteGroupDB, err)
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return errors.Wrap(errDeleteGroupDB, err)
+	}
+
+	if cnt != 1 {
+		return errors.Wrap(users.ErrDeleteGroupMissing, err)
+	}
 	return nil
 }
 
@@ -212,9 +287,64 @@ func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string,
 	return page, nil
 }
 
-func (gr groupRepository) AssignUser(ctx context.Context, u users.User, g users.Group) error {
-	q := `INSERT INTO group_relations (group_id, user_id) VALUES (:group_id, :user_id)`
-	dbr := toDBGroupRelation(u, g)
+func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string) error {
+	tx, err := gr.db.BeginTxx(context.Background(), nil)
+	if err != nil {
+		return errors.Wrap(errDeleteGroupDB, err)
+	}
+	defer func() {
+		if err != nil {
+			if txErr := tx.Rollback(); txErr != nil {
+				err = errors.Wrap(err, errors.Wrap(errTransRollback, txErr))
+			}
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
+			err = errors.Wrap(errDeleteGroupDB, err)
+		}
+		return
+	}()
+
+	q := `SELECT COUNT(*) FROM group_relations WHERE group_id = :group AND user_id = :user ;`
+	params := map[string]interface{}{
+		"group": groupID,
+		"user":  userID,
+	}
+
+	tot, err := total(ctx, gr.db, q, params)
+	if err != nil {
+		return errors.Wrap(errDeleteGroupDB, err)
+	}
+	if tot > 0 {
+		return errors.Wrap(users.ErrUserAlreadyAssigned, err)
+	}
+
+	qIns := `INSERT INTO group_relations (group_id, user_id) VALUES (:group, :user)`
+	_, err = gr.db.NamedQueryContext(ctx, qIns, params)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		fmt.Println(pqErr.Code.Name())
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return errors.Wrap(users.ErrMalformedEntity, err)
+			case errDuplicate:
+				return errors.Wrap(users.ErrGroupConflict, err)
+			case errFK:
+				return errors.Wrap(users.ErrNotFound, err)
+			}
+		}
+
+		return errors.Wrap(users.ErrAssignUserToGroup, err)
+	}
+
+	return nil
+}
+
+func (gr groupRepository) RemoveUser(ctx context.Context, userID, groupID string) error {
+	q := `DELETE FROM group_relations WHERE user_id = :user_id AND group_id = :group_id`
+	dbr := toDBGroupRelation(userID, groupID)
 	if _, err := gr.db.NamedExecContext(ctx, q, dbr); err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
@@ -224,7 +354,7 @@ func (gr groupRepository) AssignUser(ctx context.Context, u users.User, g users.
 type dbGroup struct {
 	ID          string     `db:"id"`
 	Name        string     `db:"name"`
-	Owner       string     `db:"owner_id"`
+	Owner       string     `db:"owner"`
 	Parent      string     `db:"parent_id"`
 	Description string     `db:"description"`
 	Metadata    dbMetadata `db:"metadata"`
@@ -250,14 +380,14 @@ func toGroup(dbu dbGroup) users.Group {
 }
 
 type dbGroupRelation struct {
-	GroupID string `db:"group_id"`
-	UserID  string `db:"user_id"`
+	Group string `db:"group_id"`
+	User  string `db:"user_id"`
 }
 
-func toDBGroupRelation(u users.User, g users.Group) dbGroupRelation {
+func toDBGroupRelation(userID, groupID string) dbGroupRelation {
 	return dbGroupRelation{
-		GroupID: g.ID,
-		UserID:  u.ID,
+		Group: groupID,
+		User:  userID,
 	}
 }
 

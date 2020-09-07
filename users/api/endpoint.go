@@ -164,6 +164,7 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		}
 
 		res := groupRes{
+			ID:      saved.ID,
 			Name:    saved.Name,
 			created: true,
 		}
@@ -174,13 +175,61 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 
 func assignUserToGroup(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignUserToGroupReq)
+		req := request.(userGroupReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
 		if err := svc.AssignUserToGroup(ctx, req.token, req.userID, req.groupID); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+}
+
+func removeGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+}
+
+func removeUserFromGroup(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(userGroupReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.RemoveUserFromGroup(ctx, req.token, req.userID, req.groupID); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+}
+
+func getUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(userGroupReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.RemoveUserFromGroup(ctx, req.token, req.userID, req.groupID); err != nil {
 			return nil, err
 		}
 
@@ -195,7 +244,6 @@ func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		group := users.Group{
 			Name:        req.Name,
 			Description: req.Description,
@@ -219,7 +267,6 @@ func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewGroupReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
@@ -267,7 +314,19 @@ func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 			}
 			res.Groups = append(res.Groups, view)
 		}
-
 		return res, nil
+	}
+}
+
+func deleteGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
+			return nil, err
+		}
+		return removeGroupRes{}, nil
 	}
 }

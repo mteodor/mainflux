@@ -107,7 +107,7 @@ func (req createGroupReq) validate() error {
 		return users.ErrUnauthorizedAccess
 	}
 
-	if len(req.Name) > maxNameSize {
+	if len(req.Name) > maxNameSize || req.Name == "" {
 		return users.ErrMalformedEntity
 	}
 
@@ -165,13 +165,13 @@ func (req listGroupReq) validate() error {
 	return nil
 }
 
-type assignUserToGroupReq struct {
+type userGroupReq struct {
 	token   string
 	groupID string
 	userID  string
 }
 
-func (req assignUserToGroupReq) validate() error {
+func (req userGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
@@ -179,6 +179,44 @@ func (req assignUserToGroupReq) validate() error {
 	if req.groupID == "" {
 		return users.ErrMalformedEntity
 	}
+	if req.userID == "" {
+		return users.ErrMalformedEntity
+	}
+
+	return nil
+}
+
+type groupReq struct {
+	token   string
+	groupID string
+}
+
+func (req groupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+
+	if req.groupID == "" {
+		return users.ErrMalformedEntity
+	}
+	return nil
+}
+
+type removeUserFromGroupReq struct {
+	token   string
+	groupID string
+	userID  string
+}
+
+func (req removeUserFromGroupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+
+	if req.groupID == "" {
+		return users.ErrMalformedEntity
+	}
+
 	if req.userID == "" {
 		return users.ErrMalformedEntity
 	}

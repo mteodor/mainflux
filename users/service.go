@@ -9,12 +9,16 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/pkg/errors"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 )
 
 var (
 	// ErrConflict indicates usage of the existing email during account
 	// registration.
 	ErrConflict = errors.New("email already taken")
+
+	// ErrGroupConflict indicates group name already taken.
+	ErrGroupConflict = errors.New("group already exists")
 
 	// ErrMalformedEntity indicates malformed entity specification
 	// (e.g. invalid username or password).
@@ -48,6 +52,21 @@ var (
 
 	// ErrCreateUser indicates error in creating User
 	ErrCreateUser = errors.New("failed to create user")
+
+	// ErrCreateGroup indicates error in creating group
+	ErrCreateGroup = errors.New("failed to create group")
+
+	// ErrDeleteGroupNotEmpty
+	ErrDeleteGroupNotEmpty = errors.New("group is not empty")
+
+	// ErrDeleteGroupMissing indicates in delete operation that group doesnt exist
+	ErrDeleteGroupMissing = errors.New("group is not existing, already deleted")
+
+	// ErrUserAlreadyAssigned indicates that user is already assigned to a group
+	ErrUserAlreadyAssigned = errors.New("user is already assigned to a group")
+
+	// ErrAssignUserToGroup indicates an error in assigning user to a group
+	ErrAssignUserToGroup = errors.New("error assigning user to a group")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -103,6 +122,9 @@ type Service interface {
 
 	// AssignUserToGroup adds user into the group
 	AssignUserToGroup(ctx context.Context, token, userID, groupID string) error
+
+	// RemoveUserFromGroup removes user from group
+	RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -150,7 +172,10 @@ func (svc usersService) Register(ctx context.Context, user User) error {
 		return errors.Wrap(ErrMalformedEntity, err)
 	}
 	user.Password = hash
-	return svc.users.Save(ctx, user)
+	if _, err := svc.users.Save(ctx, user); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
@@ -277,6 +302,11 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	group.Owner.ID = userID.Value
+	uid, err := uuidProvider.New().ID()
+	if err != nil {
+		return Group{}, errors.Wrap(ErrCreateUser, err)
+	}
+	group.ID = uid
 	return svc.groups.Save(ctx, group)
 }
 
@@ -290,9 +320,23 @@ func (svc usersService) ListGroups(ctx context.Context, token string, offset, li
 }
 
 func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error {
-	return nil
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return svc.groups.Delete(ctx, id)
 }
 
+func (svc usersService) RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return svc.groups.RemoveUser(ctx, userID, groupID)
+
+}
 func (svc usersService) UpdateGroup(ctx context.Context, token string, group Group) error {
 	return nil
 }
@@ -306,18 +350,13 @@ func (svc usersService) ViewGroup(ctx context.Context, token, name string) (Grou
 	return svc.groups.RetrieveByName(ctx, name)
 }
 
-func (svc usersService) AssignUserToGroup(ctx context.Context, token, userId, groupId string) error {
+func (svc usersService) AssignUserToGroup(ctx context.Context, token, userID, groupID string) error {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	group := Group{
-		ID: groupId,
-	}
-	user := User{
-		ID: userId,
-	}
-	return svc.groups.AssignUser(ctx, user, group)
+
+	return svc.groups.AssignUser(ctx, userID, groupID)
 }
 
 func (svc usersService) issue(ctx context.Context, email string, keyType uint32) (string, error) {

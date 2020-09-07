@@ -121,3 +121,11 @@ func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, grou
 func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, name string) (users.Group, error) {
 	return ms.svc.ViewGroup(ctx, token, name)
 }
+
+func (ms *metricsMiddleware) AssignUserToGroup(ctx context.Context, token, userId, groupId string) error {
+	return ms.svc.AssignUserToGroup(ctx, token, userId, groupId)
+}
+
+func (ms *metricsMiddleware) RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error {
+	return ms.svc.RemoveUserFromGroup(ctx, token, userID, groupID)
+}

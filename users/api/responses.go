@@ -15,6 +15,9 @@ var (
 	_ mainflux.Response = (*tokenRes)(nil)
 	_ mainflux.Response = (*viewUserRes)(nil)
 	_ mainflux.Response = (*passwChangeRes)(nil)
+	_ mainflux.Response = (*updateGroupRes)(nil)
+	_ mainflux.Response = (*viewGroupRes)(nil)
+	_ mainflux.Response = (*groupRes)(nil)
 )
 
 // MailSent message response when link is sent
@@ -129,6 +132,7 @@ func (res passwChangeRes) Empty() bool {
 }
 
 type groupRes struct {
+	ID          string                 `json:"id"`
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
@@ -153,6 +157,10 @@ func (res groupRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
+func (res groupRes) Empty() bool {
+	return true
+}
+
 type groupPageRes struct {
 	pageRes
 	Groups []viewGroupRes `json:"groups"`
@@ -170,4 +178,5 @@ func (res groupPageRes) Empty() bool {
 	return false
 }
 
-type removeRes struct{}
+type removeGroupRes struct{}
+type removeUserFromGroupRes struct{}

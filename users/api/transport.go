@@ -96,35 +96,35 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Put("/groups/:groupId/users/:userId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "assign_user_group")(assignUserToGroup(svc)),
-		decodeAssignUser,
+		decodeUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Delete("/groups/:groupId/users/:userId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_user_group")(removeUserFromGroup(svc)),
-		decodeRemoveUserFromGroup,
+		decodeUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Get("/groups/:groupId/users", kithttp.NewServer(
-		kitot.TraceServer(tracer, "get_users_group")(getUsersForGroup(svc)),
-		decodeGetUsersForGroup,
+		kitot.TraceServer(tracer, "get_users_group")(getUsersForGroupEndpoint(svc)),
+		decodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/groups/:id", kithttp.NewServer(
+	mux.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_group")(listGroupsEndpoint(svc)),
-		decodeGroupView,
+		decodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Delete("/groups/:id", kithttp.NewServer(
+	mux.Delete("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "delete_group_by_id")(deleteGroupEndpoint(svc)),
-		decodeGroupView,
+		decodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -215,6 +215,7 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 	return req, nil
 }
 
+// Group related methods
 func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, ErrUnsupportedContentType
@@ -230,25 +231,29 @@ func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 	return req, nil
 }
 
-func decodeGroupView(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, ErrUnsupportedContentType
 	}
 
-	req := viewGroupReq{
-		token: r.Header.Get("Authorization"),
-		Name:  bone.GetValue(r, "name"),
+	req := groupReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupId"),
 	}
 
 	return req, nil
 }
-func decodeAssignUser(_ context.Context, r *http.Request) (interface{}, error) {
-	req := assignUserToGroupReq{
+
+func decodeUserGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+
+	req := userGroupReq{
 		token:   r.Header.Get("Authorization"),
 		groupID: bone.GetValue(r, "groupId"),
 		userID:  bone.GetValue(r, "userId"),
 	}
-
 	return req, nil
 }
 
@@ -291,6 +296,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		case errors.Contains(errorVal, users.ErrUnauthorizedAccess):
 			w.WriteHeader(http.StatusForbidden)
 		case errors.Contains(errorVal, users.ErrConflict):
+			w.WriteHeader(http.StatusConflict)
+		case errors.Contains(errorVal, users.ErrGroupConflict):
 			w.WriteHeader(http.StatusConflict)
 		case errors.Contains(errorVal, ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)

@@ -15,12 +15,14 @@ import (
 const (
 	assignUser         = "assign_user"
 	saveGroupOp        = "save_group_op"
+	deleteGroupOp      = "delete_group_op"
 	updateGroupOp      = "update_group"
 	retrieveById       = "retrieve_by_id"
 	retrieveGroupById  = "retrieve_group_by_id"
 	retrieveAll        = "retrieve_all_group"
 	retrieveByName     = "retrieve_by_name"
 	retrieveAllForUser = "retrieve_all_group_for_user"
+	removeUser         = "remove_user_from_group"
 )
 
 var _ users.GroupRepository = (*groupRepositoryMiddleware)(nil)
@@ -51,6 +53,14 @@ func (grm groupRepositoryMiddleware) Update(ctx context.Context, group users.Gro
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return grm.repo.Update(ctx, group)
+}
+
+func (grm groupRepositoryMiddleware) Delete(ctx context.Context, groupID string) error {
+	span := createSpan(ctx, grm.tracer, deleteGroupOp)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	return grm.repo.Delete(ctx, groupID)
 }
 
 func (grm groupRepositoryMiddleware) RetrieveByID(ctx context.Context, id string) (users.Group, error) {
@@ -86,10 +96,18 @@ func (grm groupRepositoryMiddleware) RetrieveAllForUser(ctx context.Context, use
 	return grm.repo.RetrieveAllForUser(ctx, userID, offset, limit, gm)
 }
 
-func (grm groupRepositoryMiddleware) AssignUser(ctx context.Context, user users.User, group users.Group) error {
+func (grm groupRepositoryMiddleware) RemoveUser(ctx context.Context, userID, groupID string) error {
+	span := createSpan(ctx, grm.tracer, removeUser)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	return grm.repo.RemoveUser(ctx, userID, groupID)
+}
+
+func (grm groupRepositoryMiddleware) AssignUser(ctx context.Context, userID, groupID string) error {
 	span := createSpan(ctx, grm.tracer, assignUser)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.AssignUser(ctx, user, group)
+	return grm.repo.AssignUser(ctx, userID, groupID)
 }

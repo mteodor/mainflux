@@ -7,22 +7,26 @@ import (
 	"context"
 	"sync"
 
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 )
 
 var _ users.GroupRepository = (*groupRepositoryMock)(nil)
 
 type groupRepositoryMock struct {
-	mu           sync.Mutex
-	groups       map[string]users.Group
+	mu     sync.Mutex
+	groups map[string]users.Group
+	// Map of "Maps of users assigned to a group" where group is a key
 	users        map[string]map[string]users.User
 	groupsByUser map[string]map[string]users.Group
+	groupsByName map[string]users.Group
 }
 
 // NewGroupRepository creates in-memory user repository
 func NewGroupRepository() users.GroupRepository {
 	return &groupRepositoryMock{
 		groups:       make(map[string]users.Group),
+		groupsByName: make(map[string]users.Group),
 		users:        make(map[string]map[string]users.User),
 		groupsByUser: make(map[string]map[string]users.Group),
 	}
@@ -31,14 +35,47 @@ func NewGroupRepository() users.GroupRepository {
 func (grm *groupRepositoryMock) Save(ctx context.Context, g users.Group) (users.Group, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
+	gid, err := uuidProvider.New().ID()
+	if err != nil {
+		return users.Group{}, err
+	}
+	g.ID = gid
 	if _, ok := grm.groups[g.ID]; ok {
-		return users.Group{}, users.ErrConflict
+		return users.Group{}, users.ErrGroupConflict
+	}
+	if _, ok := grm.groupsByName[g.Name]; ok {
+		return users.Group{}, users.ErrGroupConflict
 	}
 	grm.groups[g.ID] = g
+	grm.groupsByName[g.Name] = g
 	return g, nil
 }
 
+func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
+	grm.mu.Lock()
+	defer grm.mu.Unlock()
+	if _, ok := grm.groups[id]; !ok {
+		return users.ErrNotFound
+	}
+	delete(grm.groups, id)
+	return nil
+}
+
+func (grm *groupRepositoryMock) RemoveUser(ctx context.Context, userID, groupID string) error {
+	grm.mu.Lock()
+	defer grm.mu.Unlock()
+	if _, ok := grm.groups[groupID]; !ok {
+		return users.ErrNotFound
+	}
+	delete(grm.users[groupID], userID)
+	return nil
+}
+
 func (grm *groupRepositoryMock) Update(ctx context.Context, g users.Group) error {
+	return nil
+}
+
+func (grm *groupRepositoryMock) Remove(ctx context.Context, g users.Group) error {
 	return nil
 }
 
@@ -69,21 +106,21 @@ func (grm *groupRepositoryMock) RetrieveByName(ctx context.Context, name string)
 	return val, err
 }
 
-func (grm *groupRepositoryMock) AssignUser(ctx context.Context, u users.User, g users.Group) error {
+func (grm *groupRepositoryMock) AssignUser(ctx context.Context, userID, groupID string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[g.ID]; !ok {
+	if _, ok := grm.groups[groupID]; !ok {
 		return users.ErrNotFound
 	}
-	if _, ok := grm.users[g.ID]; !ok {
-		grm.users[g.ID] = make(map[string]users.User)
+	if _, ok := grm.users[groupID]; !ok {
+		grm.users[groupID] = make(map[string]users.User)
+	}
+	if _, ok := grm.groupsByUser[userID]; !ok {
+		grm.groupsByUser[userID] = make(map[string]users.Group)
+	}
 
-	}
-	if _, ok := grm.groupsByUser[u.ID]; !ok {
-		grm.groupsByUser[u.ID] = make(map[string]users.Group)
-	}
-	grm.users[g.ID][u.ID] = u
-	grm.groupsByUser[u.ID][g.ID] = g
+	grm.users[groupID][userID] = users.User{ID: userID}
+	grm.groupsByUser[userID][groupID] = users.Group{ID: groupID}
 	return nil
 
 }

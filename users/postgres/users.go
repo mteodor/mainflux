@@ -40,18 +40,26 @@ func NewUserRepo(db Database) users.UserRepository {
 	}
 }
 
-func (ur userRepository) Save(ctx context.Context, user users.User) error {
-	q := `INSERT INTO users (id, email, password, metadata) VALUES (:id, :email, :password, :metadata)`
+func (ur userRepository) Save(ctx context.Context, user users.User) (users.User, error) {
+	q := `INSERT INTO users ( email, password, metadata) VALUES ( :email, :password, :metadata) RETURNING id`
 
 	dbu, err := toDBUser(user)
 	if err != nil {
-		return errors.Wrap(errSaveUserDB, err)
-	}
-	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
-		return errors.Wrap(errSaveUserDB, err)
+		return users.User{}, errors.Wrap(errSaveUserDB, err)
 	}
 
-	return nil
+	row, err := ur.db.NamedQueryContext(ctx, q, dbu)
+	if err != nil {
+		return users.User{}, errors.Wrap(errSaveUserDB, err)
+	}
+	defer row.Close()
+	row.Next()
+	var id string
+	if err := row.Scan(&id); err != nil {
+		return users.User{}, err
+	}
+	user.ID = id
+	return user, nil
 }
 
 func (ur userRepository) Update(ctx context.Context, user users.User) error {
@@ -228,6 +236,7 @@ func (m dbMetadata) Value() (driver.Value, error) {
 
 type dbUser struct {
 	ID       string `db:"id"`
+	Owner    string `db:"owner"`
 	Email    string `db:"email"`
 	Password string `db:"password"`
 	Metadata []byte `db:"metadata"`
