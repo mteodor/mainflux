@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/internal/email"
-	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/bcrypt"
 	"github.com/mainflux/mainflux/users/emailer"
@@ -321,7 +320,6 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 		Email:    c.adminEmail,
 		Password: c.adminPassword,
 	}
-	groupName := c.adminGroup
 
 	_, err := userRepo.RetrieveByEmail(context.Background(), user.Email, false)
 	if err == nil {
@@ -332,35 +330,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 	if err := svc.Register(context.Background(), user); err != nil {
 		return err
 	}
-	u, err := userRepo.RetrieveByEmail(context.Background(), user.Email, false)
-	if err != nil {
-		return err
-	}
 
-	// Check for existing group and create if doesnt exist.
-	_, err = groupRepo.RetrieveByName(context.Background(), groupName)
-	if !errors.Contains(err, users.ErrNotFound) {
-		return err
-	}
-	if err != nil && errors.Contains(err, users.ErrNotFound) {
-		// Create group if doesnt exist
-		group := users.Group{
-			Name:        groupName,
-			Description: defaultAdminGroupDescription,
-		}
-		if _, err := groupRepo.Save(context.Background(), group); err != nil {
-			return err
-		}
-	}
-
-	group, err := groupRepo.RetrieveByName(context.Background(), groupName)
-	if err != nil {
-		return err
-	}
-
-	if err := groupRepo.AssignUser(context.Background(), u.ID, group.ID); err != nil {
-		return err
-	}
 	return nil
 }
 
