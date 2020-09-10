@@ -15,9 +15,7 @@ import (
 const (
 	saveOp              = "save_op"
 	retrieveByEmailOp   = "retrieve_by_email"
-	generateResetToken  = "generate_reset_token"
 	updatePassword      = "update_password"
-	sendPasswordReset   = "send_reset_password"
 	retrieveAllForGroup = "retrieve_all_for_group"
 )
 

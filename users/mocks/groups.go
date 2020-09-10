@@ -7,7 +7,6 @@ import (
 	"context"
 	"sync"
 
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -35,11 +34,6 @@ func NewGroupRepository() users.GroupRepository {
 func (grm *groupRepositoryMock) Save(ctx context.Context, g users.Group) (users.Group, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	gid, err := uuidProvider.New().ID()
-	if err != nil {
-		return users.Group{}, err
-	}
-	g.ID = gid
 	if _, ok := grm.groups[g.ID]; ok {
 		return users.Group{}, users.ErrGroupConflict
 	}

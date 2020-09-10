@@ -41,7 +41,10 @@ func NewUserRepo(db Database) users.UserRepository {
 }
 
 func (ur userRepository) Save(ctx context.Context, user users.User) (users.User, error) {
-	q := `INSERT INTO users ( email, password, metadata) VALUES ( :email, :password, :metadata) RETURNING id`
+	q := `INSERT INTO users ( email, password, id, metadata) VALUES ( :email, :password, :id, :metadata) RETURNING id`
+	if user.ID == "" || user.Email == "" {
+		return users.User{}, users.ErrMalformedEntity
+	}
 
 	dbu, err := toDBUser(user)
 	if err != nil {
@@ -147,7 +150,7 @@ func (ur userRepository) RetrieveAllForGroup(ctx context.Context, groupID string
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	q := fmt.Sprintf(`SELECT u.id, u.email, u.name, u.metadata FROM users u, groups g
+	q := fmt.Sprintf(`SELECT u.id, u.email, u.metadata FROM users u, group_relations g
 					  WHERE u.id = g.user_id AND g.group_id = :group 
 		  	          %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
@@ -178,7 +181,7 @@ func (ur userRepository) RetrieveAllForGroup(ctx context.Context, groupID string
 
 		items = append(items, user)
 	}
-	cq := fmt.Sprintf(`SELECT COUNT(*) u.metadata FROM users u, groups g
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u, group_relations g
 	WHERE u.id = g.user_id AND g.group_id = :group  %s;`, mq)
 
 	total, err := total(ctx, ur.db, cq, params)

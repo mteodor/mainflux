@@ -150,7 +150,7 @@ func (res groupRes) Code() int {
 func (res groupRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/groups/%s", res.Name),
+			"Location": fmt.Sprintf("/groups/%s", res.ID),
 		}
 	}
 
@@ -177,6 +177,3 @@ func (res groupPageRes) Headers() map[string]string {
 func (res groupPageRes) Empty() bool {
 	return false
 }
-
-type removeGroupRes struct{}
-type removeUserFromGroupRes struct{}

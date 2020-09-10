@@ -89,7 +89,6 @@ func TestSingleUserRetrieval(t *testing.T) {
 }
 
 func TestRetrieveAllForGroup(t *testing.T) {
-
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
@@ -106,10 +105,13 @@ func TestRetrieveAllForGroup(t *testing.T) {
 		}
 		_, err = userRepo.Save(context.Background(), user)
 		require.Nil(t, err, fmt.Sprintf("saving user error: %s", err))
-		usrs = append(usrs, user)
+		u, _ := userRepo.RetrieveByEmail(context.Background(), user.Email, false)
+		usrs = append(usrs, u)
 	}
-
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("user uuid error: %s", err))
 	group := users.Group{
+		ID:   uid,
 		Name: groupName,
 	}
 

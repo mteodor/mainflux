@@ -76,7 +76,7 @@ func migrateDB(db *sqlx.DB) error {
 					`ALTER TABLE IF EXISTS users DROP CONSTRAINT users_pkey`,
 					`ALTER TABLE IF EXISTS users ADD PRIMARY KEY (id)`,
 					`CREATE TABLE IF NOT EXISTS groups ( 
-					id          UUID NOT NULL DEFAULT gen_random_uuid(),
+					id          UUID NOT NULL,
 					parent_id   UUID, 
 					owner_id    UUID,
 					name        VARCHAR(254) UNIQUE NOT NULL,

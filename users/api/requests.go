@@ -10,10 +10,6 @@ import (
 const minPassLen = 8
 const maxNameSize = 1024
 
-type apiReq interface {
-	validate() error
-}
-
 type userReq struct {
 	user users.User
 }
@@ -98,6 +94,7 @@ func (req passwChangeReq) validate() error {
 type createGroupReq struct {
 	token       string
 	Name        string                 `json:"name,omitempty"`
+	ParentID    string                 `json:"parent_id,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -135,15 +132,16 @@ func (req updateGroupReq) validate() error {
 }
 
 type viewGroupReq struct {
-	token string
-	Name  string `json:"name,omitempty"`
+	token   string
+	Name    string `json:"name,omitempty"`
+	GroupID string `json:"group_id,omitempty"`
 }
 
 func (req viewGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-	if req.Name == "" {
+	if req.Name == "" && req.GroupID == "" {
 		return users.ErrMalformedEntity
 	}
 	return nil
@@ -155,11 +153,16 @@ type listGroupReq struct {
 	limit    uint64
 	metadata users.Metadata
 	name     string
+	groupID  string
 }
 
 func (req listGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
+	}
+
+	if req.name == "" && req.groupID == "" {
+		return users.ErrMalformedEntity
 	}
 
 	return nil
@@ -189,6 +192,7 @@ func (req userGroupReq) validate() error {
 type groupReq struct {
 	token   string
 	groupID string
+	name    string
 }
 
 func (req groupReq) validate() error {
@@ -196,30 +200,8 @@ func (req groupReq) validate() error {
 		return users.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" {
+	if req.groupID == "" && req.name == "" {
 		return users.ErrMalformedEntity
 	}
-	return nil
-}
-
-type removeUserFromGroupReq struct {
-	token   string
-	groupID string
-	userID  string
-}
-
-func (req removeUserFromGroupReq) validate() error {
-	if req.token == "" {
-		return users.ErrUnauthorizedAccess
-	}
-
-	if req.groupID == "" {
-		return users.ErrMalformedEntity
-	}
-
-	if req.userID == "" {
-		return users.ErrMalformedEntity
-	}
-
 	return nil
 }

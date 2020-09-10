@@ -23,13 +23,12 @@ import (
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
 	contentType  = "application/json"
 	invalidEmail = "userexample.com"
-	wrongID      = "123e4567-e89b-12d3-a456-000000000042"
-	id           = "123e4567-e89b-12d3-a456-000000000001"
 )
 
 var (
@@ -150,7 +149,8 @@ func TestLogin(t *testing.T) {
 		Email:    "non-existentuser@example.com",
 		Password: "password",
 	})
-	svc.Register(context.Background(), user)
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	cases := []struct {
 		desc        string
@@ -193,7 +193,8 @@ func TestViewUser(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
-	svc.Register(context.Background(), user)
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 0})
@@ -244,7 +245,8 @@ func TestPasswordResetRequest(t *testing.T) {
 		api.MailSent,
 	})
 
-	svc.Register(context.Background(), user)
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	cases := []struct {
 		desc        string
@@ -300,9 +302,14 @@ func TestPasswordReset(t *testing.T) {
 
 	resData.Msg = users.ErrUserNotFound.Error()
 
-	svc.Register(context.Background(), user)
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
-	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 0})
+
+	tkn, err := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 0})
+	require.Nil(t, err, fmt.Sprintf("issue user token error: %s", err))
+
 	token := tkn.GetValue()
 
 	reqData.Password = user.Password
@@ -379,7 +386,8 @@ func TestPasswordChange(t *testing.T) {
 	}{}
 	resData.Msg = users.ErrUnauthorizedAccess.Error()
 
-	svc.Register(context.Background(), user)
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	reqData.Password = user.Password
 	reqData.OldPassw = user.Password
@@ -491,8 +499,6 @@ func TestGroupCreate(t *testing.T) {
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
 }
-
-
 
 type errorRes struct {
 	Err string `json:"error"`

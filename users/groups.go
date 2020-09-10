@@ -37,8 +37,8 @@ type GroupRepository interface {
 	// RetrieveByName retrieves group by name
 	RetrieveByName(ctx context.Context, name string) (Group, error)
 
-	// RetrieveAll retrieves a group subtree created by owner starting from group with groupName
-	RetrieveAll(ctx context.Context, ownerID, groupName string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	// RetrieveAll retrieves all groups if groupID == "",  if groupID is specified returns children groups
+	RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
 	// RetrieveAllForUser retrieves all groups that user belongs to
 	RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)

@@ -133,8 +133,8 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return lm.svc.CreateGroup(ctx, token, group)
 }
 
-func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta users.Metadata) (users.GroupPage, error) {
-	return lm.svc.ListGroups(ctx, token, offset, limit, name, meta)
+func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, id string, meta users.Metadata) (users.GroupPage, error) {
+	return lm.svc.ListGroups(ctx, token, offset, limit, id, meta)
 }
 
 func (lm *loggingMiddleware) RemoveGroup(ctx context.Context, token, id string) error {

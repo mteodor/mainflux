@@ -105,9 +105,8 @@ func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return ms.svc.CreateGroup(ctx, token, group)
 }
 
-func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta users.Metadata) (users.GroupPage, error) {
-
-	return ms.svc.ListGroups(ctx, token, offset, limit, name, meta)
+func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, id string, meta users.Metadata) (users.GroupPage, error) {
+	return ms.svc.ListGroups(ctx, token, offset, limit, id, meta)
 }
 
 func (ms *metricsMiddleware) RemoveGroup(ctx context.Context, token, id string) error {

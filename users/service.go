@@ -110,11 +110,11 @@ type Service interface {
 
 	// ViewGroup retrieves data about the group identified with the provided
 	// name, that belongs to the user identified by the provided key.
-	ViewGroup(ctx context.Context, token, name string) (Group, error)
+	ViewGroup(ctx context.Context, token, id string) (Group, error)
 
 	// ListGroups retrieves data about subset of groups that belongs to the
 	// user identified by the provided key.
-	ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta Metadata) (GroupPage, error)
+	ListGroups(ctx context.Context, token string, offset, limit uint64, id string, meta Metadata) (GroupPage, error)
 
 	// RemoveGroup removes the group identified with the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -167,11 +167,20 @@ func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainf
 }
 
 func (svc usersService) Register(ctx context.Context, user User) error {
+	if err := user.Validate(); err != nil {
+		return err
+	}
 	hash, err := svc.hasher.Hash(user.Password)
 	if err != nil {
 		return errors.Wrap(ErrMalformedEntity, err)
 	}
 	user.Password = hash
+	uid, err := uuidProvider.New().ID()
+	if err != nil {
+		return errors.Wrap(ErrCreateUser, err)
+	}
+	user.ID = uid
+
 	if _, err := svc.users.Save(ctx, user); err != nil {
 		return err
 	}
@@ -301,22 +310,26 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	group.Owner.ID = userID.Value
+	user, err := svc.users.RetrieveByEmail(ctx, userID.Value, false)
+	if err != nil {
+		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
 	uid, err := uuidProvider.New().ID()
 	if err != nil {
 		return Group{}, errors.Wrap(ErrCreateUser, err)
 	}
 	group.ID = uid
+	group.Owner = user
 	return svc.groups.Save(ctx, group)
 }
 
-func (svc usersService) ListGroups(ctx context.Context, token string, offset, limit uint64, name string, meta Metadata) (GroupPage, error) {
-	userID, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+func (svc usersService) ListGroups(ctx context.Context, token string, offset, limit uint64, parentID string, meta Metadata) (GroupPage, error) {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return svc.groups.RetrieveAll(ctx, userID.Value, name, offset, limit, meta)
+	return svc.groups.RetrieveAll(ctx, parentID, offset, limit, meta)
 }
 
 func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error {
@@ -341,13 +354,13 @@ func (svc usersService) UpdateGroup(ctx context.Context, token string, group Gro
 	return nil
 }
 
-func (svc usersService) ViewGroup(ctx context.Context, token, name string) (Group, error) {
+func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group, error) {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return svc.groups.RetrieveByName(ctx, name)
+	return svc.groups.RetrieveByID(ctx, id)
 }
 
 func (svc usersService) AssignUserToGroup(ctx context.Context, token, userID, groupID string) error {

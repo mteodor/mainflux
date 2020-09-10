@@ -192,7 +192,6 @@ func TestGroupDelete(t *testing.T) {
 }
 
 func TestAssignUser(t *testing.T) {
-
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
