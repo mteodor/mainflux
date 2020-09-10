@@ -102,29 +102,74 @@ func (ms *metricsMiddleware) SendPasswordReset(ctx context.Context, host, email,
 }
 
 func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, group users.Group) (users.Group, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "create_group").Add(1)
+		ms.latency.With("method", "create_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
 	return ms.svc.CreateGroup(ctx, token, group)
 }
 
-func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, id string, meta users.Metadata) (users.GroupPage, error) {
-	return ms.svc.ListGroups(ctx, token, offset, limit, id, meta)
+func (ms *metricsMiddleware) ListGroups(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.GroupPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_groups").Add(1)
+		ms.latency.With("method", "list_groups").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ListGroups(ctx, token, id, offset, limit, meta)
+}
+
+func (ms *metricsMiddleware) ListUsersInGroup(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.UserPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_users_in_groups").Add(1)
+		ms.latency.With("method", "list_users_in_groups").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ListUsersInGroup(ctx, token, id, offset, limit, meta)
 }
 
 func (ms *metricsMiddleware) RemoveGroup(ctx context.Context, token, id string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "remove_group").Add(1)
+		ms.latency.With("method", "remove_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
 	return ms.svc.RemoveGroup(ctx, token, id)
 }
 
 func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group users.Group) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "update_group").Add(1)
+		ms.latency.With("method", "update_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
 	return ms.svc.UpdateGroup(ctx, token, group)
 }
 
 func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, name string) (users.Group, error) {
+
+	defer func(begin time.Time) {
+		ms.counter.With("method", "view_group").Add(1)
+		ms.latency.With("method", "view_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
 	return ms.svc.ViewGroup(ctx, token, name)
 }
 
 func (ms *metricsMiddleware) AssignUserToGroup(ctx context.Context, token, userId, groupId string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "assign_user_to_group").Add(1)
+		ms.latency.With("method", "assign_user_to_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
 	return ms.svc.AssignUserToGroup(ctx, token, userId, groupId)
 }
 
 func (ms *metricsMiddleware) RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "remove_user_from_group").Add(1)
+		ms.latency.With("method", "remove_user_from_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
 	return ms.svc.RemoveUserFromGroup(ctx, token, userID, groupID)
 }

@@ -130,7 +130,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/groups/:groupId/users", kithttp.NewServer(
 		kitot.TraceServer(tracer, "get_users_group")(getUsersForGroupEndpoint(svc)),
-		decodeGroupRequest,
+		decodeGroupListRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -151,7 +151,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_users_group")(viewGroupEndpoint(svc)),
-		decodeGroupRequest,
+		decodeGroupListRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -179,6 +179,14 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 func decodeViewUser(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewUserReq{
 		token: r.Header.Get("Authorization"),
+	}
+	return req, nil
+}
+
+func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
+	req := listUserReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupId"),
 	}
 	return req, nil
 }

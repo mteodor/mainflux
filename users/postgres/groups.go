@@ -365,7 +365,7 @@ func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string
 		}
 	}()
 
-	q := `SELECT COUNT(*) FROM group_relations WHERE group_id = :group AND user_id = :user ;`
+	q := `SELECT COUNT(*) FROM group_relations WHERE group_id = :group_id AND user_id = :user_id ;`
 	dbr, err := toDBGroupRelation(userID, groupID)
 	if err != nil {
 		return errors.Wrap(users.ErrAssignUserToGroup, err)
@@ -378,7 +378,7 @@ func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string
 		return errors.Wrap(users.ErrUserAlreadyAssigned, err)
 	}
 
-	qIns := `INSERT INTO group_relations (group_id, user_id) VALUES (:group, :user)`
+	qIns := `INSERT INTO group_relations (group_id, user_id) VALUES (:group_id, :user_id)`
 	_, err = gr.db.NamedQueryContext(ctx, qIns, dbr)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)

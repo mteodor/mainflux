@@ -74,6 +74,7 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "users_4",
 				Up: []string{
 					`ALTER TABLE IF EXISTS users DROP CONSTRAINT users_pkey`,
+					`ALTER TABLE IF EXISTS users ADD CONSTRAINT users_email_key UNIQUE (email)`,
 					`ALTER TABLE IF EXISTS users ADD PRIMARY KEY (id)`,
 					`CREATE TABLE IF NOT EXISTS groups ( 
 					id          UUID NOT NULL,

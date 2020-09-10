@@ -29,6 +29,18 @@ func (req viewUserReq) validate() error {
 	return nil
 }
 
+type listUserReq struct {
+	token   string
+	groupID string
+}
+
+func (req listUserReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	return nil
+}
+
 type updateUserReq struct {
 	token    string
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
