@@ -317,7 +317,6 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthNServi
 }
 
 func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo users.GroupRepository, c config) error {
-
 	user := users.User{
 		Email:    c.adminEmail,
 		Password: c.adminPassword,
@@ -330,7 +329,9 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 		return nil
 	}
 
-	svc.Register(context.Background(), user)
+	if err := svc.Register(context.Background(), user); err != nil {
+		return err
+	}
 	u, err := userRepo.RetrieveByEmail(context.Background(), user.Email, false)
 	if err != nil {
 		return err
