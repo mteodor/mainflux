@@ -107,6 +107,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
+	mux.Get("/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_users_group")(listGroupsEndpoint(svc)),
+		decodeGroupListRequest,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Put("/groups/:groupId/users/:userId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "assign_users_group_user")(assignUserToGroup(svc)),
 		decodeUserGroupRequest,
@@ -135,7 +142,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
-	mux.Get("/groups/:groupId/all", kithttp.NewServer(
+	mux.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_users_group")(listGroupsEndpoint(svc)),
 		decodeGroupListRequest,
 		encodeResponse,

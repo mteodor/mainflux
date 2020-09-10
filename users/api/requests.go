@@ -161,10 +161,6 @@ func (req listGroupReq) validate() error {
 		return users.ErrUnauthorizedAccess
 	}
 
-	if req.name == "" && req.groupID == "" {
-		return users.ErrMalformedEntity
-	}
-
 	return nil
 }
 

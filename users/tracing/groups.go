@@ -79,12 +79,12 @@ func (grm groupRepositoryMiddleware) RetrieveByName(ctx context.Context, name st
 	return grm.repo.RetrieveByName(ctx, name)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, ownerID, groupName string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAll)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RetrieveAll(ctx, ownerID, groupName, offset, limit, gm)
+	return grm.repo.RetrieveAll(ctx, groupID, offset, limit, gm)
 
 }
 func (grm groupRepositoryMiddleware) RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {

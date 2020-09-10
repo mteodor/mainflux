@@ -140,7 +140,7 @@ func (grm *groupRepositoryMock) RetrieveAllForUser(ctx context.Context, userID s
 	}, nil
 }
 
-func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, ownerID, groupName string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []users.Group

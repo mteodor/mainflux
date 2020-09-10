@@ -181,16 +181,72 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (user
 	return group, nil
 }
 
-func (gr groupRepository) RetrieveAll(ctx context.Context, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+// func (gr groupRepository) RetrieveAll(ctx context.Context, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+// 	_, mq, err := getMetadataQuery(gm)
+// 	if err != nil {
+// 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
+// 	}
+
+// 	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups
+// 		  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
+
+// 	dbPage, err := toDBGroupPage("", "", offset, limit, gm)
+// 	if err != nil {
+// 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
+// 	}
+// 	rows, err := gr.db.NamedQueryContext(ctx, q, dbPage)
+// 	if err != nil {
+// 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
+// 	}
+// 	defer rows.Close()
+
+// 	var items []users.Group
+// 	for rows.Next() {
+// 		dbgr := dbGroup{}
+// 		if err := rows.StructScan(&dbgr); err != nil {
+// 			return users.GroupPage{}, errors.Wrap(errSelectDb, err)
+// 		}
+
+// 		gr := toGroup(dbgr)
+// 		if err != nil {
+// 			return users.GroupPage{}, err
+// 		}
+
+// 		items = append(items, gr)
+// 	}
+
+// 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups WHERE 1=1 %s;`, mq)
+
+// 	total, err := total(ctx, gr.db, cq, dbPage)
+// 	if err != nil {
+// 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
+// 	}
+
+// 	page := users.GroupPage{
+// 		Groups: items,
+// 		PageMetadata: users.PageMetadata{
+// 			Total:  total,
+// 			Offset: offset,
+// 			Limit:  limit,
+// 		},
+// 	}
+
+// 	return page, nil
+// }
+
+func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	_, mq, err := getMetadataQuery(gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
+	var q string
+	parentQuery := ""
+	if groupID != "" {
+		parentQuery = `AND parent_id in (select id from groups where id = :id)`
+	}
+	q = fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups WHERE 1=1 %s %s ORDER BY id LIMIT :limit OFFSET :offset;`, parentQuery, mq)
 
-	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups 
-		  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
-
-	dbPage, err := toDBGroupPage("", "", offset, limit, gm)
+	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
@@ -203,64 +259,6 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, offset, limit uint64,
 	var items []users.Group
 	for rows.Next() {
 		dbgr := dbGroup{}
-		if err := rows.StructScan(&dbgr); err != nil {
-			return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-		}
-
-		gr := toGroup(dbgr)
-		if err != nil {
-			return users.GroupPage{}, err
-		}
-
-		items = append(items, gr)
-	}
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups WHERE 1=1 %s;`, mq)
-
-	total, err := total(ctx, gr.db, cq, dbPage)
-	if err != nil {
-		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-	}
-
-	page := users.GroupPage{
-		Groups: items,
-		PageMetadata: users.PageMetadata{
-			Total:  total,
-			Offset: offset,
-			Limit:  limit,
-		},
-	}
-
-	return page, nil
-}
-
-func (gr groupRepository) RetrieveAllChildren(ctx context.Context, ownerID, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	_, mq, err := getMetadataQuery(gm)
-	if err != nil {
-		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
-	}
-
-	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups
-		  WHERE owner_id = :owner_id
-		  AND parent_id in (select id from groups where id = :id) 
-		  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
-
-	dbPage, err := toDBGroupPage(ownerID, groupID, offset, limit, gm)
-	if err != nil {
-		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-	}
-	rows, err := gr.db.NamedQueryContext(ctx, q, dbPage)
-	if err != nil {
-		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-	}
-	defer rows.Close()
-
-	var items []users.Group
-	for rows.Next() {
-		var id uuid.NullUUID
-		id.Scan(ownerID)
-
-		dbgr := dbGroup{OwnerID: id}
 		if err := rows.StructScan(&dbgr); err != nil {
 			return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 		}
