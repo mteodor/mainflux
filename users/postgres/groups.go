@@ -180,59 +180,6 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (user
 	return group, nil
 }
 
-// func (gr groupRepository) RetrieveAll(ctx context.Context, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-// 	_, mq, err := getMetadataQuery(gm)
-// 	if err != nil {
-// 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
-// 	}
-
-// 	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups
-// 		  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
-
-// 	dbPage, err := toDBGroupPage("", "", offset, limit, gm)
-// 	if err != nil {
-// 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-// 	}
-// 	rows, err := gr.db.NamedQueryContext(ctx, q, dbPage)
-// 	if err != nil {
-// 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-// 	}
-// 	defer rows.Close()
-
-// 	var items []users.Group
-// 	for rows.Next() {
-// 		dbgr := dbGroup{}
-// 		if err := rows.StructScan(&dbgr); err != nil {
-// 			return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-// 		}
-
-// 		gr := toGroup(dbgr)
-// 		if err != nil {
-// 			return users.GroupPage{}, err
-// 		}
-
-// 		items = append(items, gr)
-// 	}
-
-// 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups WHERE 1=1 %s;`, mq)
-
-// 	total, err := total(ctx, gr.db, cq, dbPage)
-// 	if err != nil {
-// 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
-// 	}
-
-// 	page := users.GroupPage{
-// 		Groups: items,
-// 		PageMetadata: users.PageMetadata{
-// 			Total:  total,
-// 			Offset: offset,
-// 			Limit:  limit,
-// 		},
-// 	}
-
-// 	return page, nil
-// }
-
 func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	_, mq, err := getMetadataQuery(gm)
 	if err != nil {

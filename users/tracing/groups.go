@@ -17,7 +17,7 @@ const (
 	saveGroupOp        = "save_group_op"
 	deleteGroupOp      = "delete_group_op"
 	updateGroupOp      = "update_group"
-	retrieveGroupById  = "retrieve_group_by_id"
+	retrieveGroupByID  = "retrieve_group_by_id"
 	retrieveAll        = "retrieve_all_group"
 	retrieveByName     = "retrieve_by_name"
 	retrieveAllForUser = "retrieve_all_group_for_user"
@@ -63,7 +63,7 @@ func (grm groupRepositoryMiddleware) Delete(ctx context.Context, groupID string)
 }
 
 func (grm groupRepositoryMiddleware) RetrieveByID(ctx context.Context, id string) (users.Group, error) {
-	span := createSpan(ctx, grm.tracer, retrieveGroupById)
+	span := createSpan(ctx, grm.tracer, retrieveGroupByID)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 

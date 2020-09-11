@@ -112,49 +112,49 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
-	mux.Delete("/users/groups/:groupId", kithttp.NewServer(
+	mux.Delete("/users/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "delete_group")(deleteGroupEndpoint(svc)),
 		decodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Put("/users/groups/:groupId/users/:userId", kithttp.NewServer(
+	mux.Put("/users/groups/:groupID/users/:userID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "assign_user_to_group")(assignUserToGroup(svc)),
 		decodeUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Delete("/users/groups/:groupId/users/:userId", kithttp.NewServer(
+	mux.Delete("/users/groups/:groupID/users/:userID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_user_from_group")(removeUserFromGroup(svc)),
 		decodeUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/users/groups/:groupId/users", kithttp.NewServer(
+	mux.Get("/users/groups/:groupID/users", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_users_for_group")(listUsersForGroupEndpoint(svc)),
 		decodeGroupListRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Patch("/users/groups/:groupId", kithttp.NewServer(
+	mux.Patch("/users/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_group")(updateGroupEndpoint(svc)),
 		decodeGroupCreate,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/users/groups/:groupId/all", kithttp.NewServer(
+	mux.Get("/users/groups/:groupID/all", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_children_groups")(listGroupsEndpoint(svc)),
 		decodeGroupListRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/users/groups/:groupId", kithttp.NewServer(
+	mux.Get("/users/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_group")(viewGroupEndpoint(svc)),
 		decodeGroupListRequest,
 		encodeResponse,
@@ -270,7 +270,7 @@ func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 	req := groupReq{
 		token:   r.Header.Get("Authorization"),
-		groupID: bone.GetValue(r, "groupId"),
+		groupID: bone.GetValue(r, "groupID"),
 		name:    bone.GetValue(r, "name"),
 	}
 
@@ -300,7 +300,7 @@ func decodeGroupListRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, err
 	}
-	groupID := bone.GetValue(r, "groupId")
+	groupID := bone.GetValue(r, "groupID")
 
 	req := listGroupReq{
 		token:    r.Header.Get("Authorization"),
@@ -320,8 +320,8 @@ func decodeUserGroupRequest(_ context.Context, r *http.Request) (interface{}, er
 
 	req := userGroupReq{
 		token:   r.Header.Get("Authorization"),
-		groupID: bone.GetValue(r, "groupId"),
-		userID:  bone.GetValue(r, "userId"),
+		groupID: bone.GetValue(r, "groupID"),
+		userID:  bone.GetValue(r, "userID"),
 	}
 	return req, nil
 }

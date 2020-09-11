@@ -156,13 +156,13 @@ func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, name string) 
 	return ms.svc.ViewGroup(ctx, token, name)
 }
 
-func (ms *metricsMiddleware) AssignUserToGroup(ctx context.Context, token, userId, groupId string) error {
+func (ms *metricsMiddleware) AssignUserToGroup(ctx context.Context, token, userID, groupID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "assign_user_to_group").Add(1)
 		ms.latency.With("method", "assign_user_to_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.AssignUserToGroup(ctx, token, userId, groupId)
+	return ms.svc.AssignUserToGroup(ctx, token, userID, groupID)
 }
 
 func (ms *metricsMiddleware) RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error {
