@@ -26,13 +26,13 @@ const (
 )
 
 func newUserService() users.Service {
-	repo := mocks.NewUserRepository()
+	usersRepo := mocks.NewUserRepository()
+	groupsRepo := mocks.NewGroupRepository()
 	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{"user@example.com": "user@example.com"})
-
 	emailer := mocks.NewEmailer()
 
-	return users.New(repo, hasher, auth, emailer)
+	return users.New(usersRepo, groupsRepo, hasher, auth, emailer)
 }
 
 func newUserServer(svc users.Service) *httptest.Server {
@@ -48,7 +48,7 @@ func TestCreateUser(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -112,7 +112,7 @@ func TestCreateToken(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,

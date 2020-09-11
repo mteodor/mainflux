@@ -28,7 +28,7 @@ func TestCreateChannel(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -89,7 +89,7 @@ func TestCreateChannels(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -156,7 +156,7 @@ func TestChannel(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -212,7 +212,7 @@ func TestChannels(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -306,7 +306,7 @@ func TestChannelsByThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -450,7 +450,7 @@ func TestUpdateChannel(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -512,7 +512,7 @@ func TestDeleteChannel(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,

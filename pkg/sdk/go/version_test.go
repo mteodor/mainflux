@@ -16,7 +16,7 @@ func TestVersion(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		GroupsPrefix:      "",
+		UsersGroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,

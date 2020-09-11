@@ -14,9 +14,9 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const groupsEndpoint = "groups"
+const groupsEndpoint = "users/groups"
 
-func (sdk mfSDK) CreateGroup(g Group, token string) (string, error) {
+func (sdk mfSDK) CreateUsersGroup(g Group, token string) (string, error) {
 	data, err := json.Marshal(g)
 	if err != nil {
 		return "", err
@@ -43,39 +43,39 @@ func (sdk mfSDK) CreateGroup(g Group, token string) (string, error) {
 	return id, nil
 }
 
-func (sdk mfSDK) Groups(token string, offset, limit uint64, name string) (GroupsPage, error) {
+func (sdk mfSDK) UsersGroups(token string, offset, limit uint64, name string) (UsersGroupsPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", groupsEndpoint, offset, limit, name)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return GroupsPage{}, err
+		return UsersGroupsPage{}, err
 	}
 
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
-		return GroupsPage{}, err
+		return UsersGroupsPage{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return GroupsPage{}, err
+		return UsersGroupsPage{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return GroupsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
+		return UsersGroupsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
-	var tp GroupsPage
+	var tp UsersGroupsPage
 	if err := json.Unmarshal(body, &tp); err != nil {
-		return GroupsPage{}, err
+		return UsersGroupsPage{}, err
 	}
 
 	return tp, nil
 }
 
-func (sdk mfSDK) Group(id, token string) (Group, error) {
+func (sdk mfSDK) UsersGroup(id, token string) (Group, error) {
 	endpoint := fmt.Sprintf("%s/%s", groupsEndpoint, id)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
