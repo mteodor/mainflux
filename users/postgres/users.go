@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
@@ -41,7 +42,7 @@ func NewUserRepo(db Database) users.UserRepository {
 }
 
 func (ur userRepository) Save(ctx context.Context, user users.User) (users.User, error) {
-	q := `INSERT INTO users ( email, password, id, metadata) VALUES ( :email, :password, :id, :metadata) RETURNING id`
+	q := `INSERT INTO users (email, password, id, metadata) VALUES (:email, :password, :id, :metadata) RETURNING id`
 	if user.ID == "" || user.Email == "" {
 		return users.User{}, users.ErrMalformedEntity
 	}
@@ -53,8 +54,18 @@ func (ur userRepository) Save(ctx context.Context, user users.User) (users.User,
 
 	row, err := ur.db.NamedQueryContext(ctx, q, dbu)
 	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return users.User{}, errors.Wrap(users.ErrMalformedEntity, err)
+			case errDuplicate:
+				return users.User{}, errors.Wrap(users.ErrConflict, err)
+			}
+		}
 		return users.User{}, errors.Wrap(errSaveUserDB, err)
 	}
+
 	defer row.Close()
 	row.Next()
 	var id string
@@ -93,7 +104,7 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error 
 	return nil
 }
 
-func (ur userRepository) RetrieveByEmail(ctx context.Context, email string, groups bool) (users.User, error) {
+func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
 	// TO-DO retrieve groups for user if groups TRUE
 	q := `SELECT id, password, metadata FROM users WHERE email = $1`
 
@@ -111,7 +122,7 @@ func (ur userRepository) RetrieveByEmail(ctx context.Context, email string, grou
 	return toUser(dbu)
 }
 
-func (ur userRepository) RetrieveByID(ctx context.Context, id string, groups bool) (users.User, error) {
+func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.User, error) {
 	// TO-DO retrieve groups for user if groups TRUE
 	q := `SELECT id, password, metadata FROM users WHERE id = $1`
 
@@ -207,13 +218,11 @@ type dbMetadata map[string]interface{}
 // Scan - Implement the database/sql scanner interface
 func (m *dbMetadata) Scan(value interface{}) error {
 	if value == nil {
-		m = nil
 		return nil
 	}
 
 	b, ok := value.([]byte)
 	if !ok {
-		m = &dbMetadata{}
 		return users.ErrScanMetadata
 	}
 

@@ -68,7 +68,6 @@ func (grm groupRepositoryMiddleware) RetrieveByID(ctx context.Context, id string
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return grm.repo.RetrieveByID(ctx, id)
-
 }
 
 func (grm groupRepositoryMiddleware) RetrieveByName(ctx context.Context, name string) (users.Group, error) {
@@ -85,8 +84,8 @@ func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, groupID st
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return grm.repo.RetrieveAll(ctx, groupID, offset, limit, gm)
-
 }
+
 func (grm groupRepositoryMiddleware) RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAllForUser)
 	defer span.Finish()

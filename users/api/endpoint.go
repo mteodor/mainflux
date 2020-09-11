@@ -207,7 +207,7 @@ func removeUserFromGroup(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func getUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
+func listUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupReq)
 		if err := req.validate(); err != nil {

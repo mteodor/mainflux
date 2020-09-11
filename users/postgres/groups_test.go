@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/postgres"
@@ -26,18 +27,23 @@ func TestGroupSave(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
-
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("user id unexpected error: %s", err))
 	user := users.User{
+		ID:       uid,
 		Email:    user,
 		Password: password,
 	}
-	_, err := userRepo.Save(context.Background(), user)
+	_, err = userRepo.Save(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("save got unexpected error: %s", err))
 
-	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email, false)
+	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email)
 	require.Nil(t, err, fmt.Sprintf("retrieve got unexpected error: %s", err))
 
+	uid, err = uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group := users.Group{
+		ID:    uid,
 		Name:  groupName,
 		Owner: user,
 	}
@@ -76,23 +82,31 @@ func TestGroupRetrieveByID(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
-
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
+		ID:       uid,
 		Email:    user,
 		Password: password,
 	}
-	_, err := userRepo.Save(context.Background(), user)
+	_, err = userRepo.Save(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("save got unexpected error: %s", err))
 
-	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email, false)
+	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email)
 	require.Nil(t, err, fmt.Sprintf("retrieve got unexpected error: %s", err))
 
+	gid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
+		ID:    gid,
 		Name:  groupName + "1",
 		Owner: user,
 	}
 
+	gid, err = uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
+		ID:    gid,
 		Name:  groupName + "2",
 		Owner: user,
 	}
@@ -133,18 +147,23 @@ func TestGroupDelete(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
-
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
+		ID:       uid,
 		Email:    user,
 		Password: password,
 	}
-	_, err := userRepo.Save(context.Background(), user)
+	_, err = userRepo.Save(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("save got unexpected error: %s", err))
 
-	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email, false)
+	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email)
 	require.Nil(t, err, fmt.Sprintf("retrieve got unexpected error: %s", err))
 
+	gid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
+		ID:    gid,
 		Name:  groupName + "1",
 		Owner: user,
 	}
@@ -155,7 +174,10 @@ func TestGroupDelete(t *testing.T) {
 	err = repo.AssignUser(context.Background(), user.ID, g1.ID)
 	require.Nil(t, err, fmt.Sprintf("failed to assign user to a group: %s", err))
 
+	gid, err = uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
+		ID:    gid,
 		Name:  groupName + "2",
 		Owner: user,
 	}
@@ -195,19 +217,24 @@ func TestAssignUser(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
-
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
+		ID:       uid,
 		Email:    user,
 		Password: password,
 	}
 
-	_, err := userRepo.Save(context.Background(), user)
+	_, err = userRepo.Save(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("save got unexpected error: %s", err))
 
-	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email, false)
+	user, err = userRepo.RetrieveByEmail(context.Background(), user.Email)
 	require.Nil(t, err, fmt.Sprintf("retrieve got unexpected error: %s", err))
 
+	gid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
+		ID:    gid,
 		Name:  groupName + "1",
 		Owner: user,
 	}
@@ -215,7 +242,10 @@ func TestAssignUser(t *testing.T) {
 	g1, err := repo.Save(context.Background(), group1)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
+	gid, err = uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
+		ID:    gid,
 		Name:  groupName + "2",
 		Owner: user,
 	}
@@ -223,9 +253,8 @@ func TestAssignUser(t *testing.T) {
 	g2, err := repo.Save(context.Background(), group2)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
-	gid, err := uuidProvider.New().ID()
+	gid, err = uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id generating error: %s", err))
-
 	g3 := users.Group{
 		ID: gid,
 	}

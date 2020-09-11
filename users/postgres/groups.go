@@ -19,7 +19,6 @@ import (
 var (
 	errDeleteGroupDB = errors.New("delete group failed")
 	errSelectDb      = errors.New("select thing from db error")
-	errUUIDFormat    = errors.New("error in UUID format")
 
 	errFK         = "foreign_key_violation"
 	errInvalid    = "invalid_text_representation"
@@ -382,7 +381,6 @@ func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string
 	_, err = gr.db.NamedQueryContext(ctx, qIns, dbr)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
-		fmt.Println(pqErr.Code.Name())
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:

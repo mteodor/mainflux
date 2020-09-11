@@ -83,7 +83,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := repo.RetrieveByEmail(context.Background(), tc.email, false)
+		_, err := repo.RetrieveByEmail(context.Background(), tc.email)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -105,7 +105,7 @@ func TestRetrieveAllForGroup(t *testing.T) {
 		}
 		_, err = userRepo.Save(context.Background(), user)
 		require.Nil(t, err, fmt.Sprintf("saving user error: %s", err))
-		u, _ := userRepo.RetrieveByEmail(context.Background(), user.Email, false)
+		u, _ := userRepo.RetrieveByEmail(context.Background(), user.Email)
 		usrs = append(usrs, u)
 	}
 	uid, err := uuid.New().ID()
@@ -147,5 +147,4 @@ func TestRetrieveAllForGroup(t *testing.T) {
 		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
-
 }

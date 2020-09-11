@@ -24,9 +24,7 @@ import (
 )
 
 const (
-	contentType  = "application/json"
-	maxLimit     = 100
-	defaultLimit = 10
+	contentType = "application/json"
 
 	offsetKey   = "offset"
 	limitKey    = "limit"
@@ -100,65 +98,65 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
-	mux.Post("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "add_users_group")(createGroupEndpoint(svc)),
+	mux.Post("/users/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "add_group")(createGroupEndpoint(svc)),
 		decodeGroupCreate,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_users_group")(listGroupsEndpoint(svc)),
+	mux.Get("/users/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_groups")(listGroupsEndpoint(svc)),
 		decodeGroupListRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Put("/groups/:groupId/users/:userId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "assign_users_group_user")(assignUserToGroup(svc)),
-		decodeUserGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Delete("/groups/:groupId/users/:userId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "remove_users_group")(removeUserFromGroup(svc)),
-		decodeUserGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Get("/groups/:groupId/users", kithttp.NewServer(
-		kitot.TraceServer(tracer, "get_users_group")(getUsersForGroupEndpoint(svc)),
-		decodeGroupListRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Patch("/groups/:groupId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "update_users_group")(updateGroupEndpoint(svc)),
-		decodeGroupCreate,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Get("/groups/:groupId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_users_group")(listGroupsEndpoint(svc)),
-		decodeGroupListRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Get("/groups/:groupId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "view_users_group")(viewGroupEndpoint(svc)),
-		decodeGroupListRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Delete("/groups/:groupId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "delete_users_group")(deleteGroupEndpoint(svc)),
+	mux.Delete("/users/groups/:groupId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "delete_group")(deleteGroupEndpoint(svc)),
 		decodeGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/users/groups/:groupId/users/:userId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "assign_user_to_group")(assignUserToGroup(svc)),
+		decodeUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Delete("/users/groups/:groupId/users/:userId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "remove_user_from_group")(removeUserFromGroup(svc)),
+		decodeUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/users/groups/:groupId/users", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_users_for_group")(listUsersForGroupEndpoint(svc)),
+		decodeGroupListRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Patch("/users/groups/:groupId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "update_group")(updateGroupEndpoint(svc)),
+		decodeGroupCreate,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/users/groups/:groupId/all", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_children_groups")(listGroupsEndpoint(svc)),
+		decodeGroupListRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/users/groups/:groupId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "view_group")(viewGroupEndpoint(svc)),
+		decodeGroupListRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -179,14 +177,6 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 func decodeViewUser(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewUserReq{
 		token: r.Header.Get("Authorization"),
-	}
-	return req, nil
-}
-
-func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
-	req := listUserReq{
-		token:   r.Header.Get("Authorization"),
-		groupID: bone.GetValue(r, "groupId"),
 	}
 	return req, nil
 }
@@ -314,9 +304,9 @@ func decodeGroupListRequest(_ context.Context, r *http.Request) (interface{}, er
 
 	req := listGroupReq{
 		token:    r.Header.Get("Authorization"),
+		groupID:  groupID,
 		offset:   o,
 		limit:    l,
-		groupID:  groupID,
 		name:     n,
 		metadata: m,
 	}
@@ -439,22 +429,4 @@ func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, err
 	}
 
 	return m, nil
-}
-
-func readBoolQuery(r *http.Request, key string) (bool, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return true, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return true, nil
-	}
-
-	b, err := strconv.ParseBool(vals[0])
-	if err != nil {
-		return true, errInvalidQueryParams
-	}
-
-	return b, nil
 }

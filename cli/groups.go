@@ -23,7 +23,7 @@ var cmdGroups = []cobra.Command{
 				Name:        args[0],
 				Description: args[1],
 			}
-			id, err := sdk.CreateGroup(group, args[2])
+			id, err := sdk.CreateUsersGroup(group, args[2])
 			if err != nil {
 				logError(err)
 				return
@@ -42,7 +42,7 @@ var cmdGroups = []cobra.Command{
 			}
 
 			if args[0] == "all" {
-				l, err := sdk.Groups(args[1], uint64(Offset), uint64(Limit), Name)
+				l, err := sdk.UsersGroups(args[1], uint64(Offset), uint64(Limit), Name)
 				if err != nil {
 					logError(err)
 					return
@@ -51,7 +51,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 
-			t, err := sdk.Group(args[0], args[1])
+			t, err := sdk.UsersGroup(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return

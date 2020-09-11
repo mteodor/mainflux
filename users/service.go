@@ -50,22 +50,22 @@ var (
 	// ErrGetToken indicates error in getting signed token.
 	ErrGetToken = errors.New("failed to fetch signed token")
 
-	// ErrCreateUser indicates error in creating User
+	// ErrCreateUser indicates error in creating user.
 	ErrCreateUser = errors.New("failed to create user")
 
-	// ErrCreateGroup indicates error in creating group
+	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
 
-	// ErrDeleteGroupNotEmpty
+	// ErrDeleteGroupNotEmpty indicates that group contains groups or users.
 	ErrDeleteGroupNotEmpty = errors.New("group is not empty")
 
-	// ErrDeleteGroupMissing indicates in delete operation that group doesnt exist
+	// ErrDeleteGroupMissing indicates in delete operation that group doesnt exist.
 	ErrDeleteGroupMissing = errors.New("group is not existing, already deleted")
 
-	// ErrUserAlreadyAssigned indicates that user is already assigned to a group
+	// ErrUserAlreadyAssigned indicates that user is already assigned to a group.
 	ErrUserAlreadyAssigned = errors.New("user is already assigned to a group")
 
-	// ErrAssignUserToGroup indicates an error in assigning user to a group
+	// ErrAssignUserToGroup indicates an error in assigning user to a group.
 	ErrAssignUserToGroup = errors.New("error assigning user to a group")
 )
 
@@ -101,32 +101,29 @@ type Service interface {
 	//SendPasswordReset sends reset password link to email.
 	SendPasswordReset(ctx context.Context, host, email, token string) error
 
-	// CreateGroup adds a list of groups to the user identified by the provided key.
+	// CreateGroup creates new user group.
 	CreateGroup(ctx context.Context, token string, group Group) (Group, error)
 
-	// UpdateGroup updates the group identified by the provided ID, that
-	// belongs to the user identified by the provided key.
+	// UpdateGroup updates the group identified by the provided ID.
 	UpdateGroup(ctx context.Context, token string, group Group) error
 
-	// ViewGroup retrieves data about the group identified with the provided
-	// name, that belongs to the user identified by the provided key.
+	// ViewGroup retrieves data about the group identified by ID.
 	ViewGroup(ctx context.Context, token, id string) (Group, error)
 
-	// ListGroups retrieves data about subset of groups that belongs
-	ListGroups(ctx context.Context, token, id string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	// ListGroups retrieves groups that are children to group identified by parenID
+	// if parentID is empty all groups are listed.
+	ListGroups(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
 
-	// ListGroups retrieves data about subset of groups that belongs to the
-	// user identified by the provided key.
+	// ListGroups retrieves users that are assigned to a group identified by groupID.
 	ListUsersInGroup(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
 
-	// RemoveGroup removes the group identified with the provided ID, that
-	// belongs to the user identified by the provided key.
+	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
 
-	// AssignUserToGroup adds user into the group
+	// AssignUserToGroup adds user with userID into the group identified by groupID.
 	AssignUserToGroup(ctx context.Context, token, userID, groupID string) error
 
-	// RemoveUserFromGroup removes user from group
+	// RemoveUserFromGroup removes user with userID from group identified by groupID.
 	RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error
 }
 
@@ -191,7 +188,7 @@ func (svc usersService) Register(ctx context.Context, user User) error {
 }
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
-	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email, false)
+	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
 	if err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -209,7 +206,7 @@ func (svc usersService) ViewUser(ctx context.Context, token string) (User, error
 		return User{}, err
 	}
 
-	dbUser, err := svc.users.RetrieveByEmail(ctx, email, false)
+	dbUser, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil {
 		return User{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -247,7 +244,7 @@ func (svc usersService) UpdateUser(ctx context.Context, token string, u User) er
 }
 
 func (svc usersService) GenerateResetToken(ctx context.Context, email, host string) error {
-	user, err := svc.users.RetrieveByEmail(ctx, email, false)
+	user, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || user.Email == "" {
 		return ErrUserNotFound
 	}
@@ -265,7 +262,7 @@ func (svc usersService) ResetPassword(ctx context.Context, resetToken, password 
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	u, err := svc.users.RetrieveByEmail(ctx, email, false)
+	u, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || u.Email == "" {
 		return ErrUserNotFound
 	}
@@ -291,7 +288,7 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 		return ErrUnauthorizedAccess
 	}
 
-	u, err = svc.users.RetrieveByEmail(ctx, email, false)
+	u, err = svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || u.Email == "" {
 		return ErrUserNotFound
 	}
@@ -317,13 +314,12 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 	return email.GetValue(), nil
 }
 
-// CreateGroup adds a list of groups to the user identified by the provided key.
 func (svc usersService) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
 	userID, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	user, err := svc.users.RetrieveByEmail(ctx, userID.Value, false)
+	user, err := svc.users.RetrieveByEmail(ctx, userID.Value)
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -341,7 +337,6 @@ func (svc usersService) ListGroups(ctx context.Context, token string, parentID s
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
 	return svc.groups.RetrieveAll(ctx, parentID, offset, limit, meta)
 }
 
@@ -350,7 +345,6 @@ func (svc usersService) ListUsersInGroup(ctx context.Context, token, groupID str
 	if err != nil {
 		return UserPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
 	return svc.users.RetrieveAllForGroup(ctx, groupID, offset, limit, meta)
 }
 
@@ -359,7 +353,6 @@ func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
 	return svc.groups.Delete(ctx, id)
 }
 
@@ -368,12 +361,15 @@ func (svc usersService) RemoveUserFromGroup(ctx context.Context, token, userID, 
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
 	return svc.groups.RemoveUser(ctx, userID, groupID)
-
 }
+
 func (svc usersService) UpdateGroup(ctx context.Context, token string, group Group) error {
-	return nil
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.groups.Update(ctx, group)
 }
 
 func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group, error) {
@@ -381,7 +377,6 @@ func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group,
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
@@ -390,7 +385,6 @@ func (svc usersService) AssignUserToGroup(ctx context.Context, token, userID, gr
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-
 	return svc.groups.AssignUser(ctx, userID, groupID)
 }
 

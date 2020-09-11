@@ -7,17 +7,14 @@ import (
 	"context"
 )
 
-// User represents a Mainflux user account. Each user is identified given its
-// email and password.
+// Group of users
 type Group struct {
 	ID          string
 	Name        string
 	Owner       User
 	Parent      *Group
 	Description string
-	Attributes  map[string]interface{}
-	//Policies   map[string]Policy
-	Metadata map[string]interface{}
+	Metadata    map[string]interface{}
 }
 
 // GroupRepository specifies an group persistence API.

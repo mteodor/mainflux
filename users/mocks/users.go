@@ -65,7 +65,7 @@ func (urm *userRepositoryMock) UpdateUser(ctx context.Context, user users.User) 
 	return nil
 }
 
-func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string, groups bool) (users.User, error) {
+func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 
@@ -77,7 +77,7 @@ func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string
 	return val, nil
 }
 
-func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, id string, groups bool) (users.User, error) {
+func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, id string) (users.User, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 

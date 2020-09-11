@@ -309,7 +309,7 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthNServi
 		}, []string{"method"}),
 	)
 	if err := createAdmin(svc, userRepo, groupRepo, c); err != nil {
-		logger.Error("failed to create admin user:" + err.Error())
+		logger.Error("failed to create admin user: " + err.Error())
 		os.Exit(1)
 	}
 	return svc
@@ -321,8 +321,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 		Password: c.adminPassword,
 	}
 
-	_, err := userRepo.RetrieveByEmail(context.Background(), user.Email, false)
-	if err == nil {
+	if _, err := userRepo.RetrieveByEmail(context.Background(), user.Email); err == users.ErrNotFound {
 		// Exiting if user already exists
 		return nil
 	}
