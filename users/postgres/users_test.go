@@ -97,7 +97,7 @@ func TestRetrieveAllForGroup(t *testing.T) {
 	for i := uint64(0); i < nUsers; i++ {
 		uid, err := uuid.New().ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		email := fmt.Sprintf("user%d@example.com", i)
+		email := fmt.Sprintf("retrieve-all-for-group%d@example.com", i)
 		user := users.User{
 			ID:       uid,
 			Email:    email,
@@ -112,7 +112,7 @@ func TestRetrieveAllForGroup(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("user uuid error: %s", err))
 	group := users.Group{
 		ID:   uid,
-		Name: groupName,
+		Name: "TestRetrieveAllForGroup",
 	}
 
 	g, err := groupRepo.Save(context.Background(), group)

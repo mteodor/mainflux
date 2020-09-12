@@ -19,7 +19,6 @@ import (
 
 const (
 	groupName = "Mainflux"
-	user      = "user@mainflux.com"
 	password  = "12345678"
 )
 
@@ -31,7 +30,7 @@ func TestGroupSave(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("user id unexpected error: %s", err))
 	user := users.User{
 		ID:       uid,
-		Email:    user,
+		Email:    "TestGroupSave@mainflux.com",
 		Password: password,
 	}
 	_, err = userRepo.Save(context.Background(), user)
@@ -44,7 +43,7 @@ func TestGroupSave(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group := users.Group{
 		ID:    uid,
-		Name:  groupName,
+		Name:  "TestGroupSave",
 		Owner: user,
 	}
 
@@ -86,7 +85,7 @@ func TestGroupRetrieveByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
 		ID:       uid,
-		Email:    user,
+		Email:    "TestGroupRetrieveByID@mainflux.com",
 		Password: password,
 	}
 	_, err = userRepo.Save(context.Background(), user)
@@ -99,7 +98,7 @@ func TestGroupRetrieveByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
 		ID:    gid,
-		Name:  groupName + "1",
+		Name:  groupName + "TestGroupRetrieveByID1",
 		Owner: user,
 	}
 
@@ -107,7 +106,7 @@ func TestGroupRetrieveByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
 		ID:    gid,
-		Name:  groupName + "2",
+		Name:  groupName + "TestGroupRetrieveByID2",
 		Owner: user,
 	}
 
@@ -151,7 +150,7 @@ func TestGroupDelete(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
 		ID:       uid,
-		Email:    user,
+		Email:    "TestGroupDelete@mainflux.com",
 		Password: password,
 	}
 	_, err = userRepo.Save(context.Background(), user)
@@ -164,7 +163,7 @@ func TestGroupDelete(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
 		ID:    gid,
-		Name:  groupName + "1",
+		Name:  groupName + "TestGroupDelete1",
 		Owner: user,
 	}
 
@@ -178,7 +177,7 @@ func TestGroupDelete(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
 		ID:    gid,
-		Name:  groupName + "2",
+		Name:  groupName + "TestGroupDelete2",
 		Owner: user,
 	}
 
@@ -221,7 +220,7 @@ func TestAssignUser(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
 		ID:       uid,
-		Email:    user,
+		Email:    "TestAssignUser@mainflux.com",
 		Password: password,
 	}
 
@@ -235,7 +234,7 @@ func TestAssignUser(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
 		ID:    gid,
-		Name:  groupName + "1",
+		Name:  groupName + "TestAssignUser1",
 		Owner: user,
 	}
 
@@ -246,7 +245,7 @@ func TestAssignUser(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
 		ID:    gid,
-		Name:  groupName + "2",
+		Name:  groupName + "TestAssignUser2",
 		Owner: user,
 	}
 

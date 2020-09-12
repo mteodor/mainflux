@@ -75,15 +75,11 @@ func TestLogin(t *testing.T) {
 	svc := newService()
 	err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	noAuthUser := users.User{
 		Email:    "email@test.com",
-		Password: "pwd",
+		Password: "12345678",
 	}
-	err = svc.Register(context.Background(), user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-
-	err = svc.Register(context.Background(), noAuthUser)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := map[string]struct {
 		user users.User

@@ -445,6 +445,9 @@ func TestGroupCreate(t *testing.T) {
 	client := ts.Client()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 0})
 	token := tkn.GetValue()
 
