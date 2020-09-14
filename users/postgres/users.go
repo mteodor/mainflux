@@ -105,7 +105,6 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error 
 }
 
 func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
-	// TO-DO retrieve groups for user if groups TRUE
 	q := `SELECT id, password, metadata FROM users WHERE email = $1`
 
 	dbu := dbUser{
