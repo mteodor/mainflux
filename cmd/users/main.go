@@ -321,7 +321,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 		Password: c.adminPassword,
 	}
 
-	if _, err := userRepo.RetrieveByEmail(context.Background(), user.Email); err == users.ErrNotFound {
+	if _, err := userRepo.RetrieveByEmail(context.Background(), user.Email); err == nil {
 		// Exiting if user already exists
 		return nil
 	}

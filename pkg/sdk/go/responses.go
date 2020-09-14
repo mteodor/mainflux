@@ -45,3 +45,8 @@ type UsersGroupsPage struct {
 	UsersGroups []Group `json:"groups"`
 	pageRes
 }
+
+type UsersPage struct {
+	Users []User `json:"users"`
+	pageRes
+}

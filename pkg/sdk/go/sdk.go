@@ -90,6 +90,7 @@ type Group struct {
 	ID          string                 `json:"id,omitempty"`
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
+	ParentID    string                 `json:"parent_id,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -150,14 +151,23 @@ type SDK interface {
 	// CreateUsersGroup creates new group and returns its id.
 	CreateUsersGroup(group Group, token string) (string, error)
 
+	// DeleteUsersGroup deletes users group.
+	DeleteUsersGroup(id, token string) error
+
 	// UsersGroups returns page of users groups.
 	UsersGroups(token string, offset, limit uint64, name string) (UsersGroupsPage, error)
 
 	// UsersGroup returns users group object by id.
 	UsersGroup(id, token string) (Group, error)
 
-	// DeleteGroup deletes group.
-	DeleteGroup(id, token string) error
+	// AssignUserToGroup assigns user to a group
+	AssignUserToGroup(userID, groupID, token string) error
+
+	// RemoveUserFromGroup
+	RemoveUserFromGroup(userID, groupID, token string) error
+
+	// ListUsersForGroup
+	ListUsersForGroup(groupID, token string, offset, limit uint64) (UsersPage, error)
 
 	// UpdateGroup updates existing group.
 	UpdateGroup(group Group, token string) error
