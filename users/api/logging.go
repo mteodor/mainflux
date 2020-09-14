@@ -24,7 +24,7 @@ func LoggingMiddleware(svc users.Service, logger log.Logger) users.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Register(ctx context.Context, user users.User) (err error) {
+func (lm *loggingMiddleware) Register(ctx context.Context, user users.User) (u users.User, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method register for user %s took %s to complete", user.Email, time.Since(begin))
 		if err != nil {

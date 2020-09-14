@@ -149,7 +149,7 @@ func TestLogin(t *testing.T) {
 		Email:    "non-existentuser@example.com",
 		Password: "password",
 	})
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	cases := []struct {
@@ -193,7 +193,7 @@ func TestViewUser(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
@@ -245,7 +245,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		api.MailSent,
 	})
 
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	cases := []struct {
@@ -302,7 +302,7 @@ func TestPasswordReset(t *testing.T) {
 
 	resData.Msg = users.ErrUserNotFound.Error()
 
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
@@ -386,7 +386,7 @@ func TestPasswordChange(t *testing.T) {
 	}{}
 	resData.Msg = users.ErrUnauthorizedAccess.Error()
 
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	reqData.Password = user.Password
@@ -445,7 +445,7 @@ func TestGroupCreate(t *testing.T) {
 	client := ts.Client()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 0})

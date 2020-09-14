@@ -29,7 +29,7 @@ func MetricsMiddleware(svc users.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (ms *metricsMiddleware) Register(ctx context.Context, user users.User) error {
+func (ms *metricsMiddleware) Register(ctx context.Context, user users.User) (users.User, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "register").Add(1)
 		ms.latency.With("method", "register").Observe(time.Since(begin).Seconds())

@@ -74,7 +74,7 @@ var (
 type Service interface {
 	// Register creates new user account. In case of the failed registration, a
 	// non-nil error value is returned.
-	Register(ctx context.Context, user User) error
+	Register(ctx context.Context, user User) (User, error)
 
 	// Login authenticates the user given its credentials. Successful
 	// authentication generates new access token. Failed invocations are
@@ -166,25 +166,26 @@ func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainf
 	}
 }
 
-func (svc usersService) Register(ctx context.Context, user User) error {
+func (svc usersService) Register(ctx context.Context, user User) (User, error) {
 	if err := user.Validate(); err != nil {
-		return err
+		return User{}, err
 	}
 	hash, err := svc.hasher.Hash(user.Password)
 	if err != nil {
-		return errors.Wrap(ErrMalformedEntity, err)
+		return User{}, errors.Wrap(ErrMalformedEntity, err)
 	}
 	user.Password = hash
 	uid, err := uuidProvider.New().ID()
 	if err != nil {
-		return errors.Wrap(ErrCreateUser, err)
+		return User{}, errors.Wrap(ErrCreateUser, err)
 	}
 	user.ID = uid
 
-	if _, err := svc.users.Save(ctx, user); err != nil {
-		return err
+	u, err := svc.users.Save(ctx, user)
+	if err != nil {
+		return User{}, err
 	}
-	return nil
+	return u, nil
 }
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {

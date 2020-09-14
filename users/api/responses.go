@@ -29,6 +29,32 @@ type pageRes struct {
 	Limit  uint64 `json:"limit"`
 }
 
+type userCreatedRes struct {
+	ID       string
+	Email    string
+	Metadata map[string]interface{}
+	created  bool
+}
+
+func (res userCreatedRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
+}
+
+func (res userCreatedRes) Headers() map[string]string {
+	if res.created {
+		return map[string]string{
+			"Location":           fmt.Sprintf("/users/%s", res.ID),
+			"Warning-Deprecated": "This endpoint will be depreciated in v1.0.0. It will be replaced with the bulk endpoint currently found at /things/bulk.",
+		}
+	}
+
+	return map[string]string{}
+}
+
 type tokenRes struct {
 	Token string `json:"token,omitempty"`
 }

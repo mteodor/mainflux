@@ -291,3 +291,68 @@ func TestAssignUser(t *testing.T) {
 	}
 
 }
+
+func TestRemoveUser(t *testing.T) {
+	dbMiddleware := postgres.NewDatabase(db)
+	repo := postgres.NewGroupRepo(dbMiddleware)
+	userRepo := postgres.NewUserRepo(dbMiddleware)
+
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	user := users.User{
+		ID:       uid,
+		Email:    "RemoveUser1@mainflux.com",
+		Password: password,
+	}
+
+	_, err = userRepo.Save(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("save got unexpected error: %s", err))
+
+	user1, err := userRepo.RetrieveByEmail(context.Background(), user.Email)
+	require.Nil(t, err, fmt.Sprintf("retrieve got unexpected error: %s", err))
+
+	uid, err = uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	user = users.User{
+		ID:       uid,
+		Email:    "RemoveUser2@mainflux.com",
+		Password: password,
+	}
+
+	_, err = userRepo.Save(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("save got unexpected error: %s", err))
+
+	user2, err := userRepo.RetrieveByEmail(context.Background(), user.Email)
+	require.Nil(t, err, fmt.Sprintf("retrieve got unexpected error: %s", err))
+
+	gid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
+	group1 := users.Group{
+		ID:    gid,
+		Name:  groupName + "RemoveUser1",
+		Owner: user,
+	}
+
+	g1, err := repo.Save(context.Background(), group1)
+	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
+
+	err = repo.AssignUser(context.Background(), user1.ID, group1.ID)
+	require.Nil(t, err, fmt.Sprintf("failed to assign user: %s", err))
+
+	cases := []struct {
+		desc  string
+		group users.Group
+		user  users.User
+		err   error
+	}{
+		{desc: "remove user from a group", group: g1, user: user1, err: nil},
+		{desc: "remove already removed user from a group", group: g1, user: user1, err: nil},
+		{desc: "remove non existing user from a group", group: g1, user: user2, err: nil},
+	}
+
+	for _, tc := range cases {
+		err := repo.RemoveUser(context.Background(), tc.user.ID, tc.group.ID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+
+}

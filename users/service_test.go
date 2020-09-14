@@ -66,14 +66,14 @@ func TestRegister(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Register(context.Background(), tc.user)
+		_, err := svc.Register(context.Background(), tc.user)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
 func TestLogin(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	noAuthUser := users.User{
@@ -117,7 +117,7 @@ func TestLogin(t *testing.T) {
 
 func TestViewUser(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	token, err := svc.Login(context.Background(), user)
@@ -152,7 +152,7 @@ func TestViewUser(t *testing.T) {
 func TestUpdateUser(t *testing.T) {
 	svc := newService()
 
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	token, err := svc.Login(context.Background(), user)
@@ -185,7 +185,7 @@ func TestUpdateUser(t *testing.T) {
 
 func TestGenerateResetToken(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := map[string]struct {
@@ -204,7 +204,7 @@ func TestGenerateResetToken(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user error: %s", err))
 	token, _ := svc.Login(context.Background(), user)
 
@@ -228,7 +228,7 @@ func TestChangePassword(t *testing.T) {
 
 func TestResetPassword(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	resetToken, err := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 2})
@@ -250,7 +250,7 @@ func TestResetPassword(t *testing.T) {
 
 func TestSendPasswordReset(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user error: %s", err))
 	token, _ := svc.Login(context.Background(), user)
 
@@ -271,7 +271,7 @@ func TestSendPasswordReset(t *testing.T) {
 
 func TestCreateGroup(t *testing.T) {
 	svc := newService()
-	err := svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
 	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
 
 	token, err := svc.Login(context.Background(), user)

@@ -15,14 +15,21 @@ func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 		req := request.(userReq)
 
 		if err := req.validate(); err != nil {
-			return nil, err
+			return userCreatedRes{}, err
 		}
 
-		if err := svc.Register(ctx, req.user); err != nil {
-			return tokenRes{}, err
+		registered, err := svc.Register(ctx, req.user)
+		if err != nil {
+			return userCreatedRes{}, err
+		}
+		ucr := userCreatedRes{
+			ID:       registered.ID,
+			Email:    registered.Email,
+			Metadata: registered.Metadata,
+			created:  true,
 		}
 		logger.Info("User successfully registered")
-		return tokenRes{}, nil
+		return ucr, nil
 	}
 }
 
