@@ -326,7 +326,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo use
 		return nil
 	}
 
-	if err := svc.Register(context.Background(), user); err != nil {
+	if _, err := svc.Register(context.Background(), user); err != nil {
 		return err
 	}
 
