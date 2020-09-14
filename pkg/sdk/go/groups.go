@@ -143,7 +143,6 @@ func (sdk mfSDK) UsersGroups(token string, offset, limit uint64, id string) (Use
 	if id != "" {
 		endpoint = fmt.Sprintf("%s/%s/all?offset=%d&limit=%d", groupsEndpoint, id, offset, limit)
 	}
-	fmt.Println(endpoint)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
