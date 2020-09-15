@@ -100,7 +100,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := mainfluxSDK.CreateUser(tc.user)
+		_, err := mainfluxSDK.CreateUser(tc.user)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 	}
 }

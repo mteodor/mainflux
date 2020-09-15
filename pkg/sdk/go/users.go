@@ -6,30 +6,34 @@ package sdk
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-func (sdk mfSDK) CreateUser(u User) error {
+func (sdk mfSDK) CreateUser(u User) (string, error) {
 	data, err := json.Marshal(u)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	url := createURL(sdk.baseURL, sdk.usersPrefix, "users")
 
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {
-		return err
+		return "", err
 	}
 
+	fmt.Println(resp.StatusCode)
 	if resp.StatusCode != http.StatusCreated {
-		return errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
+		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
-	return nil
+	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", thingsEndpoint))
+	return id, nil
 }
 
 func (sdk mfSDK) User(token string) (User, error) {
