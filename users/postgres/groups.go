@@ -185,12 +185,15 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
-	var q string
-	parentQuery := ""
-	if groupID != "" {
-		parentQuery = `AND parent_id in (select id from groups where id = :id)`
-	}
-	q = fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups WHERE 1=1 %s %s ORDER BY id LIMIT :limit OFFSET :offset;`, parentQuery, mq)
+	q := fmt.Sprintf(`WITH RECURSIVE subordinates AS (
+						SELECT id, owner_id, parent_id, name, description, metadata
+						FROM groups
+						WHERE id = :id 
+						UNION
+							SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata
+							FROM groups g
+							INNER JOIN subordinates s ON s.id = g.parent_id %s
+					) SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset`, mq)
 
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
