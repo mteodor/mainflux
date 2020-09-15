@@ -43,6 +43,6 @@ type GroupRepository interface {
 	// AssignUser adds user to group.
 	AssignUser(ctx context.Context, userID, groupID string) error
 
-	// RemoveUser
+	// RemoveUser removes user from group
 	RemoveUser(ctx context.Context, userID, groupID string) error
 }

@@ -66,7 +66,7 @@ var (
 	ErrUserAlreadyAssigned = errors.New("user is already assigned to a group")
 
 	// ErrAssignUserToGroup indicates an error in assigning user to a group.
-	ErrAssignUserToGroup = errors.New("error assigning user to a group")
+	ErrAssignUserToGroup = errors.New("failed assigning user to a group")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -114,8 +114,8 @@ type Service interface {
 	// if parentID is empty all groups are listed.
 	ListGroups(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
 
-	// ListGroups retrieves users that are assigned to a group identified by groupID.
-	ListUsersInGroup(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
+	// ListGroupUsers retrieves users that are assigned to a group identified by groupID.
+	ListGroupUsers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
 
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
@@ -225,9 +225,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, groupID str
 	if err != nil {
 		return UserPage{}, err
 	}
-
 	return svc.users.RetrieveAllForGroup(ctx, groupID, offset, limit, um)
-
 }
 
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
@@ -240,7 +238,6 @@ func (svc usersService) UpdateUser(ctx context.Context, token string, u User) er
 		Email:    email,
 		Metadata: u.Metadata,
 	}
-
 	return svc.users.UpdateUser(ctx, user)
 }
 
@@ -341,7 +338,7 @@ func (svc usersService) ListGroups(ctx context.Context, token string, parentID s
 	return svc.groups.RetrieveAll(ctx, parentID, offset, limit, meta)
 }
 
-func (svc usersService) ListUsersInGroup(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error) {
+func (svc usersService) ListGroupUsers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error) {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return UserPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
