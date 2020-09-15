@@ -122,7 +122,6 @@ func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (use
 }
 
 func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.User, error) {
-	// TO-DO retrieve groups for user if groups TRUE
 	q := `SELECT id, password, metadata FROM users WHERE id = $1`
 
 	dbu := dbUser{
@@ -161,8 +160,8 @@ func (ur userRepository) RetrieveAllForGroup(ctx context.Context, groupID string
 	}
 
 	q := fmt.Sprintf(`SELECT u.id, u.email, u.metadata FROM users u, group_relations g
-					  WHERE u.id = g.user_id AND g.group_id = :group 
-		  	          %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
+                      WHERE u.id = g.user_id AND g.group_id = :group 
+                      %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
 		"group":    groupID,
