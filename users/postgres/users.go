@@ -272,8 +272,10 @@ func toDBUser(u users.User) (dbUser, error) {
 
 func toUser(dbu dbUser) (users.User, error) {
 	var metadata map[string]interface{}
-	if err := json.Unmarshal([]byte(dbu.Metadata), &metadata); err != nil {
-		return users.User{}, errors.Wrap(errUnmarshal, err)
+	if dbu.Metadata != nil {
+		if err := json.Unmarshal([]byte(dbu.Metadata), &metadata); err != nil {
+			return users.User{}, errors.Wrap(errUnmarshal, err)
+		}
 	}
 
 	return users.User{
