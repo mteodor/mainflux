@@ -216,12 +216,27 @@ func removeUserFromGroup(svc users.Service) endpoint.Endpoint {
 
 func listUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listGroupReq)
+		req := request.(listUserGroupReq)
 		if err := req.validate(); err != nil {
 			return users.UserPage{}, err
 		}
 
 		up, err := svc.ListGroupUsers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return users.UserPage{}, err
+		}
+		return up, nil
+	}
+}
+
+func listGroupForUserEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listUserGroupReq)
+		if err := req.validate(); err != nil {
+			return users.UserPage{}, err
+		}
+
+		up, err := svc.ListUserGroups(ctx, req.token, req.userID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return users.UserPage{}, err
 		}
@@ -258,12 +273,12 @@ func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 
 func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewGroupReq)
+		req := request.(groupReq)
 		if err := req.validate(); err != nil {
 			return viewGroupRes{}, err
 		}
 
-		group, err := svc.ViewGroup(ctx, req.token, req.GroupID)
+		group, err := svc.ViewGroup(ctx, req.token, req.groupID)
 		if err != nil {
 			return viewGroupRes{}, err
 		}
@@ -279,7 +294,7 @@ func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 
 func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listGroupReq)
+		req := request.(listUserGroupReq)
 
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, err

@@ -101,6 +101,25 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	cobra.Command{
+		Use:   "groups",
+		Short: "groups <thing_id> <user_auth_token>",
+		Long:  `Update user metadata`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Short)
+				return
+			}
+
+			up, err := sdk.UserGroups(args[0], args[1], uint64(Offset), uint64(Limit))
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(up)
+		},
+	},
+	cobra.Command{
 		Use:   "password",
 		Short: "password <old_password> <password> <user_auth_token>",
 		Long:  `Update user password`,

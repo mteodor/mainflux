@@ -96,7 +96,7 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.AssignUserToGroup(args[0], args[1], args[2]); err != nil {
+			if err := sdk.AddGroupUser(args[0], args[1], args[2]); err != nil {
 				logError(err)
 			}
 		},
@@ -110,7 +110,7 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.RemoveUserFromGroup(args[0], args[1], args[2]); err != nil {
+			if err := sdk.RemoveGroupUser(args[0], args[1], args[2]); err != nil {
 				logError(err)
 			}
 		},
@@ -138,7 +138,7 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-			up, err := sdk.ListUsersForGroup(args[0], args[1], uint64(Offset), uint64(Limit))
+			up, err := sdk.GroupUsers(args[0], args[1], uint64(Offset), uint64(Limit))
 			if err != nil {
 				logError(err)
 			}

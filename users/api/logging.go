@@ -232,3 +232,16 @@ func (lm *loggingMiddleware) RemoveUserFromGroup(ctx context.Context, token, use
 
 	return lm.svc.RemoveUserFromGroup(ctx, token, userID, groupID)
 }
+
+func (lm *loggingMiddleware) ListUserGroups(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method list_user_groups for user %s took %s to complete", id, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ListUserGroups(ctx, token, id, offset, limit, meta)
+}

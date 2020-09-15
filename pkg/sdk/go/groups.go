@@ -63,10 +63,9 @@ func (sdk mfSDK) DeleteUsersGroup(id, token string) error {
 	}
 
 	return nil
-
 }
 
-func (sdk mfSDK) AssignUserToGroup(userID, groupID, token string) error {
+func (sdk mfSDK) AddGroupUser(userID, groupID, token string) error {
 	endpoint := fmt.Sprintf("%s/%s/users/%s", groupsEndpoint, groupID, userID)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader([]byte{}))
@@ -86,7 +85,7 @@ func (sdk mfSDK) AssignUserToGroup(userID, groupID, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) RemoveUserFromGroup(userID, groupID, token string) error {
+func (sdk mfSDK) RemoveGroupUser(userID, groupID, token string) error {
 	endpoint := fmt.Sprintf("%s/%s/users/%s", groupsEndpoint, groupID, userID)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
@@ -106,10 +105,10 @@ func (sdk mfSDK) RemoveUserFromGroup(userID, groupID, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) ListUsersForGroup(groupID, token string, offset, limit uint64) (UsersPage, error) {
+func (sdk mfSDK) GroupUsers(groupID, token string, offset, limit uint64) (UsersPage, error) {
 	endpoint := fmt.Sprintf("%s/%s/users?offset=%d&limit=%d&", groupsEndpoint, groupID, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
-
+	fmt.Println(url)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return UsersPage{}, err
@@ -205,7 +204,7 @@ func (sdk mfSDK) UsersGroup(id, token string) (Group, error) {
 	return t, nil
 }
 
-func (sdk mfSDK) UpdateGroup(t Group, token string) error {
+func (sdk mfSDK) UpdateUsersGroup(t Group, token string) error {
 	data, err := json.Marshal(t)
 	if err != nil {
 		return err

@@ -77,6 +77,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
+	mux.Get("/users/:userID/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_groups_for_user")(listGroupForUserEndpoint(svc)),
+		decodeListUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Post("/password/reset-request", kithttp.NewServer(
 		kitot.TraceServer(tracer, "res-req")(passwordResetRequestEndpoint(svc)),
 		decodePasswordResetRequest,
@@ -107,7 +114,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/users/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_groups")(listGroupsEndpoint(svc)),
-		decodeGroupListRequest,
+		decodeListUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -135,7 +142,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/users/groups/:groupID/users", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_users_for_group")(listUsersForGroupEndpoint(svc)),
-		decodeGroupListRequest,
+		decodeListUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -147,16 +154,16 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
-	mux.Get("/users/groups/:groupID/all", kithttp.NewServer(
+	mux.Get("/users/groups/:groupID/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_children_groups")(listGroupsEndpoint(svc)),
-		decodeGroupListRequest,
+		decodeListUserGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Get("/users/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_group")(viewGroupEndpoint(svc)),
-		decodeGroupListRequest,
+		decodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -277,7 +284,7 @@ func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return req, nil
 }
 
-func decodeGroupListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListUserGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, ErrUnsupportedContentType
 	}
@@ -300,11 +307,14 @@ func decodeGroupListRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, err
 	}
-	groupID := bone.GetValue(r, "groupID")
 
-	req := listGroupReq{
+	groupID := bone.GetValue(r, "groupID")
+	userID := bone.GetValue(r, "userID")
+
+	req := listUserGroupReq{
 		token:    r.Header.Get("Authorization"),
 		groupID:  groupID,
+		userID:   userID,
 		offset:   o,
 		limit:    l,
 		name:     n,

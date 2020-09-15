@@ -131,32 +131,17 @@ func (req updateGroupReq) validate() error {
 	return nil
 }
 
-type viewGroupReq struct {
-	token   string
-	Name    string `json:"name,omitempty"`
-	GroupID string `json:"group_id,omitempty"`
-}
-
-func (req viewGroupReq) validate() error {
-	if req.token == "" {
-		return users.ErrUnauthorizedAccess
-	}
-	if req.Name == "" && req.GroupID == "" {
-		return users.ErrMalformedEntity
-	}
-	return nil
-}
-
-type listGroupReq struct {
+type listUserGroupReq struct {
 	token    string
 	offset   uint64
 	limit    uint64
 	metadata users.Metadata
 	name     string
 	groupID  string
+	userID   string
 }
 
-func (req listGroupReq) validate() error {
+func (req listUserGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}

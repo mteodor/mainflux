@@ -14,13 +14,19 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+const (
+	usersEndpoint    = "users"
+	tokensEndpoint   = "tokens"
+	passwordEndpoint = "password"
+)
+
 func (sdk mfSDK) CreateUser(u User) (string, error) {
 	data, err := json.Marshal(u)
 	if err != nil {
 		return "", err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, "users")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, usersEndpoint)
 
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {
@@ -37,7 +43,7 @@ func (sdk mfSDK) CreateUser(u User) (string, error) {
 }
 
 func (sdk mfSDK) User(token string) (User, error) {
-	url := createURL(sdk.baseURL, sdk.usersPrefix, "users")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, usersEndpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -73,7 +79,7 @@ func (sdk mfSDK) CreateToken(user User) (string, error) {
 		return "", err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, "tokens")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, tokensEndpoint)
 
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {
@@ -104,7 +110,7 @@ func (sdk mfSDK) UpdateUser(u User, token string) error {
 		return err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, "users")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, usersEndpoint)
 
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
@@ -133,7 +139,7 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 		return err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, "password")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, passwordEndpoint)
 
 	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
 	if err != nil {
@@ -150,4 +156,35 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 	}
 
 	return nil
+}
+func (sdk mfSDK) UserGroups(userID, token string, offset, limit uint64) (UsersGroupsPage, error) {
+	endpoint := fmt.Sprintf("%s/%s/groups?offset=%d&limit=%d&", usersEndpoint, userID, offset, limit)
+	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
+	fmt.Println(url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return UsersGroupsPage{}, err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return UsersGroupsPage{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return UsersGroupsPage{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return UsersGroupsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
+	}
+
+	var tp UsersGroupsPage
+	if err := json.Unmarshal(body, &tp); err != nil {
+		return UsersGroupsPage{}, err
+	}
+
+	return tp, nil
 }

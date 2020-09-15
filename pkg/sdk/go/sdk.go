@@ -78,11 +78,11 @@ var _ SDK = (*mfSDK)(nil)
 
 // User represents mainflux user its credentials.
 type User struct {
-	ID          string                 `json:"id,omitempty"`
-	Email       string                 `json:"email,omitempty"`
-	UsersGroups []string               `json:"groups,omitempty"`
-	Password    string                 `json:"password,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	ID       string                 `json:"id,omitempty"`
+	Email    string                 `json:"email,omitempty"`
+	Groups   []string               `json:"groups,omitempty"`
+	Password string                 `json:"password,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Group represents mainflux users group.
@@ -160,17 +160,20 @@ type SDK interface {
 	// UsersGroup returns users group object by id.
 	UsersGroup(id, token string) (Group, error)
 
-	// AssignUserToGroup assigns user to a group
-	AssignUserToGroup(userID, groupID, token string) error
+	// AddGroupUser assigns user to a group
+	AddGroupUser(userID, groupID, token string) error
 
-	// RemoveUserFromGroup
-	RemoveUserFromGroup(userID, groupID, token string) error
+	// RemoveGroupUser
+	RemoveGroupUser(userID, groupID, token string) error
 
-	// ListUsersForGroup
-	ListUsersForGroup(groupID, token string, offset, limit uint64) (UsersPage, error)
+	// GroupUsers lists users in group.
+	GroupUsers(groupID, token string, offset, limit uint64) (UsersPage, error)
 
-	// UpdateGroup updates existing group.
-	UpdateGroup(group Group, token string) error
+	// UserGroups lists groups for user.
+	UserGroups(userID, token string, offset, limit uint64) (UsersGroupsPage, error)
+
+	// UpdateUsersGroup updates existing group.
+	UpdateUsersGroup(group Group, token string) error
 
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) error

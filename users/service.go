@@ -117,6 +117,9 @@ type Service interface {
 	// ListGroupUsers retrieves users that are assigned to a group identified by groupID.
 	ListGroupUsers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
 
+	// ListUserGroups retrieves groups that user identified with userID belongs to.
+	ListUserGroups(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
 
@@ -392,4 +395,12 @@ func (svc usersService) issue(ctx context.Context, email string, keyType uint32)
 		return "", errors.Wrap(ErrUserNotFound, err)
 	}
 	return key.GetValue(), nil
+}
+
+func (svc usersService) ListUserGroups(ctx context.Context, token, userID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.groups.RetrieveAllForUser(ctx, userID, offset, limit, meta)
 }

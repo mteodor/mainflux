@@ -246,12 +246,13 @@ func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string,
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata FROM groups
-		  WHERE id IN (SELECT group_id FROM group_relations WHERE user_id = :owner_id) 
-		  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
+	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata 
+					  FROM group_relations gr, groups g
+					  WHERE gr.group_id = g.id and gr.user_id = :userID
+		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
-		"owner":    userID,
+		"userID":   userID,
 		"limit":    limit,
 		"offset":   offset,
 		"metadata": m,
@@ -277,8 +278,9 @@ func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string,
 
 		items = append(items, gr)
 	}
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups 
-	WHERE id IN (SELECT group_id FROM group_relations WHERE user_id = :owner)  %s;`, mq)
+	cq := fmt.Sprintf(`SELECT COUNT(*) 
+					   FROM group_relations gr, groups g
+					   WHERE gr.group_id = g.id and gr.user_id = :userID %s;`, mq)
 
 	total, err := total(ctx, gr.db, cq, params)
 	if err != nil {
