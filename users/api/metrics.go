@@ -119,13 +119,13 @@ func (ms *metricsMiddleware) ListGroups(ctx context.Context, token, id string, o
 	return ms.svc.ListGroups(ctx, token, id, offset, limit, meta)
 }
 
-func (ms *metricsMiddleware) ListUsersInGroup(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.UserPage, error) {
+func (ms *metricsMiddleware) ListGroupUsers(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.UserPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_users_in_groups").Add(1)
 		ms.latency.With("method", "list_users_in_groups").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListUsersInGroup(ctx, token, id, offset, limit, meta)
+	return ms.svc.ListGroupUsers(ctx, token, id, offset, limit, meta)
 }
 
 func (ms *metricsMiddleware) RemoveGroup(ctx context.Context, token, id string) error {

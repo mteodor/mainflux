@@ -221,7 +221,7 @@ func listUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return users.UserPage{}, err
 		}
 
-		up, err := svc.ListUsersInGroup(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		up, err := svc.ListGroupUsers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return users.UserPage{}, err
 		}

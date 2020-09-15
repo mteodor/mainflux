@@ -18,6 +18,7 @@ var (
 	_ mainflux.Response = (*updateGroupRes)(nil)
 	_ mainflux.Response = (*viewGroupRes)(nil)
 	_ mainflux.Response = (*groupRes)(nil)
+	_ mainflux.Response = (*userCreatedRes)(nil)
 )
 
 // MailSent message response when link is sent
@@ -53,6 +54,10 @@ func (res userCreatedRes) Headers() map[string]string {
 	}
 
 	return map[string]string{}
+}
+
+func (res userCreatedRes) Empty() bool {
+	return true
 }
 
 type tokenRes struct {
