@@ -88,9 +88,9 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	cobra.Command{
-		Use:   "assign",
-		Short: "assign <user_id> <group_id> <user_auth_token>",
-		Long:  `Assigns user to a group.`,
+		Use:   "add",
+		Short: "add <user_id> <group_id> <user_auth_token>",
+		Long:  `add user to a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
@@ -102,9 +102,9 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	cobra.Command{
-		Use:   "unassign",
-		Short: "unassign <user_id> <group_id> <user_auth_token>",
-		Long:  `Unassign user from a group.`,
+		Use:   "remove",
+		Short: "remove <user_id> <group_id> <user_auth_token>",
+		Long:  `remove user from a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
@@ -154,7 +154,7 @@ func NewGroupsCmd() *cobra.Command {
 		Short: "Groups management",
 		Long:  `Groups management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: Groups [create | get | delete]")
+			logUsage("Usage: Groups [create | get | delete | add | remove ]")
 		},
 	}
 
