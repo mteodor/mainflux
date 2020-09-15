@@ -136,8 +136,7 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	hasher := bcrypt.New()
-	db := connectToDB(cfg.dbConfig, hasher, logger)
+	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
 	authTracer, closer := initJaeger("auth", cfg.jaegerURL, logger)
@@ -246,7 +245,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 
 	return tracer, closer
 }
-func connectToDB(dbConfig postgres.Config, hasher users.Hasher, logger logger.Logger) *sqlx.DB {
+func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	db, err := postgres.Connect(dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
