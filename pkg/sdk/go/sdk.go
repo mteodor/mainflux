@@ -69,6 +69,9 @@ var (
 
 	// ErrFailedCertUpdate failed to update certs in bootstrap config
 	ErrFailedCertUpdate = errors.New("failed to update certs in bootstrap config")
+
+	// ErrFailedUserAdd failed to add user to a group.
+	ErrFailedUserAdd = errors.New("failed to add user to group")
 )
 
 // ContentType represents all possible content types.

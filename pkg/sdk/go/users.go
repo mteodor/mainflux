@@ -160,7 +160,6 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 func (sdk mfSDK) UserGroups(userID, token string, offset, limit uint64) (UsersGroupsPage, error) {
 	endpoint := fmt.Sprintf("%s/%s/groups?offset=%d&limit=%d&", usersEndpoint, userID, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
-	fmt.Println(url)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return UsersGroupsPage{}, err

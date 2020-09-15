@@ -79,7 +79,7 @@ func (sdk mfSDK) AddGroupUser(userID, groupID, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(ErrFailedConnect, errors.New(resp.Status))
+		return errors.Wrap(ErrFailedUserAdd, errors.New(resp.Status))
 	}
 
 	return nil
@@ -108,7 +108,6 @@ func (sdk mfSDK) RemoveGroupUser(userID, groupID, token string) error {
 func (sdk mfSDK) GroupUsers(groupID, token string, offset, limit uint64) (UsersPage, error) {
 	endpoint := fmt.Sprintf("%s/%s/users?offset=%d&limit=%d&", groupsEndpoint, groupID, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
-	fmt.Println(url)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return UsersPage{}, err
@@ -140,7 +139,7 @@ func (sdk mfSDK) GroupUsers(groupID, token string, offset, limit uint64) (UsersP
 func (sdk mfSDK) UsersGroups(token string, offset, limit uint64, id string) (UsersGroupsPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", groupsEndpoint, offset, limit)
 	if id != "" {
-		endpoint = fmt.Sprintf("%s/%s/all?offset=%d&limit=%d", groupsEndpoint, id, offset, limit)
+		endpoint = fmt.Sprintf("%s/%s/groups?offset=%d&limit=%d", groupsEndpoint, id, offset, limit)
 	}
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
