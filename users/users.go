@@ -67,11 +67,9 @@ type UserRepository interface {
 	UpdateUser(ctx context.Context, u User) error
 
 	// RetrieveByEmail retrieves user by its unique identifier (i.e. email).
-	// If groups = TRUE retrieve groups for given User
 	RetrieveByEmail(ctx context.Context, email string) (User, error)
 
 	// RetrieveByID retrieves user by its unique identifier ID.
-	// If groups = TRUE retrieve groups for given User
 	RetrieveByID(ctx context.Context, id string) (User, error)
 
 	// UpdatePassword updates password for user with given email
