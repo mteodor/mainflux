@@ -48,8 +48,7 @@ func (res userCreatedRes) Code() int {
 func (res userCreatedRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location":           fmt.Sprintf("/users/%s", res.ID),
-			"Warning-Deprecated": "This endpoint will be depreciated in v1.0.0. It will be replaced with the bulk endpoint currently found at /things/bulk.",
+			"Location": fmt.Sprintf("/users/%s", res.ID),
 		}
 	}
 
