@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
@@ -23,8 +22,6 @@ var (
 	errFK         = "foreign_key_violation"
 	errInvalid    = "invalid_text_representation"
 	errTruncation = "string_data_right_truncation"
-
-	groupRegexp = regexp.MustCompile("^[a-zA-Z0-9]+$")
 )
 
 var _ users.GroupRepository = (*groupRepository)(nil)
@@ -42,15 +39,10 @@ func NewGroupRepo(db Database) users.GroupRepository {
 }
 
 func (gr groupRepository) Save(ctx context.Context, group users.Group) (users.Group, error) {
-	var id, q string
+	var id string
+	q := `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata) VALUES (:name, :description, :id, :owner_id, :parent_id, :metadata) RETURNING id`
 	if group.Parent == nil || group.Parent.ID == "" {
 		q = `INSERT INTO groups (name, description, id, owner_id, metadata) VALUES (:name, :description, :id, :owner_id, :metadata) RETURNING id`
-	} else {
-		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata) VALUES (:name, :description, :id, :owner_id, :parent_id, :metadata) RETURNING id`
-	}
-
-	if group.ID == "" || group.Name == "" || !groupRegexp.MatchString(group.Name) {
-		return users.Group{}, users.ErrMalformedEntity
 	}
 
 	dbu, err := toDBGroup(group)
@@ -97,36 +89,6 @@ func (gr groupRepository) Update(ctx context.Context, group users.Group) error {
 }
 
 func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
-	tx, err := gr.db.BeginTxx(context.Background(), nil)
-	if err != nil {
-		return errors.Wrap(errDeleteGroupDB, err)
-	}
-	defer func() {
-		if err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				err = errors.Wrap(err, errors.Wrap(errTransRollback, txErr))
-			}
-		}
-
-		if err = tx.Commit(); err != nil {
-			err = errors.Wrap(errDeleteGroupDB, err)
-		}
-	}()
-
-	dbr, err := toDBGroupRelation("", groupID)
-	if err != nil {
-		return errors.Wrap(errDeleteGroupDB, err)
-	}
-	q := `SELECT COUNT(*) FROM group_relations WHERE group_id = :group_id`
-
-	tot, err := total(ctx, gr.db, q, dbr)
-	if err != nil {
-		return errors.Wrap(errDeleteGroupDB, err)
-	}
-	if tot > 0 {
-		return errors.Wrap(users.ErrDeleteGroupNotEmpty, err)
-	}
-
 	qd := `DELETE FROM groups WHERE id = :id`
 	dbg, err := toDBGroup(users.Group{ID: groupID})
 	if err != nil {
@@ -300,35 +262,10 @@ func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string,
 }
 
 func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string) error {
-	tx, err := gr.db.BeginTxx(context.Background(), nil)
-	if err != nil {
-		return errors.Wrap(errDeleteGroupDB, err)
-	}
-	defer func() {
-		if err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				err = errors.Wrap(err, errors.Wrap(errTransRollback, txErr))
-			}
-		}
-
-		if err = tx.Commit(); err != nil {
-			err = errors.Wrap(errDeleteGroupDB, err)
-		}
-	}()
-
-	q := `SELECT COUNT(*) FROM group_relations WHERE group_id = :group_id AND user_id = :user_id ;`
 	dbr, err := toDBGroupRelation(userID, groupID)
 	if err != nil {
 		return errors.Wrap(users.ErrAssignUserToGroup, err)
 	}
-	tot, err := total(ctx, gr.db, q, dbr)
-	if err != nil {
-		return errors.Wrap(users.ErrAssignUserToGroup, err)
-	}
-	if tot > 0 {
-		return errors.Wrap(users.ErrUserAlreadyAssigned, err)
-	}
-
 	qIns := `INSERT INTO group_relations (group_id, user_id) VALUES (:group_id, :user_id)`
 	_, err = gr.db.NamedQueryContext(ctx, qIns, dbr)
 	if err != nil {
@@ -447,16 +384,16 @@ func toGroup(dbu dbGroup) users.Group {
 }
 
 type dbGroupRelation struct {
-	Group uuid.NullUUID `db:"group_id"`
-	User  uuid.NullUUID `db:"user_id"`
+	Group uuid.UUID `db:"group_id"`
+	User  uuid.UUID `db:"user_id"`
 }
 
 func toDBGroupRelation(userID, groupID string) (dbGroupRelation, error) {
-	group, err := toUUID(groupID)
+	group, err := uuid.FromString(groupID)
 	if err != nil {
 		return dbGroupRelation{}, err
 	}
-	user, err := toUUID(userID)
+	user, err := uuid.FromString(userID)
 	if err != nil {
 		return dbGroupRelation{}, err
 	}
