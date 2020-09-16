@@ -5,6 +5,7 @@ package users
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
@@ -13,6 +14,8 @@ import (
 )
 
 var (
+	groupRegexp = regexp.MustCompile("^[a-zA-Z0-9]+$")
+
 	// ErrConflict indicates usage of the existing email during account
 	// registration.
 	ErrConflict = errors.New("email already taken")
@@ -316,6 +319,9 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 }
 
 func (svc usersService) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
+	if group.ID == "" || group.Name == "" || !groupRegexp.MatchString(group.Name) {
+		return Group{}, ErrMalformedEntity
+	}
 	userID, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
