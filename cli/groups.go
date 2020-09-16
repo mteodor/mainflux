@@ -49,9 +49,9 @@ var cmdGroups = []cobra.Command{
 	cobra.Command{
 		Use:   "get",
 		Short: "get [all | children <group_id> | group_id] <user_auth_token>",
-		Long: `Get all users groups or group by id.
+		Long: `Get all users groups, group children or group by id.
 		all - lists all groups
-		all <group_id> - lists all children groups of <group_id>
+		children <group_id> - lists all children groups of <group_id>
 		<group_id> - shows group with provided group ID`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {
@@ -90,7 +90,7 @@ var cmdGroups = []cobra.Command{
 	cobra.Command{
 		Use:   "add",
 		Short: "add <user_id> <group_id> <user_auth_token>",
-		Long:  `add user to a group.`,
+		Long:  `Add user to a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
@@ -104,7 +104,7 @@ var cmdGroups = []cobra.Command{
 	cobra.Command{
 		Use:   "remove",
 		Short: "remove <user_id> <group_id> <user_auth_token>",
-		Long:  `remove user from a group.`,
+		Long:  `Remove user from a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
