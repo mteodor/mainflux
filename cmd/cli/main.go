@@ -20,7 +20,7 @@ func main() {
 		CertsURL:          "http://localhost:8204",
 		ReaderPrefix:      "",
 		UsersPrefix:       "",
-		UsersGroupsPrefix: "",
+		GroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "http",
 		BootstrapPrefix:   "things",
@@ -86,10 +86,10 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.UsersGroupsPrefix,
+		&sdkConf.GroupsPrefix,
 		"groups-prefix",
 		"g",
-		sdkConf.UsersGroupsPrefix,
+		sdkConf.GroupsPrefix,
 		"Mainflux groups service prefix",
 	)
 
