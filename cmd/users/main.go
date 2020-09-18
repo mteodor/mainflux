@@ -52,7 +52,6 @@ const (
 	defServerKey     = ""
 	defJaegerURL     = ""
 
-	defEmailLogLevel    = "debug"
 	defEmailDriver      = "smtp"
 	defEmailHost        = "localhost"
 	defEmailPort        = "25"
@@ -107,8 +106,6 @@ const (
 	envAuthnCACerts = "MF_AUTHN_CA_CERTS"
 	envAuthnURL     = "MF_AUTHN_GRPC_URL"
 	envAuthnTimeout = "MF_AUTHN_GRPC_TIMEOUT"
-
-	defaultAdminGroupDescription = "Mainflux default admin group"
 )
 
 type config struct {
