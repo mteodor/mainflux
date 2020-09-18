@@ -41,8 +41,8 @@ type MessagesPage struct {
 	pageRes
 }
 
-type UsersGroupsPage struct {
-	UsersGroups []Group `json:"groups"`
+type GroupsPage struct {
+	Groups []Group `json:"groups"`
 	pageRes
 }
 

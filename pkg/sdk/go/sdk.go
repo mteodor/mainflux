@@ -151,32 +151,32 @@ type SDK interface {
 	// DeleteThing removes existing thing.
 	DeleteThing(id, token string) error
 
-	// CreateUsersGroup creates new group and returns its id.
-	CreateUsersGroup(group Group, token string) (string, error)
+	// CreateGroup creates new group and returns its id.
+	CreateGroup(group Group, token string) (string, error)
 
-	// DeleteUsersGroup deletes users group.
-	DeleteUsersGroup(id, token string) error
+	// DeleteGroup deletes users group.
+	DeleteGroup(id, token string) error
 
-	// UsersGroups returns page of users groups.
-	UsersGroups(token string, offset, limit uint64, name string) (UsersGroupsPage, error)
+	// Groups returns page of users groups.
+	Groups(token string, offset, limit uint64, name string) (GroupsPage, error)
 
-	// UsersGroup returns users group object by id.
-	UsersGroup(id, token string) (Group, error)
+	// Group returns users group object by id.
+	Group(id, token string) (Group, error)
 
-	// AddGroupUser assigns user to a group
-	AddGroupUser(userID, groupID, token string) error
+	// AssignUserGroup assigns user to a group
+	AssignUserGroup(userID, groupID, token string) error
 
-	// RemoveGroupUser
-	RemoveGroupUser(userID, groupID, token string) error
+	// UnassignUserGroup
+	UnassignUserGroup(userID, groupID, token string) error
 
 	// GroupUsers lists users in group.
 	GroupUsers(groupID, token string, offset, limit uint64) (UsersPage, error)
 
 	// UserGroups lists groups for user.
-	UserGroups(userID, token string, offset, limit uint64) (UsersGroupsPage, error)
+	UserGroups(userID, token string, offset, limit uint64) (GroupsPage, error)
 
-	// UpdateUsersGroup updates existing group.
-	UpdateUsersGroup(group Group, token string) error
+	// UpdateGroup updates existing group.
+	UpdateGroup(group Group, token string) error
 
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) error
@@ -274,7 +274,7 @@ type Config struct {
 	CertsURL          string
 	ReaderPrefix      string
 	UsersPrefix       string
-	UsersGroupsPrefix string
+	GroupsPrefix string
 	ThingsPrefix      string
 	HTTPAdapterPrefix string
 	BootstrapPrefix   string
@@ -291,7 +291,7 @@ func NewSDK(conf Config) SDK {
 		certsURL:          conf.CertsURL,
 		readerPrefix:      conf.ReaderPrefix,
 		usersPrefix:       conf.UsersPrefix,
-		groupsPrefix:      conf.UsersGroupsPrefix,
+		groupsPrefix:      conf.GroupsPrefix,
 		thingsPrefix:      conf.ThingsPrefix,
 		httpAdapterPrefix: conf.HTTPAdapterPrefix,
 		bootstrapPrefix:   conf.BootstrapPrefix,

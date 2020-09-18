@@ -33,7 +33,6 @@ func (sdk mfSDK) CreateUser(u User) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(resp.StatusCode)
 	if resp.StatusCode != http.StatusCreated {
 		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
@@ -157,32 +156,32 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 
 	return nil
 }
-func (sdk mfSDK) UserGroups(userID, token string, offset, limit uint64) (UsersGroupsPage, error) {
+func (sdk mfSDK) UserGroups(userID, token string, offset, limit uint64) (GroupsPage, error) {
 	endpoint := fmt.Sprintf("%s/%s/groups?offset=%d&limit=%d&", usersEndpoint, userID, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return UsersGroupsPage{}, err
+		return GroupsPage{}, err
 	}
 
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
-		return UsersGroupsPage{}, err
+		return GroupsPage{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return UsersGroupsPage{}, err
+		return GroupsPage{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return UsersGroupsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
+		return GroupsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
-	var tp UsersGroupsPage
+	var tp GroupsPage
 	if err := json.Unmarshal(body, &tp); err != nil {
-		return UsersGroupsPage{}, err
+		return GroupsPage{}, err
 	}
 
 	return tp, nil

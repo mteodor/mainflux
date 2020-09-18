@@ -40,7 +40,7 @@ func TestSendMessage(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		UsersGroupsPrefix: "",
+		GroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -110,7 +110,7 @@ func TestSetContentType(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
-		UsersGroupsPrefix: "",
+		GroupsPrefix: "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
