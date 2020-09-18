@@ -38,7 +38,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 
-			id, err := sdk.CreateUsersGroup(group, args[1])
+			id, err := sdk.CreateGroup(group, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -60,7 +60,7 @@ var cmdGroups = []cobra.Command{
 			}
 
 			if args[0] == "all" {
-				l, err := sdk.UsersGroups(args[1], uint64(Offset), uint64(Limit), "")
+				l, err := sdk.Groups(args[1], uint64(Offset), uint64(Limit), "")
 				if err != nil {
 					logError(err)
 					return
@@ -70,7 +70,7 @@ var cmdGroups = []cobra.Command{
 			}
 
 			if args[0] == "children" {
-				l, err := sdk.UsersGroups(args[2], uint64(Offset), uint64(Limit), args[1])
+				l, err := sdk.Groups(args[2], uint64(Offset), uint64(Limit), args[1])
 				if err != nil {
 					logError(err)
 					return
@@ -78,7 +78,7 @@ var cmdGroups = []cobra.Command{
 				logJSON(l)
 				return
 			}
-			t, err := sdk.UsersGroup(args[0], args[1])
+			t, err := sdk.Group(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -88,43 +88,43 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	cobra.Command{
-		Use:   "add",
-		Short: "add <user_id> <group_id> <user_auth_token>",
-		Long:  `Add user to a group.`,
+		Use:   "assign",
+		Short: "assign <user_id> <group_id> <user_auth_token>",
+		Long:  `Assign user to a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.AddGroupUser(args[0], args[1], args[2]); err != nil {
+			if err := sdk.AssignUserGroup(args[0], args[1], args[2]); err != nil {
 				logError(err)
 			}
 		},
 	},
 	cobra.Command{
-		Use:   "remove",
-		Short: "remove <user_id> <group_id> <user_auth_token>",
-		Long:  `Remove user from a group.`,
+		Use:   "unassign",
+		Short: "unassign <user_id> <group_id> <user_auth_token>",
+		Long:  `Unassign user from a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.RemoveGroupUser(args[0], args[1], args[2]); err != nil {
+			if err := sdk.UnassignUserGroup(args[0], args[1], args[2]); err != nil {
 				logError(err)
 			}
 		},
 	},
 	cobra.Command{
 		Use:   "delete",
-		Short: "unassign <group_id> <user_auth_token>",
+		Short: "delete <group_id> <user_auth_token>",
 		Long:  `Delete users group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.DeleteUsersGroup(args[0], args[1]); err != nil {
+			if err := sdk.DeleteGroup(args[0], args[1]); err != nil {
 				logError(err)
 			}
 		},
@@ -132,7 +132,7 @@ var cmdGroups = []cobra.Command{
 	cobra.Command{
 		Use:   "users",
 		Short: "users <group_id> <user_auth_token>",
-		Long:  `Lists users in users group.`,
+		Long:  `Lists group users.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Short)
@@ -154,7 +154,7 @@ func NewGroupsCmd() *cobra.Command {
 		Short: "Groups management",
 		Long:  `Groups management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: Groups [create | get | delete | add | remove ]")
+			logUsage("Usage: Groups [create | get | delete | assign | unassign ]")
 		},
 	}
 
