@@ -31,10 +31,8 @@ type pageRes struct {
 }
 
 type userCreatedRes struct {
-	ID       string
-	Email    string
-	Metadata map[string]interface{}
-	created  bool
+	ID      string
+	created bool
 }
 
 func (res userCreatedRes) Code() int {
@@ -110,13 +108,6 @@ type viewUserRes struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
-type viewGroupRes struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-}
-
 func (res viewUserRes) Code() int {
 	return http.StatusOK
 }
@@ -127,6 +118,31 @@ func (res viewUserRes) Headers() map[string]string {
 
 func (res viewUserRes) Empty() bool {
 	return false
+}
+
+type userPageRes struct {
+	pageRes
+	Users []viewUserRes
+}
+
+func (res userPageRes) Code() int {
+	return http.StatusOK
+}
+
+func (res userPageRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res userPageRes) Empty() bool {
+	return false
+}
+
+type viewGroupRes struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	ParentID    string                 `json:"parent_id"`
+	Description string                 `json:"description"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (res viewGroupRes) Code() int {
@@ -165,6 +181,7 @@ type groupRes struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
+	ParentID    string                 `json:"parent_id"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	created     bool
 }
@@ -183,7 +200,6 @@ func (res groupRes) Headers() map[string]string {
 			"Location": fmt.Sprintf("/users/groups/%s", res.ID),
 		}
 	}
-
 	return map[string]string{}
 }
 

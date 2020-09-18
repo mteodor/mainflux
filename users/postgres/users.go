@@ -41,15 +41,15 @@ func NewUserRepo(db Database) users.UserRepository {
 	}
 }
 
-func (ur userRepository) Save(ctx context.Context, user users.User) (users.User, error) {
+func (ur userRepository) Save(ctx context.Context, user users.User) (string, error) {
 	q := `INSERT INTO users (email, password, id, metadata) VALUES (:email, :password, :id, :metadata) RETURNING id`
 	if user.ID == "" || user.Email == "" {
-		return users.User{}, users.ErrMalformedEntity
+		return "", users.ErrMalformedEntity
 	}
 
 	dbu, err := toDBUser(user)
 	if err != nil {
-		return users.User{}, errors.Wrap(errSaveUserDB, err)
+		return "", errors.Wrap(errSaveUserDB, err)
 	}
 
 	row, err := ur.db.NamedQueryContext(ctx, q, dbu)
@@ -58,22 +58,21 @@ func (ur userRepository) Save(ctx context.Context, user users.User) (users.User,
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return users.User{}, errors.Wrap(users.ErrMalformedEntity, err)
+				return "", errors.Wrap(users.ErrMalformedEntity, err)
 			case errDuplicate:
-				return users.User{}, errors.Wrap(users.ErrConflict, err)
+				return "", errors.Wrap(users.ErrConflict, err)
 			}
 		}
-		return users.User{}, errors.Wrap(errSaveUserDB, err)
+		return "", errors.Wrap(errSaveUserDB, err)
 	}
 
 	defer row.Close()
 	row.Next()
 	var id string
 	if err := row.Scan(&id); err != nil {
-		return users.User{}, err
+		return "", err
 	}
-	user.ID = id
-	return user, nil
+	return id, nil
 }
 
 func (ur userRepository) Update(ctx context.Context, user users.User) error {

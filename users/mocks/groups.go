@@ -42,17 +42,22 @@ func (grm *groupRepositoryMock) Save(ctx context.Context, g users.Group) (users.
 	if _, ok := grm.groupsByName[g.Name]; ok {
 		return users.Group{}, users.ErrGroupConflict
 	}
-	if g.Parent != nil && g.Parent.ID != "" {
-		if _, ok := grm.groups[g.Parent.ID]; !ok {
+	if g.ParentID != "" {
+		if _, ok := grm.groups[g.ParentID]; !ok {
 			return users.Group{}, users.ErrCreateGroup
 		}
-		if _, ok := grm.childrenByGroups[g.Parent.ID]; !ok {
-			grm.childrenByGroups[g.Parent.ID] = make(map[string]users.Group)
+		if _, ok := grm.childrenByGroups[g.ParentID]; !ok {
+			grm.childrenByGroups[g.ParentID] = make(map[string]users.Group)
 		}
-		grm.childrenByGroups[g.Parent.ID][g.ID] = g
+		grm.childrenByGroups[g.ParentID][g.ID] = g
 	}
 	grm.groups[g.ID] = g
 	grm.groupsByName[g.Name] = g
+
+	if _, ok := grm.groupsByUser[g.OwnerID]; !ok {
+		grm.groupsByUser[g.OwnerID] = make(map[string]users.Group)
+	}
+	grm.groupsByUser[g.OwnerID][g.ID] = g
 	return g, nil
 }
 
@@ -66,7 +71,7 @@ func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (grm *groupRepositoryMock) RemoveUser(ctx context.Context, userID, groupID string) error {
+func (grm *groupRepositoryMock) UnassignUser(ctx context.Context, userID, groupID string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[groupID]; !ok {
@@ -77,6 +82,23 @@ func (grm *groupRepositoryMock) RemoveUser(ctx context.Context, userID, groupID 
 }
 
 func (grm *groupRepositoryMock) Update(ctx context.Context, g users.Group) error {
+	grm.mu.Lock()
+	defer grm.mu.Unlock()
+	var group users.Group
+	group, ok := grm.groups[g.ID]
+	if !ok {
+		return users.ErrNotFound
+	}
+
+	group.Description = g.Description
+	group.Metadata = g.Metadata
+	group.ParentID = g.ParentID
+	group.Name = g.Name
+	group.OwnerID = g.OwnerID
+	grm.groups[g.ID] = group
+	grm.groupsByName[g.ID] = group
+	grm.groupsByUser[g.OwnerID][g.ID] = group
+
 	return nil
 }
 
@@ -89,14 +111,6 @@ func (grm *groupRepositoryMock) Remove(ctx context.Context, g users.Group) error
 
 	if _, ok := grm.groups[g.ID]; !ok {
 		return users.ErrDeleteGroupMissing
-	}
-	// Does group contain users
-	if _, ok := grm.users[g.ID]; ok {
-		return users.ErrDeleteGroupNotEmpty
-	}
-	// Does group contain other groups
-	if _, ok := grm.childrenByGroups[g.ID]; ok {
-		return users.ErrDeleteGroupNotEmpty
 	}
 
 	delete(grm.users, g.ID)

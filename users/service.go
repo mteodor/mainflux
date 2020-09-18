@@ -59,14 +59,8 @@ var (
 	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
 
-	// ErrDeleteGroupNotEmpty indicates that group contains groups or users.
-	ErrDeleteGroupNotEmpty = errors.New("group is not empty")
-
 	// ErrDeleteGroupMissing indicates in delete operation that group doesnt exist.
 	ErrDeleteGroupMissing = errors.New("group is not existing, already deleted")
-
-	// ErrUserAlreadyAssigned indicates that user is already assigned to a group.
-	ErrUserAlreadyAssigned = errors.New("user is already assigned to a group")
 
 	// ErrAssignUserToGroup indicates an error in assigning user to a group.
 	ErrAssignUserToGroup = errors.New("failed assigning user to a group")
@@ -77,7 +71,7 @@ var (
 type Service interface {
 	// Register creates new user account. In case of the failed registration, a
 	// non-nil error value is returned.
-	Register(ctx context.Context, user User) (User, error)
+	Register(ctx context.Context, user User) (string, error)
 
 	// Login authenticates the user given its credentials. Successful
 	// authentication generates new access token. Failed invocations are
@@ -129,8 +123,8 @@ type Service interface {
 	// AssignUserToGroup adds user with userID into the group identified by groupID.
 	AssignUserToGroup(ctx context.Context, token, userID, groupID string) error
 
-	// RemoveUserFromGroup removes user with userID from group identified by groupID.
-	RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error
+	// UnassignUserFromGroup removes user with userID from group identified by groupID.
+	UnassignUserFromGroup(ctx context.Context, token, userID, groupID string) error
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -172,26 +166,26 @@ func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainf
 	}
 }
 
-func (svc usersService) Register(ctx context.Context, user User) (User, error) {
+func (svc usersService) Register(ctx context.Context, user User) (string, error) {
 	if err := user.Validate(); err != nil {
-		return User{}, err
+		return "", err
 	}
 	hash, err := svc.hasher.Hash(user.Password)
 	if err != nil {
-		return User{}, errors.Wrap(ErrMalformedEntity, err)
+		return "", errors.Wrap(ErrMalformedEntity, err)
 	}
 	user.Password = hash
 	uid, err := uuidProvider.New().ID()
 	if err != nil {
-		return User{}, errors.Wrap(ErrCreateUser, err)
+		return "", errors.Wrap(ErrCreateUser, err)
 	}
 	user.ID = uid
 
-	u, err := svc.users.Save(ctx, user)
+	uid, err = svc.users.Save(ctx, user)
 	if err != nil {
-		return User{}, err
+		return "", err
 	}
-	return u, nil
+	return uid, nil
 }
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
@@ -319,7 +313,7 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 }
 
 func (svc usersService) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
-	if group.ID == "" || group.Name == "" || !groupRegexp.MatchString(group.Name) {
+	if group.Name == "" || !groupRegexp.MatchString(group.Name) {
 		return Group{}, ErrMalformedEntity
 	}
 	userID, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
@@ -335,7 +329,7 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 		return Group{}, errors.Wrap(ErrCreateUser, err)
 	}
 	group.ID = uid
-	group.Owner = user
+	group.OwnerID = user.ID
 	return svc.groups.Save(ctx, group)
 }
 
@@ -363,12 +357,12 @@ func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error
 	return svc.groups.Delete(ctx, id)
 }
 
-func (svc usersService) RemoveUserFromGroup(ctx context.Context, token, userID, groupID string) error {
+func (svc usersService) UnassignUserFromGroup(ctx context.Context, token, userID, groupID string) error {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.RemoveUser(ctx, userID, groupID)
+	return svc.groups.UnassignUser(ctx, userID, groupID)
 }
 
 func (svc usersService) UpdateGroup(ctx context.Context, token string, group Group) error {

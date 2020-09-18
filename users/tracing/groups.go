@@ -94,12 +94,12 @@ func (grm groupRepositoryMiddleware) RetrieveAllForUser(ctx context.Context, use
 	return grm.repo.RetrieveAllForUser(ctx, userID, offset, limit, gm)
 }
 
-func (grm groupRepositoryMiddleware) RemoveUser(ctx context.Context, userID, groupID string) error {
+func (grm groupRepositoryMiddleware) UnassignUser(ctx context.Context, userID, groupID string) error {
 	span := createSpan(ctx, grm.tracer, removeUser)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RemoveUser(ctx, userID, groupID)
+	return grm.repo.UnassignUser(ctx, userID, groupID)
 }
 
 func (grm groupRepositoryMiddleware) AssignUser(ctx context.Context, userID, groupID string) error {

@@ -61,7 +61,7 @@ func (u User) Validate() error {
 type UserRepository interface {
 	// Save persists the user account. A non-nil error is returned to indicate
 	// operation failure.
-	Save(ctx context.Context, u User) (User, error)
+	Save(ctx context.Context, u User) (string, error)
 
 	// Update updates the user metadata.
 	UpdateUser(ctx context.Context, u User) error

@@ -11,8 +11,8 @@ import (
 type Group struct {
 	ID          string
 	Name        string
-	Owner       User
-	Parent      *Group
+	OwnerID     string
+	ParentID    string
 	Description string
 	Metadata    map[string]interface{}
 }
@@ -43,6 +43,6 @@ type GroupRepository interface {
 	// AssignUser adds user to group.
 	AssignUser(ctx context.Context, userID, groupID string) error
 
-	// RemoveUser removes user from group
-	RemoveUser(ctx context.Context, userID, groupID string) error
+	// UnassignUser removes user from group
+	UnassignUser(ctx context.Context, userID, groupID string) error
 }

@@ -42,9 +42,9 @@ func TestGroupSave(t *testing.T) {
 	uid, err = uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group := users.Group{
-		ID:    uid,
-		Name:  "TestGroupSave",
-		Owner: user,
+		ID:      uid,
+		Name:    "TestGroupSave",
+		OwnerID: user.ID,
 	}
 
 	cases := []struct {
@@ -97,17 +97,17 @@ func TestGroupRetrieveByID(t *testing.T) {
 	gid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
-		ID:    gid,
-		Name:  groupName + "TestGroupRetrieveByID1",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "TestGroupRetrieveByID1",
+		OwnerID: user.ID,
 	}
 
 	gid, err = uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
-		ID:    gid,
-		Name:  groupName + "TestGroupRetrieveByID2",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "TestGroupRetrieveByID2",
+		OwnerID: user.ID,
 	}
 
 	g1, err := repo.Save(context.Background(), group1)
@@ -162,9 +162,9 @@ func TestGroupDelete(t *testing.T) {
 	gid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
-		ID:    gid,
-		Name:  groupName + "TestGroupDelete1",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "TestGroupDelete1",
+		OwnerID: user.ID,
 	}
 
 	g1, err := repo.Save(context.Background(), group1)
@@ -176,9 +176,9 @@ func TestGroupDelete(t *testing.T) {
 	gid, err = uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
-		ID:    gid,
-		Name:  groupName + "TestGroupDelete2",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "TestGroupDelete2",
+		OwnerID: user.ID,
 	}
 
 	g2, err := repo.Save(context.Background(), group2)
@@ -198,11 +198,6 @@ func TestGroupDelete(t *testing.T) {
 			desc:  "delete group for non-existing id",
 			group: g2,
 			err:   users.ErrDeleteGroupMissing,
-		},
-		{
-			desc:  "delete group not empty",
-			group: g1,
-			err:   users.ErrDeleteGroupNotEmpty,
 		},
 	}
 
@@ -233,9 +228,9 @@ func TestAssignUser(t *testing.T) {
 	gid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
-		ID:    gid,
-		Name:  groupName + "TestAssignUser1",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "TestAssignUser1",
+		OwnerID: user.ID,
 	}
 
 	g1, err := repo.Save(context.Background(), group1)
@@ -244,9 +239,9 @@ func TestAssignUser(t *testing.T) {
 	gid, err = uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group2 := users.Group{
-		ID:    gid,
-		Name:  groupName + "TestAssignUser2",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "TestAssignUser2",
+		OwnerID: user.ID,
 	}
 
 	g2, err := repo.Save(context.Background(), group2)
@@ -274,11 +269,6 @@ func TestAssignUser(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc:  "assign already assigned user to a group",
-			group: g2,
-			err:   users.ErrUserAlreadyAssigned,
-		},
-		{
 			desc:  "assign user to non existing group",
 			group: g3,
 			err:   users.ErrNotFound,
@@ -292,7 +282,7 @@ func TestAssignUser(t *testing.T) {
 
 }
 
-func TestRemoveUser(t *testing.T) {
+func TestUnassignUser(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
@@ -301,7 +291,7 @@ func TestRemoveUser(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := users.User{
 		ID:       uid,
-		Email:    "RemoveUser1@mainflux.com",
+		Email:    "UnassignUser1@mainflux.com",
 		Password: password,
 	}
 
@@ -315,7 +305,7 @@ func TestRemoveUser(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user = users.User{
 		ID:       uid,
-		Email:    "RemoveUser2@mainflux.com",
+		Email:    "UnassignUser2@mainflux.com",
 		Password: password,
 	}
 
@@ -328,9 +318,9 @@ func TestRemoveUser(t *testing.T) {
 	gid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("group id unexpected error: %s", err))
 	group1 := users.Group{
-		ID:    gid,
-		Name:  groupName + "RemoveUser1",
-		Owner: user,
+		ID:      gid,
+		Name:    groupName + "UnassignUser1",
+		OwnerID: user.ID,
 	}
 
 	g1, err := repo.Save(context.Background(), group1)
@@ -351,7 +341,7 @@ func TestRemoveUser(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := repo.RemoveUser(context.Background(), tc.user.ID, tc.group.ID)
+		err := repo.UnassignUser(context.Background(), tc.user.ID, tc.group.ID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 

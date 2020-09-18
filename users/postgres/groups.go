@@ -41,7 +41,7 @@ func NewGroupRepo(db Database) users.GroupRepository {
 func (gr groupRepository) Save(ctx context.Context, group users.Group) (users.Group, error) {
 	var id string
 	q := `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata) VALUES (:name, :description, :id, :owner_id, :parent_id, :metadata) RETURNING id`
-	if group.Parent == nil || group.Parent.ID == "" {
+	if group.ParentID == "" {
 		q = `INSERT INTO groups (name, description, id, owner_id, metadata) VALUES (:name, :description, :id, :owner_id, :metadata) RETURNING id`
 	}
 
@@ -287,7 +287,7 @@ func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string
 	return nil
 }
 
-func (gr groupRepository) RemoveUser(ctx context.Context, userID, groupID string) error {
+func (gr groupRepository) UnassignUser(ctx context.Context, userID, groupID string) error {
 	q := `DELETE FROM group_relations WHERE user_id = :user_id AND group_id = :group_id`
 	dbr, err := toDBGroupRelation(userID, groupID)
 	if err != nil {
@@ -332,14 +332,14 @@ func toUUID(id string) (uuid.NullUUID, error) {
 
 func toDBGroup(g users.Group) (dbGroup, error) {
 	parentID := ""
-	if g.Parent != nil && g.Parent.ID != "" {
-		parentID = g.Parent.ID
+	if g.ParentID != "" {
+		parentID = g.ParentID
 	}
 	parent, err := toUUID(parentID)
 	if err != nil {
 		return dbGroup{}, err
 	}
-	owner, err := toUUID(g.Owner.ID)
+	owner, err := toUUID(g.OwnerID)
 	if err != nil {
 		return dbGroup{}, err
 	}
