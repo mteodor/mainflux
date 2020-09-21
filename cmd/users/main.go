@@ -84,11 +84,10 @@ const (
 	envHTTPPort      = "MF_USERS_HTTP_PORT"
 	envServerCert    = "MF_USERS_SERVER_CERT"
 	envServerKey     = "MF_USERS_SERVER_KEY"
+	envJaegerURL     = "MF_JAEGER_URL"
+
 	envAdminEmail    = "MF_USERS_ADMIN_EMAIL"
 	envAdminPassword = "MF_USERS_ADMIN_PASSWORD"
-	envAdminGroup    = "MF_USERS_ADMIN_GROUP"
-
-	envJaegerURL = "MF_JAEGER_URL"
 
 	envEmailDriver      = "MF_EMAIL_DRIVER"
 	envEmailHost        = "MF_EMAIL_HOST"
