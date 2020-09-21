@@ -20,7 +20,7 @@ func main() {
 		CertsURL:          "http://localhost:8204",
 		ReaderPrefix:      "",
 		UsersPrefix:       "",
-		GroupsPrefix: "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "http",
 		BootstrapPrefix:   "things",
