@@ -23,8 +23,7 @@ var cmdGroups = []cobra.Command{
 			"Metadata":<metadata>,
 		}
 		Name - is unique group name
-		ParentID - ID of a group that is a parent
-		to the creating group
+		ParentID - ID of a group that is a parent to the creating group
 		Metadata - JSON structured string`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
@@ -159,7 +158,7 @@ func NewGroupsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "groups",
 		Short: "Groups management",
-		Long:  `Groups management: create accounts and tokens"`,
+		Long:  `Groups management: create groups and assigns user to groups"`,
 		Run: func(cmd *cobra.Command, args []string) {
 			logUsage("Usage: Groups [create | get | delete | assign | unassign]")
 		},

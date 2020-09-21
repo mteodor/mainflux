@@ -212,6 +212,10 @@ mainflux-cli groups create '{"name":"<group_name>","parent_id":"<parent_group_id
 ```bash
 mainflux-cli groups delete <group_id> <user_auth_token>
 ```
+### Get group with id
+```bash
+mainflux-cli groups get <group_id> <user_auth_token>
+```
 ### List all groups
 ```bash
 mainflux-cli groups get all <user_auth_token>
@@ -220,19 +224,19 @@ mainflux-cli groups get all <user_auth_token>
 ```bash
 mainflux-cli groups get children <parent_group_id> <user_auth_token>
 ```
-### Add user to a group
+### Assign user to a group
 ```bash
-mainflux-cli groups add <user_id> <group_id> <user_auth_token>
+mainflux-cli groups assign <user_id> <group_id> <user_auth_token>
 ```
-### Remove user from group
+### Unassign user from group
 ```bash
-mainflux-cli groups remove <user_id> <group_id> <user_auth_token>
+mainflux-cli groups unassign <user_id> <group_id> <user_auth_token>
 ```
 ### List users for a group
 ```bash
 mainflux-cli groups users <group_id> <user_auth_token>
 ```
-### List groups user belongs to
+### List groups that user belongs to
 ```bash
 mainflux-cli users groups <user_id> <user_auth_token>
 ```
