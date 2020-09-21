@@ -103,7 +103,7 @@ var cmdUsers = []cobra.Command{
 	cobra.Command{
 		Use:   "groups",
 		Short: "groups <thing_id> <user_auth_token>",
-		Long:  `Update user metadata`,
+		Long:  `List user groups`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Short)
@@ -146,7 +146,7 @@ func NewUsersCmd() *cobra.Command {
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: users [create | get | update | token | password]")
+			logUsage("Usage: users [create | get | update | token | password | groups]")
 		},
 	}
 

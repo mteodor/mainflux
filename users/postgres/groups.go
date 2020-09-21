@@ -17,7 +17,7 @@ import (
 
 var (
 	errDeleteGroupDB = errors.New("delete group failed")
-	errSelectDb      = errors.New("select thing from db error")
+	errSelectDb      = errors.New("select group from db error")
 
 	errFK         = "foreign_key_violation"
 	errInvalid    = "invalid_text_representation"
@@ -111,7 +111,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 }
 
 func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (users.Group, error) {
-	q := `SELECT id, name, description, metadata FROM groups WHERE id = $1`
+	q := `SELECT id, name, owner_id, parent_id, description, metadata FROM groups WHERE id = $1`
 	dbu := dbGroup{
 		ID: id,
 	}
@@ -143,7 +143,7 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (user
 }
 
 func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	_, mq, err := getMetadataQuery(gm)
+	_, mq, err := getGroupsMetadataQuery(gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -152,9 +152,9 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 						FROM groups
 						WHERE id = :id 
 						UNION
-							SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata
-							FROM groups g
-							INNER JOIN subordinates s ON s.id = g.parent_id %s
+							SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
+							FROM groups 
+							INNER JOIN subordinates s ON s.id = groups.parent_id %s
 					) SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset`, mq)
 
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
@@ -182,8 +182,15 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 		items = append(items, gr)
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups WHERE owner_id = :owner_id
-	AND parent_id in (select id from groups where id = :id)  %s;`, mq)
+	cq := fmt.Sprintf(`WITH RECURSIVE subordinates AS (
+						SELECT id, owner_id, parent_id, name, description, metadata
+						FROM groups
+						WHERE id = :id 
+						UNION
+						SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
+						FROM groups
+						INNER JOIN subordinates s ON s.id = groups.parent_id %s
+					) SELECT COUNT(*) FROM subordinates`, mq)
 
 	total, err := total(ctx, gr.db, cq, dbPage)
 	if err != nil {
@@ -203,7 +210,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 }
 
 func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	m, mq, err := getMetadataQuery(gm)
+	m, mq, err := getGroupsMetadataQuery(gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -312,6 +319,7 @@ type dbGroupPage struct {
 	ID       uuid.NullUUID `db:"id"`
 	OwnerID  uuid.NullUUID `db:"owner_id"`
 	ParentID uuid.NullUUID `db:"parent_id"`
+	Metadata dbMetadata    `db:"metadata"`
 	Limit    uint64
 	Offset   uint64
 	Size     uint64
@@ -367,10 +375,11 @@ func toDBGroupPage(ownerID, groupID string, offset, limit uint64, metadata users
 		return dbGroupPage{}, err
 	}
 	return dbGroupPage{
-		ID:      group,
-		OwnerID: owner,
-		Offset:  offset,
-		Limit:   limit,
+		ID:       group,
+		Metadata: dbMetadata(metadata),
+		OwnerID:  owner,
+		Offset:   offset,
+		Limit:    limit,
 	}, nil
 }
 
@@ -378,6 +387,8 @@ func toGroup(dbu dbGroup) users.Group {
 	return users.Group{
 		ID:          dbu.ID,
 		Name:        dbu.Name,
+		ParentID:    dbu.ParentID.UUID.String(),
+		OwnerID:     dbu.OwnerID.UUID.String(),
 		Description: dbu.Description,
 		Metadata:    dbu.Metadata,
 	}
@@ -403,11 +414,11 @@ func toDBGroupRelation(userID, groupID string) (dbGroupRelation, error) {
 	}, nil
 }
 
-func getMetadataQuery(m users.Metadata) ([]byte, string, error) {
+func getGroupsMetadataQuery(m users.Metadata) ([]byte, string, error) {
 	mq := ""
 	mb := []byte("{}")
 	if len(m) > 0 {
-		mq = ` AND users.metadata @> :metadata`
+		mq = ` AND groups.metadata @> :metadata`
 
 		b, err := json.Marshal(m)
 		if err != nil {

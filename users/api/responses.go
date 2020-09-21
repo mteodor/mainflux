@@ -17,8 +17,11 @@ var (
 	_ mainflux.Response = (*passwChangeRes)(nil)
 	_ mainflux.Response = (*updateGroupRes)(nil)
 	_ mainflux.Response = (*viewGroupRes)(nil)
-	_ mainflux.Response = (*groupRes)(nil)
-	_ mainflux.Response = (*userCreatedRes)(nil)
+	_ mainflux.Response = (*createGroupRes)(nil)
+	_ mainflux.Response = (*createUserRes)(nil)
+	_ mainflux.Response = (*groupDeleteRes)(nil)
+	_ mainflux.Response = (*assignUserToGroupRes)(nil)
+	_ mainflux.Response = (*removeUserFromGroupRes)(nil)
 )
 
 // MailSent message response when link is sent
@@ -30,12 +33,12 @@ type pageRes struct {
 	Limit  uint64 `json:"limit"`
 }
 
-type userCreatedRes struct {
+type createUserRes struct {
 	ID      string
 	created bool
 }
 
-func (res userCreatedRes) Code() int {
+func (res createUserRes) Code() int {
 	if res.created {
 		return http.StatusCreated
 	}
@@ -43,7 +46,7 @@ func (res userCreatedRes) Code() int {
 	return http.StatusOK
 }
 
-func (res userCreatedRes) Headers() map[string]string {
+func (res createUserRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
 			"Location": fmt.Sprintf("/users/%s", res.ID),
@@ -53,7 +56,7 @@ func (res userCreatedRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res userCreatedRes) Empty() bool {
+func (res createUserRes) Empty() bool {
 	return true
 }
 
@@ -84,20 +87,6 @@ func (res updateUserRes) Headers() map[string]string {
 }
 
 func (res updateUserRes) Empty() bool {
-	return true
-}
-
-type updateGroupRes struct{}
-
-func (res updateGroupRes) Code() int {
-	return http.StatusOK
-}
-
-func (res updateGroupRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res updateGroupRes) Empty() bool {
 	return true
 }
 
@@ -137,10 +126,55 @@ func (res userPageRes) Empty() bool {
 	return false
 }
 
+type createGroupRes struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	ParentID    string                 `json:"parent_id"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	created     bool
+}
+
+func (res createGroupRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
+}
+
+func (res createGroupRes) Headers() map[string]string {
+	if res.created {
+		return map[string]string{
+			"Location": fmt.Sprintf("/users/groups/%s", res.ID),
+		}
+	}
+	return map[string]string{}
+}
+
+func (res createGroupRes) Empty() bool {
+	return true
+}
+
+type updateGroupRes struct{}
+
+func (res updateGroupRes) Code() int {
+	return http.StatusOK
+}
+
+func (res updateGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res updateGroupRes) Empty() bool {
+	return true
+}
+
 type viewGroupRes struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
 	ParentID    string                 `json:"parent_id"`
+	OwnerID     string                 `json:"owner_id"`
 	Description string                 `json:"description"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -177,36 +211,6 @@ func (res passwChangeRes) Empty() bool {
 	return false
 }
 
-type groupRes struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name,omitempty"`
-	Description string                 `json:"description,omitempty"`
-	ParentID    string                 `json:"parent_id"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	created     bool
-}
-
-func (res groupRes) Code() int {
-	if res.created {
-		return http.StatusCreated
-	}
-
-	return http.StatusOK
-}
-
-func (res groupRes) Headers() map[string]string {
-	if res.created {
-		return map[string]string{
-			"Location": fmt.Sprintf("/users/groups/%s", res.ID),
-		}
-	}
-	return map[string]string{}
-}
-
-func (res groupRes) Empty() bool {
-	return true
-}
-
 type groupPageRes struct {
 	pageRes
 	Groups []viewGroupRes `json:"groups"`
@@ -222,4 +226,46 @@ func (res groupPageRes) Headers() map[string]string {
 
 func (res groupPageRes) Empty() bool {
 	return false
+}
+
+type groupDeleteRes struct{}
+
+func (res groupDeleteRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res groupDeleteRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res groupDeleteRes) Empty() bool {
+	return true
+}
+
+type assignUserToGroupRes struct{}
+
+func (res assignUserToGroupRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res assignUserToGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res assignUserToGroupRes) Empty() bool {
+	return true
+}
+
+type removeUserFromGroupRes struct{}
+
+func (res removeUserFromGroupRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res removeUserFromGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res removeUserFromGroupRes) Empty() bool {
+	return true
 }

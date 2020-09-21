@@ -37,7 +37,7 @@ func (sdk mfSDK) CreateUser(u User) (string, error) {
 		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
-	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", thingsEndpoint))
+	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", usersEndpoint))
 	return id, nil
 }
 

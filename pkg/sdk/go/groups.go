@@ -78,7 +78,7 @@ func (sdk mfSDK) AssignUserGroup(userID, groupID, token string) error {
 		return err
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		return errors.Wrap(ErrFailedUserAdd, errors.New(resp.Status))
 	}
 

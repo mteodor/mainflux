@@ -352,3 +352,47 @@ func TestUpdateGroup(t *testing.T) {
 		assert.Equal(t, tc.group.OwnerID, g.OwnerID, tc.desc, tc.err)
 	}
 }
+
+func TestRemoveGroup(t *testing.T) {
+	svc := newService()
+
+	_, err := svc.Register(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
+
+	token, err := svc.Login(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
+
+	group := users.Group{
+		Name: groupName,
+	}
+
+	saved, err := svc.CreateGroup(context.Background(), token, group)
+	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
+
+	group.Description = "test description"
+	group.Name = "NewName"
+	group.ID = saved.ID
+	group.OwnerID = saved.OwnerID
+
+	cases := []struct {
+		desc  string
+		group users.Group
+		err   error
+	}{
+		{
+			desc:  "remove existing group",
+			group: group,
+			err:   nil,
+		},
+		{
+			desc:  "remove non existing group",
+			group: group,
+			err:   users.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.RemoveGroup(context.Background(), token, tc.group.ID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}

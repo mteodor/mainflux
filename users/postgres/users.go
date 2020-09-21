@@ -153,7 +153,7 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 }
 
 func (ur userRepository) RetrieveAllForGroup(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
-	m, mq, err := getMetadataQuery(gm)
+	m, mq, err := getUsersMetadataQuery(gm)
 	if err != nil {
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -283,4 +283,19 @@ func toUser(dbu dbUser) (users.User, error) {
 		Password: dbu.Password,
 		Metadata: metadata,
 	}, nil
+}
+
+func getUsersMetadataQuery(m users.Metadata) ([]byte, string, error) {
+	mq := ""
+	mb := []byte("{}")
+	if len(m) > 0 {
+		mq = ` AND users.metadata @> :metadata`
+
+		b, err := json.Marshal(m)
+		if err != nil {
+			return nil, "", err
+		}
+		mb = b
+	}
+	return mb, mq, nil
 }

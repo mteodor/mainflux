@@ -31,8 +31,7 @@ type groupRepositoryMiddleware struct {
 	repo   users.GroupRepository
 }
 
-// GroupRepositoryMiddleware tracks request and their latency, and adds spans
-// to context.
+// GroupRepositoryMiddleware tracks request and their latency, and adds spans to context.
 func GroupRepositoryMiddleware(repo users.GroupRepository, tracer opentracing.Tracer) users.GroupRepository {
 	return groupRepositoryMiddleware{
 		tracer: tracer,

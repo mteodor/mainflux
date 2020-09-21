@@ -98,7 +98,9 @@ var cmdGroups = []cobra.Command{
 			}
 			if err := sdk.AssignUserGroup(args[0], args[1], args[2]); err != nil {
 				logError(err)
+				return
 			}
+			logOK()
 		},
 	},
 	cobra.Command{
@@ -112,7 +114,9 @@ var cmdGroups = []cobra.Command{
 			}
 			if err := sdk.UnassignUserGroup(args[0], args[1], args[2]); err != nil {
 				logError(err)
+				return
 			}
+			logOK()
 		},
 	},
 	cobra.Command{
@@ -126,7 +130,9 @@ var cmdGroups = []cobra.Command{
 			}
 			if err := sdk.DeleteGroup(args[0], args[1]); err != nil {
 				logError(err)
+				return
 			}
+			logOK()
 		},
 	},
 	cobra.Command{
@@ -141,6 +147,7 @@ var cmdGroups = []cobra.Command{
 			up, err := sdk.GroupUsers(args[0], args[1], uint64(Offset), uint64(Limit))
 			if err != nil {
 				logError(err)
+				return
 			}
 			logJSON(up)
 		},
@@ -154,7 +161,7 @@ func NewGroupsCmd() *cobra.Command {
 		Short: "Groups management",
 		Long:  `Groups management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: Groups [create | get | delete | assign | unassign ]")
+			logUsage("Usage: Groups [create | get | delete | assign | unassign]")
 		},
 	}
 
