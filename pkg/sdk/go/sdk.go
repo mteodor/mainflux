@@ -274,7 +274,7 @@ type Config struct {
 	CertsURL          string
 	ReaderPrefix      string
 	UsersPrefix       string
-	GroupsPrefix string
+	GroupsPrefix      string
 	ThingsPrefix      string
 	HTTPAdapterPrefix string
 	BootstrapPrefix   string
