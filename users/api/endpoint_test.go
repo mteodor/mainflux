@@ -188,7 +188,7 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestViewUser(t *testing.T) {
+func TestUser(t *testing.T) {
 	svc := newService()
 	ts := newServer(svc)
 	defer ts.Close()

@@ -87,7 +87,7 @@ func viewUserEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		u, err := svc.ViewUser(ctx, req.token)
+		u, err := svc.User(ctx, req.token)
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +221,7 @@ func listUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return users.UserPage{}, err
 		}
 
-		up, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		up, err := svc.Members(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return users.UserPage{}, err
 		}
@@ -236,7 +236,7 @@ func listUserGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 			return users.UserPage{}, err
 		}
 
-		gp, err := svc.ListMembership(ctx, req.token, req.userID, req.offset, req.limit, req.metadata)
+		gp, err := svc.Memberships(ctx, req.token, req.userID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return groupPageRes{}, err
 		}
@@ -278,7 +278,7 @@ func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return viewGroupRes{}, err
 		}
 
-		group, err := svc.ViewGroup(ctx, req.token, req.groupID)
+		group, err := svc.Group(ctx, req.token, req.groupID)
 		if err != nil {
 			return viewGroupRes{}, err
 		}
@@ -300,7 +300,7 @@ func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 			return groupPageRes{}, err
 		}
 
-		gp, err := svc.ListGroups(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		gp, err := svc.Groups(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return groupPageRes{}, err
 		}

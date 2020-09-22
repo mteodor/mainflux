@@ -51,7 +51,7 @@ func (lm *loggingMiddleware) Login(ctx context.Context, user users.User) (token 
 	return lm.svc.Login(ctx, user)
 }
 
-func (lm *loggingMiddleware) ViewUser(ctx context.Context, token string) (u users.User, err error) {
+func (lm *loggingMiddleware) User(ctx context.Context, token string) (u users.User, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method view_user for user %s took %s to complete", u.Email, time.Since(begin))
 		if err != nil {
@@ -61,7 +61,7 @@ func (lm *loggingMiddleware) ViewUser(ctx context.Context, token string) (u user
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ViewUser(ctx, token)
+	return lm.svc.User(ctx, token)
 }
 
 func (lm *loggingMiddleware) UpdateUser(ctx context.Context, token string, u users.User) (err error) {
@@ -142,7 +142,7 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return lm.svc.CreateGroup(ctx, token, group)
 }
 
-func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
+func (lm *loggingMiddleware) Groups(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_groups for parent %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -152,10 +152,10 @@ func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, id string, o
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListGroups(ctx, token, id, offset, limit, meta)
+	return lm.svc.Groups(ctx, token, id, offset, limit, meta)
 }
 
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.UserPage, err error) {
+func (lm *loggingMiddleware) Members(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.UserPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_groups for parent %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -165,7 +165,7 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, id string, 
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListMembers(ctx, token, id, offset, limit, meta)
+	return lm.svc.Members(ctx, token, id, offset, limit, meta)
 }
 
 func (lm *loggingMiddleware) RemoveGroup(ctx context.Context, token, id string) (err error) {
@@ -194,7 +194,7 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, grou
 	return lm.svc.UpdateGroup(ctx, token, group)
 }
 
-func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (u users.Group, err error) {
+func (lm *loggingMiddleware) Group(ctx context.Context, token, id string) (u users.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method view_group with id %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -204,7 +204,7 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (u
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ViewGroup(ctx, token, id)
+	return lm.svc.Group(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) Assign(ctx context.Context, token, userID, groupID string) (err error) {
@@ -233,7 +233,7 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, token, userID, groupI
 	return lm.svc.Unassign(ctx, token, userID, groupID)
 }
 
-func (lm *loggingMiddleware) ListMembership(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
+func (lm *loggingMiddleware) Memberships(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_user_groups for user %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -243,5 +243,5 @@ func (lm *loggingMiddleware) ListMembership(ctx context.Context, token, id strin
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListMembership(ctx, token, id, offset, limit, meta)
+	return lm.svc.Memberships(ctx, token, id, offset, limit, meta)
 }
