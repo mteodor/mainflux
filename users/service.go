@@ -111,20 +111,20 @@ type Service interface {
 	// if parentID is empty all groups are listed.
 	ListGroups(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
 
-	// ListGroupUsers retrieves users that are assigned to a group identified by groupID.
-	ListGroupUsers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
+	// ListMembers retrieves users that are assigned to a group identified by groupID.
+	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
 
-	// ListUserGroups retrieves groups that user identified with userID belongs to.
-	ListUserGroups(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	// ListMembership retrieves groups that user identified with userID belongs to.
+	ListMembership(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error)
 
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
 
 	// AssignUserToGroup adds user with userID into the group identified by groupID.
-	AssignUserToGroup(ctx context.Context, token, userID, groupID string) error
+	Assign(ctx context.Context, token, userID, groupID string) error
 
-	// UnassignUserFromGroup removes user with userID from group identified by groupID.
-	UnassignUserFromGroup(ctx context.Context, token, userID, groupID string) error
+	// Unassign removes user with userID from group identified by groupID.
+	Unassign(ctx context.Context, token, userID, groupID string) error
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -341,7 +341,7 @@ func (svc usersService) ListGroups(ctx context.Context, token string, parentID s
 	return svc.groups.RetrieveAll(ctx, parentID, offset, limit, meta)
 }
 
-func (svc usersService) ListGroupUsers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error) {
+func (svc usersService) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error) {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return UserPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
@@ -357,7 +357,7 @@ func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error
 	return svc.groups.Delete(ctx, id)
 }
 
-func (svc usersService) UnassignUserFromGroup(ctx context.Context, token, userID, groupID string) error {
+func (svc usersService) Unassign(ctx context.Context, token, userID, groupID string) error {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
@@ -381,7 +381,7 @@ func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group,
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
-func (svc usersService) AssignUserToGroup(ctx context.Context, token, userID, groupID string) error {
+func (svc usersService) Assign(ctx context.Context, token, userID, groupID string) error {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
@@ -397,7 +397,7 @@ func (svc usersService) issue(ctx context.Context, email string, keyType uint32)
 	return key.GetValue(), nil
 }
 
-func (svc usersService) ListUserGroups(ctx context.Context, token, userID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+func (svc usersService) ListMembership(ctx context.Context, token, userID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
