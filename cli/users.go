@@ -127,7 +127,7 @@ func NewUsersCmd() *cobra.Command {
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: users [create | get | update | token | password ]")
+			logUsage("Usage: users [create | get | update | token | password]")
 		},
 	}
 

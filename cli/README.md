@@ -236,7 +236,6 @@ mainflux-cli groups unassign <user_id> <group_id> <user_auth_token>
 ```bash
 mainflux-cli groups members <group_id> <user_auth_token>
 ```
-
 #### List groups that user belongs to
 ```bash
 mainflux-cli groups membership <user_id> <user_auth_token>

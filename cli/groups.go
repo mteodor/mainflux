@@ -153,7 +153,7 @@ var cmdGroups = []cobra.Command{
 	},
 	cobra.Command{
 		Use:   "membership",
-		Short: "membership <thing_id> <user_auth_token>",
+		Short: "membership <user_id> <user_auth_token>",
 		Long:  `List user groups membership`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
