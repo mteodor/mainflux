@@ -135,9 +135,9 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	cobra.Command{
-		Use:   "users",
-		Short: "users <group_id> <user_auth_token>",
-		Long:  `Lists group users.`,
+		Use:   "members",
+		Short: "members <group_id> <user_auth_token>",
+		Long:  `Lists all user members of a group.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Short)
@@ -151,6 +151,25 @@ var cmdGroups = []cobra.Command{
 			logJSON(up)
 		},
 	},
+	cobra.Command{
+		Use:   "membership",
+		Short: "membership <thing_id> <user_auth_token>",
+		Long:  `List user groups membership`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Short)
+				return
+			}
+
+			up, err := sdk.UserGroups(args[0], args[1], uint64(Offset), uint64(Limit))
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(up)
+		},
+	},
 }
 
 // NewGroupsCmd returns users command.
@@ -160,7 +179,7 @@ func NewGroupsCmd() *cobra.Command {
 		Short: "Groups management",
 		Long:  `Groups management: create groups and assigns user to groups"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: Groups [create | get | delete | assign | unassign]")
+			logUsage("Usage: Groups [create | get | delete | assign | unassign | members | membership]")
 		},
 	}
 
