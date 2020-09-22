@@ -121,8 +121,8 @@ func (ms *metricsMiddleware) Groups(ctx context.Context, token, id string, offse
 
 func (ms *metricsMiddleware) Members(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.UserPage, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "list_users_in_groups").Add(1)
-		ms.latency.With("method", "list_users_in_groups").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "members").Add(1)
+		ms.latency.With("method", "members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.Members(ctx, token, id, offset, limit, meta)
@@ -149,8 +149,8 @@ func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, grou
 func (ms *metricsMiddleware) Group(ctx context.Context, token, name string) (users.Group, error) {
 
 	defer func(begin time.Time) {
-		ms.counter.With("method", "view_group").Add(1)
-		ms.latency.With("method", "view_group").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "group").Add(1)
+		ms.latency.With("method", "group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.Group(ctx, token, name)
@@ -176,8 +176,8 @@ func (ms *metricsMiddleware) Unassign(ctx context.Context, token, userID, groupI
 
 func (ms *metricsMiddleware) Memberships(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.GroupPage, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "list_user_groups").Add(1)
-		ms.latency.With("method", "list_user_groups").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "memberships").Add(1)
+		ms.latency.With("method", "memberships").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.Memberships(ctx, token, id, offset, limit, meta)

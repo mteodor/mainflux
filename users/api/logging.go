@@ -235,7 +235,7 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, token, userID, groupI
 
 func (lm *loggingMiddleware) Memberships(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_user_groups for user %s took %s to complete", id, time.Since(begin))
+		message := fmt.Sprintf("Method memberships for user %s took %s to complete", id, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
