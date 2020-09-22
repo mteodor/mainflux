@@ -122,7 +122,6 @@ type config struct {
 	authnTimeout  time.Duration
 	adminEmail    string
 	adminPassword string
-	adminGroup    string
 }
 
 func main() {
@@ -213,7 +212,6 @@ func loadConfig() config {
 		authnTimeout:  authnTimeout,
 		adminEmail:    mainflux.Env(envAdminEmail, defAdminEmail),
 		adminPassword: mainflux.Env(envAdminPassword, defAdminPassword),
-		adminGroup:    mainflux.Env(envAdminGroup, defAdminGroup),
 	}
 
 }
