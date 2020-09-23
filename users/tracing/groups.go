@@ -13,15 +13,15 @@ import (
 )
 
 const (
-	assignUser         = "assign_user"
-	saveGroup          = "save_group"
-	deleteGroup        = "delete_group"
-	updateGroup        = "update_group"
-	retrieveGroupByID  = "retrieve_group_by_id"
-	retrieveAll        = "retrieve_all_group"
-	retrieveByName     = "retrieve_by_name"
-	retrieveAllForUser = "retrieve_all_group_for_user"
-	unassignUser       = "unassign_user"
+	assignUser        = "assign_user"
+	saveGroup         = "save_group"
+	deleteGroup       = "delete_group"
+	updateGroup       = "update_group"
+	retrieveGroupByID = "retrieve_group_by_id"
+	retrieveAll       = "retrieve_all_group"
+	retrieveByName    = "retrieve_by_name"
+	memberships       = "memberships"
+	unassignUser      = "unassign_user"
 )
 
 var _ users.GroupRepository = (*groupRepositoryMiddleware)(nil)
@@ -86,7 +86,7 @@ func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, groupID st
 }
 
 func (grm groupRepositoryMiddleware) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	span := createSpan(ctx, grm.tracer, retrieveAllForUser)
+	span := createSpan(ctx, grm.tracer, memberships)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
