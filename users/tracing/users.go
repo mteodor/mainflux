@@ -76,7 +76,7 @@ func (urm userRepositoryMiddleware) UpdatePassword(ctx context.Context, email, p
 }
 
 func (urm userRepositoryMiddleware) Members(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
-	span := createSpan(ctx, urm.tracer, retrieveAllForGroup)
+	span := createSpan(ctx, urm.tracer, members)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
