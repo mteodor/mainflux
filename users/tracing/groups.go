@@ -18,7 +18,7 @@ const (
 	deleteGroup       = "delete_group"
 	updateGroup       = "update_group"
 	retrieveGroupByID = "retrieve_group_by_id"
-	retrieveAll       = "retrieve_all_group"
+	retrieveAll       = "retrieve_all_groups"
 	retrieveByName    = "retrieve_by_name"
 	memberships       = "memberships"
 	unassignUser      = "unassign_user"

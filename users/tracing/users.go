@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	saveOp              = "save_op"
-	retrieveByEmailOp   = "retrieve_by_email"
-	updatePassword      = "update_password"
-	retrieveAllForGroup = "retrieve_all_for_group"
+	saveOp            = "save_op"
+	retrieveByEmailOp = "retrieve_by_email"
+	updatePassword    = "update_password"
+	members           = "members"
 )
 
 var _ users.UserRepository = (*userRepositoryMiddleware)(nil)
