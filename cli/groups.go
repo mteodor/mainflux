@@ -30,13 +30,11 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-
 			var group mfxsdk.Group
 			if err := json.Unmarshal([]byte(args[0]), &group); err != nil {
 				logError(err)
 				return
 			}
-
 			id, err := sdk.CreateGroup(group, args[1])
 			if err != nil {
 				logError(err)
@@ -57,7 +55,6 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-
 			if args[0] == "all" {
 				l, err := sdk.Groups(args[1], uint64(Offset), uint64(Limit), "")
 				if err != nil {
@@ -67,7 +64,6 @@ var cmdGroups = []cobra.Command{
 				logJSON(l)
 				return
 			}
-
 			if args[0] == "children" {
 				l, err := sdk.Groups(args[2], uint64(Offset), uint64(Limit), args[1])
 				if err != nil {
@@ -82,7 +78,6 @@ var cmdGroups = []cobra.Command{
 				logError(err)
 				return
 			}
-
 			logJSON(t)
 		},
 	},
@@ -160,13 +155,11 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-
 			up, err := sdk.Memberships(args[0], args[1], uint64(Offset), uint64(Limit))
 			if err != nil {
 				logError(err)
 				return
 			}
-
 			logJSON(up)
 		},
 	},
@@ -182,10 +175,8 @@ func NewGroupsCmd() *cobra.Command {
 			logUsage("Usage: Groups [create | get | delete | assign | unassign | members | membership]")
 		},
 	}
-
 	for i := range cmdGroups {
 		cmd.AddCommand(&cmdGroups[i])
 	}
-
 	return &cmd
 }

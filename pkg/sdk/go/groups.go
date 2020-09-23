@@ -14,7 +14,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const groupsEndpoint = "users/groups"
+const groupsEndpoint = "groups"
 
 func (sdk mfSDK) CreateGroup(g Group, token string) (string, error) {
 	data, err := json.Marshal(g)

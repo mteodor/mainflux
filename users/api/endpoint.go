@@ -13,11 +13,9 @@ import (
 func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(userReq)
-
 		if err := req.validate(); err != nil {
 			return createUserRes{}, err
 		}
-
 		uid, err := svc.Register(ctx, req.user)
 		if err != nil {
 			return createUserRes{}, err
@@ -47,10 +45,8 @@ func passwordResetRequestEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		res := passwChangeRes{}
 		email := req.Email
-
 		if err := svc.GenerateResetToken(ctx, email, req.Host); err != nil {
 			return nil, err
 		}
@@ -70,7 +66,6 @@ func passwordResetEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		res := passwChangeRes{}
-
 		if err := svc.ResetPassword(ctx, req.Token, req.Password); err != nil {
 			return nil, err
 		}
@@ -82,7 +77,6 @@ func passwordResetEndpoint(svc users.Service) endpoint.Endpoint {
 func viewUserEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewUserReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
@@ -102,11 +96,9 @@ func viewUserEndpoint(svc users.Service) endpoint.Endpoint {
 func updateUserEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateUserReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		user := users.User{
 			Metadata: req.Metadata,
 		}
@@ -114,7 +106,6 @@ func updateUserEndpoint(svc users.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-
 		return updateUserRes{}, nil
 	}
 }
@@ -126,11 +117,9 @@ func passwordChangeEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		res := passwChangeRes{}
-
 		if err := svc.ChangePassword(ctx, req.Token, req.Password, req.OldPassword); err != nil {
 			return nil, err
 		}
-
 		return res, nil
 	}
 }
@@ -138,11 +127,9 @@ func passwordChangeEndpoint(svc users.Service) endpoint.Endpoint {
 func loginEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(userReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		token, err := svc.Login(ctx, req.user)
 		if err != nil {
 			return nil, err
@@ -155,11 +142,9 @@ func loginEndpoint(svc users.Service) endpoint.Endpoint {
 func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		group := users.Group{
 			Name:        req.Name,
 			ParentID:    req.ParentID,
@@ -170,7 +155,6 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-
 		res := createGroupRes{
 			ID:          saved.ID,
 			Name:        saved.Name,
@@ -187,15 +171,12 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 func assignUserToGroup(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(userGroupReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		if err := svc.Assign(ctx, req.token, req.userID, req.groupID); err != nil {
 			return nil, err
 		}
-
 		return assignUserToGroupRes{}, nil
 	}
 }
@@ -209,7 +190,6 @@ func removeUserFromGroup(svc users.Service) endpoint.Endpoint {
 		if err := svc.Unassign(ctx, req.token, req.userID, req.groupID); err != nil {
 			return nil, err
 		}
-
 		return removeUserFromGroupRes{}, nil
 	}
 }
@@ -220,7 +200,6 @@ func listUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return users.UserPage{}, err
 		}
-
 		up, err := svc.Members(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return users.UserPage{}, err
@@ -235,7 +214,6 @@ func listUserGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return users.UserPage{}, err
 		}
-
 		gp, err := svc.Memberships(ctx, req.token, req.userID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return groupPageRes{}, err
@@ -247,7 +225,6 @@ func listUserGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
-
 		if err := req.validate(); err != nil {
 			return createGroupRes{}, err
 		}
@@ -256,11 +233,9 @@ func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			Description: req.Description,
 			Metadata:    req.Metadata,
 		}
-
 		if err := svc.UpdateGroup(ctx, req.token, group); err != nil {
 			return createGroupRes{}, err
 		}
-
 		res := createGroupRes{
 			Name:        group.Name,
 			Description: group.Description,
@@ -277,12 +252,10 @@ func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return viewGroupRes{}, err
 		}
-
 		group, err := svc.Group(ctx, req.token, req.groupID)
 		if err != nil {
 			return viewGroupRes{}, err
 		}
-
 		res := viewGroupRes{
 			Name:        group.Name,
 			Description: group.Description,
@@ -295,11 +268,9 @@ func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listUserGroupReq)
-
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, err
 		}
-
 		gp, err := svc.Groups(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return groupPageRes{}, err

@@ -146,7 +146,7 @@ func (res createGroupRes) Code() int {
 func (res createGroupRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/users/groups/%s", res.ID),
+			"Location": fmt.Sprintf("/groups/%s", res.ID),
 		}
 	}
 	return map[string]string{}

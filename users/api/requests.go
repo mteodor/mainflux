@@ -7,8 +7,10 @@ import (
 	"github.com/mainflux/mainflux/users"
 )
 
-const minPassLen = 8
-const maxNameSize = 1024
+const (
+	minPassLen  = 8
+	maxNameSize = 1024
+)
 
 type userReq struct {
 	user users.User
@@ -103,11 +105,9 @@ func (req createGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-
 	if len(req.Name) > maxNameSize || req.Name == "" {
 		return users.ErrMalformedEntity
 	}
-
 	return nil
 }
 
@@ -145,7 +145,6 @@ func (req listUserGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-
 	return nil
 }
 
@@ -159,14 +158,12 @@ func (req userGroupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-
 	if req.groupID == "" {
 		return users.ErrMalformedEntity
 	}
 	if req.userID == "" {
 		return users.ErrMalformedEntity
 	}
-
 	return nil
 }
 
@@ -180,7 +177,6 @@ func (req groupReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-
 	if req.groupID == "" && req.name == "" {
 		return users.ErrMalformedEntity
 	}

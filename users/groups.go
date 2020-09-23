@@ -25,7 +25,7 @@ type GroupRepository interface {
 	// Update updates the group data.
 	Update(ctx context.Context, g Group) error
 
-	// Delete deletes group for given id
+	// Delete deletes group for given id.
 	Delete(ctx context.Context, id string) error
 
 	// RetrieveByID retrieves group by its unique identifier.
@@ -34,8 +34,8 @@ type GroupRepository interface {
 	// RetrieveByName retrieves group by name
 	RetrieveByName(ctx context.Context, name string) (Group, error)
 
-	// RetrieveAll retrieves all groups if groupID == "",  if groupID is specified returns children groups
-	RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	// RetrieveAllWithAncestors retrieves all groups if groupID == "",  if groupID is specified returns children groups
+	RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
 	// Memberships retrieves all groups that user belongs to
 	Memberships(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)

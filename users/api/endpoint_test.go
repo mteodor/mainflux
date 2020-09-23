@@ -486,7 +486,7 @@ func TestGroupCreate(t *testing.T) {
 		req := testRequest{
 			client:      client,
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/groups", ts.URL),
+			url:         fmt.Sprintf("%s/groups", ts.URL),
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.req),
 			token:       tc.tok,

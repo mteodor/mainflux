@@ -100,7 +100,7 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: '#/components/responses/ServiceError'
-  /users/groups:
+  /groups:
     post:
       summary: Create users group
       description: |

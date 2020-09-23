@@ -81,6 +81,7 @@ func (gr groupRepository) Update(ctx context.Context, group users.Group) error {
 	if err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
+
 	if _, err := gr.db.NamedExecContext(ctx, q, dbu); err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
@@ -94,6 +95,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 	if err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
+
 	res, err := gr.db.NamedExecContext(ctx, qd, dbg)
 	if err != nil {
 		return errors.Wrap(errDeleteGroupDB, err)
@@ -115,6 +117,7 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (users.Gr
 	dbu := dbGroup{
 		ID: id,
 	}
+
 	if err := gr.db.QueryRowxContext(ctx, q, id).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
 			return users.Group{}, errors.Wrap(users.ErrNotFound, err)
@@ -122,6 +125,7 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (users.Gr
 		}
 		return users.Group{}, errors.Wrap(errRetrieveDB, err)
 	}
+
 	return toGroup(dbu), nil
 }
 
@@ -131,6 +135,7 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (user
 	dbu := dbGroup{
 		Name: name,
 	}
+
 	if err := gr.db.QueryRowxContext(ctx, q, name).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
 			return users.Group{}, errors.Wrap(users.ErrNotFound, err)
@@ -138,15 +143,17 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (user
 		}
 		return users.Group{}, errors.Wrap(errRetrieveDB, err)
 	}
+
 	group := toGroup(dbu)
 	return group, nil
 }
 
-func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	_, mq, err := getGroupsMetadataQuery(gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
+
 	q := fmt.Sprintf(`WITH RECURSIVE subordinates AS (
 						SELECT id, owner_id, parent_id, name, description, metadata
 						FROM groups
@@ -161,10 +168,12 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
+
 	rows, err := gr.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
+
 	defer rows.Close()
 
 	var items []users.Group
@@ -173,12 +182,10 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 		if err := rows.StructScan(&dbgr); err != nil {
 			return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 		}
-
 		gr := toGroup(dbgr)
 		if err != nil {
 			return users.GroupPage{}, err
 		}
-
 		items = append(items, gr)
 	}
 
@@ -239,14 +246,13 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 		if err := rows.StructScan(&dbgr); err != nil {
 			return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 		}
-
 		gr := toGroup(dbgr)
 		if err != nil {
 			return users.GroupPage{}, err
 		}
-
 		items = append(items, gr)
 	}
+
 	cq := fmt.Sprintf(`SELECT COUNT(*) 
 					   FROM group_relations gr, groups g
 					   WHERE gr.group_id = g.id and gr.user_id = :userID %s;`, mq)
@@ -273,6 +279,7 @@ func (gr groupRepository) Assign(ctx context.Context, userID, groupID string) er
 	if err != nil {
 		return errors.Wrap(users.ErrAssignUserToGroup, err)
 	}
+
 	qIns := `INSERT INTO group_relations (group_id, user_id) VALUES (:group_id, :user_id)`
 	_, err = gr.db.NamedQueryContext(ctx, qIns, dbr)
 	if err != nil {
@@ -287,7 +294,6 @@ func (gr groupRepository) Assign(ctx context.Context, userID, groupID string) er
 				return errors.Wrap(users.ErrNotFound, err)
 			}
 		}
-
 		return errors.Wrap(users.ErrAssignUserToGroup, err)
 	}
 

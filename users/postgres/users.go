@@ -82,6 +82,7 @@ func (ur userRepository) Update(ctx context.Context, user users.User) error {
 	if err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
+
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
@@ -96,6 +97,7 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error 
 	if err != nil {
 		return errors.Wrap(errUpdateUserDB, err)
 	}
+
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
 		return errors.Wrap(errUpdateUserDB, err)
 	}
@@ -109,6 +111,7 @@ func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (use
 	dbu := dbUser{
 		Email: email,
 	}
+
 	if err := ur.db.QueryRowxContext(ctx, q, email).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
 			return users.User{}, errors.Wrap(users.ErrNotFound, err)
@@ -126,6 +129,7 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.Use
 	dbu := dbUser{
 		ID: id,
 	}
+
 	if err := ur.db.QueryRowxContext(ctx, q, id).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
 			return users.User{}, errors.Wrap(users.ErrNotFound, err)
@@ -189,6 +193,7 @@ func (ur userRepository) Members(ctx context.Context, groupID string, offset, li
 
 		items = append(items, user)
 	}
+
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u, group_relations g
 	WHERE u.id = g.user_id AND g.group_id = :group  %s;`, mq)
 
