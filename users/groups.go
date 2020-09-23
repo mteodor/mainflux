@@ -37,12 +37,12 @@ type GroupRepository interface {
 	// RetrieveAll retrieves all groups if groupID == "",  if groupID is specified returns children groups
 	RetrieveAll(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
-	// RetrieveAllForUser retrieves all groups that user belongs to
-	RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	// Memberships retrieves all groups that user belongs to
+	Memberships(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
-	// AssignUser adds user to group.
-	AssignUser(ctx context.Context, userID, groupID string) error
+	// Assign adds user to group.
+	Assign(ctx context.Context, userID, groupID string) error
 
-	// UnassignUser removes user from group
-	UnassignUser(ctx context.Context, userID, groupID string) error
+	// Unassign removes user from group
+	Unassign(ctx context.Context, userID, groupID string) error
 }

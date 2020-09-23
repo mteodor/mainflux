@@ -209,7 +209,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, groupID string, offse
 	return page, nil
 }
 
-func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (gr groupRepository) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	m, mq, err := getGroupsMetadataQuery(gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
@@ -268,7 +268,7 @@ func (gr groupRepository) RetrieveAllForUser(ctx context.Context, userID string,
 	return page, nil
 }
 
-func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string) error {
+func (gr groupRepository) Assign(ctx context.Context, userID, groupID string) error {
 	dbr, err := toDBGroupRelation(userID, groupID)
 	if err != nil {
 		return errors.Wrap(users.ErrAssignUserToGroup, err)
@@ -294,7 +294,7 @@ func (gr groupRepository) AssignUser(ctx context.Context, userID, groupID string
 	return nil
 }
 
-func (gr groupRepository) UnassignUser(ctx context.Context, userID, groupID string) error {
+func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) error {
 	q := `DELETE FROM group_relations WHERE user_id = :user_id AND group_id = :group_id`
 	dbr, err := toDBGroupRelation(userID, groupID)
 	if err != nil {

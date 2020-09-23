@@ -75,8 +75,8 @@ type UserRepository interface {
 	// UpdatePassword updates password for user with given email
 	UpdatePassword(ctx context.Context, email, password string) error
 
-	// RetrieveAllForGroup retrieves all users that belong to a group
-	RetrieveAllForGroup(ctx context.Context, groupID string, offset, limit uint64, um Metadata) (UserPage, error)
+	// Members retrieves all users that belong to a group
+	Members(ctx context.Context, groupID string, offset, limit uint64, um Metadata) (UserPage, error)
 }
 
 func isEmail(email string) bool {

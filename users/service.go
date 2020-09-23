@@ -120,7 +120,7 @@ type Service interface {
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
 
-	// AssignUserToGroup adds user with userID into the group identified by groupID.
+	// Assign adds user with userID into the group identified by groupID.
 	Assign(ctx context.Context, token, userID, groupID string) error
 
 	// Unassign removes user with userID from group identified by groupID.
@@ -225,7 +225,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, groupID str
 	if err != nil {
 		return UserPage{}, err
 	}
-	return svc.users.RetrieveAllForGroup(ctx, groupID, offset, limit, um)
+	return svc.users.Members(ctx, groupID, offset, limit, um)
 }
 
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
@@ -346,7 +346,7 @@ func (svc usersService) Members(ctx context.Context, token, groupID string, offs
 	if err != nil {
 		return UserPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.users.RetrieveAllForGroup(ctx, groupID, offset, limit, meta)
+	return svc.users.Members(ctx, groupID, offset, limit, meta)
 }
 
 func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error {
@@ -362,7 +362,7 @@ func (svc usersService) Unassign(ctx context.Context, token, userID, groupID str
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.UnassignUser(ctx, userID, groupID)
+	return svc.groups.Unassign(ctx, userID, groupID)
 }
 
 func (svc usersService) UpdateGroup(ctx context.Context, token string, group Group) error {
@@ -386,7 +386,7 @@ func (svc usersService) Assign(ctx context.Context, token, userID, groupID strin
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.AssignUser(ctx, userID, groupID)
+	return svc.groups.Assign(ctx, userID, groupID)
 }
 
 func (svc usersService) issue(ctx context.Context, email string, keyType uint32) (string, error) {
@@ -402,5 +402,5 @@ func (svc usersService) Memberships(ctx context.Context, token, userID string, o
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.RetrieveAllForUser(ctx, userID, offset, limit, meta)
+	return svc.groups.Memberships(ctx, userID, offset, limit, meta)
 }

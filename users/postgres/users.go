@@ -152,7 +152,7 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	return nil
 }
 
-func (ur userRepository) RetrieveAllForGroup(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
+func (ur userRepository) Members(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
 	m, mq, err := getUsersMetadataQuery(gm)
 	if err != nil {
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)

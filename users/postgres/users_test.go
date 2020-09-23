@@ -88,7 +88,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 	}
 }
 
-func TestRetrieveAllForGroup(t *testing.T) {
+func TestMembers(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
@@ -112,14 +112,14 @@ func TestRetrieveAllForGroup(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("user uuid error: %s", err))
 	group := users.Group{
 		ID:   uid,
-		Name: "TestRetrieveAllForGroup",
+		Name: "TestMembers",
 	}
 
 	g, err := groupRepo.Save(context.Background(), group)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	for _, u := range usrs {
-		err := groupRepo.AssignUser(context.Background(), u.ID, g.ID)
+		err := groupRepo.Assign(context.Background(), u.ID, g.ID)
 		require.Nil(t, err, fmt.Sprintf("group user assign got unexpected error: %s", err))
 	}
 
@@ -141,7 +141,7 @@ func TestRetrieveAllForGroup(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := userRepo.RetrieveAllForGroup(context.Background(), tc.group, tc.offset, tc.limit, tc.metadata)
+		page, err := userRepo.Members(context.Background(), tc.group, tc.offset, tc.limit, tc.metadata)
 		size := uint64(len(usrs))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))

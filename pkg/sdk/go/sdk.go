@@ -163,17 +163,17 @@ type SDK interface {
 	// Group returns users group object by id.
 	Group(id, token string) (Group, error)
 
-	// AssignUserGroup assigns user to a group
-	AssignUserGroup(userID, groupID, token string) error
+	// Assign assigns user to a group.
+	Assign(userID, groupID, token string) error
 
-	// UnassignUserGroup
-	UnassignUserGroup(userID, groupID, token string) error
+	// Unassign removes user from a group.
+	Unassign(userID, groupID, token string) error
 
-	// GroupUsers lists users in group.
-	GroupUsers(groupID, token string, offset, limit uint64) (UsersPage, error)
+	// Members lists member users of a group.
+	Members(groupID, token string, offset, limit uint64) (UsersPage, error)
 
-	// UserGroups lists groups for user.
-	UserGroups(userID, token string, offset, limit uint64) (GroupsPage, error)
+	// Memberships lists groups for user.
+	Memberships(userID, token string, offset, limit uint64) (GroupsPage, error)
 
 	// UpdateGroup updates existing group.
 	UpdateGroup(group Group, token string) error

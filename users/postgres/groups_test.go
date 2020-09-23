@@ -170,7 +170,7 @@ func TestGroupDelete(t *testing.T) {
 	g1, err := repo.Save(context.Background(), group1)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
-	err = repo.AssignUser(context.Background(), user.ID, g1.ID)
+	err = repo.Assign(context.Background(), user.ID, g1.ID)
 	require.Nil(t, err, fmt.Sprintf("failed to assign user to a group: %s", err))
 
 	gid, err = uuid.New().ID()
@@ -276,7 +276,7 @@ func TestAssignUser(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := repo.AssignUser(context.Background(), user.ID, tc.group.ID)
+		err := repo.Assign(context.Background(), user.ID, tc.group.ID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 
@@ -326,7 +326,7 @@ func TestUnassignUser(t *testing.T) {
 	g1, err := repo.Save(context.Background(), group1)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
-	err = repo.AssignUser(context.Background(), user1.ID, group1.ID)
+	err = repo.Assign(context.Background(), user1.ID, group1.ID)
 	require.Nil(t, err, fmt.Sprintf("failed to assign user: %s", err))
 
 	cases := []struct {
@@ -341,7 +341,7 @@ func TestUnassignUser(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := repo.UnassignUser(context.Background(), tc.user.ID, tc.group.ID)
+		err := repo.Unassign(context.Background(), tc.user.ID, tc.group.ID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 

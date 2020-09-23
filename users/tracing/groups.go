@@ -14,14 +14,14 @@ import (
 
 const (
 	assignUser         = "assign_user"
-	saveGroupOp        = "save_group_op"
-	deleteGroupOp      = "delete_group_op"
-	updateGroupOp      = "update_group"
+	saveGroup          = "save_group"
+	deleteGroup        = "delete_group"
+	updateGroup        = "update_group"
 	retrieveGroupByID  = "retrieve_group_by_id"
 	retrieveAll        = "retrieve_all_group"
 	retrieveByName     = "retrieve_by_name"
 	retrieveAllForUser = "retrieve_all_group_for_user"
-	removeUser         = "remove_user_from_group"
+	unassignUser       = "unassign_user"
 )
 
 var _ users.GroupRepository = (*groupRepositoryMiddleware)(nil)
@@ -39,14 +39,14 @@ func GroupRepositoryMiddleware(repo users.GroupRepository, tracer opentracing.Tr
 	}
 }
 func (grm groupRepositoryMiddleware) Save(ctx context.Context, group users.Group) (users.Group, error) {
-	span := createSpan(ctx, grm.tracer, saveGroupOp)
+	span := createSpan(ctx, grm.tracer, saveGroup)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return grm.repo.Save(ctx, group)
 }
 func (grm groupRepositoryMiddleware) Update(ctx context.Context, group users.Group) error {
-	span := createSpan(ctx, grm.tracer, updateGroupOp)
+	span := createSpan(ctx, grm.tracer, updateGroup)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
@@ -54,7 +54,7 @@ func (grm groupRepositoryMiddleware) Update(ctx context.Context, group users.Gro
 }
 
 func (grm groupRepositoryMiddleware) Delete(ctx context.Context, groupID string) error {
-	span := createSpan(ctx, grm.tracer, deleteGroupOp)
+	span := createSpan(ctx, grm.tracer, deleteGroup)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
@@ -85,26 +85,26 @@ func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, groupID st
 	return grm.repo.RetrieveAll(ctx, groupID, offset, limit, gm)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm groupRepositoryMiddleware) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAllForUser)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RetrieveAllForUser(ctx, userID, offset, limit, gm)
+	return grm.repo.Memberships(ctx, userID, offset, limit, gm)
 }
 
-func (grm groupRepositoryMiddleware) UnassignUser(ctx context.Context, userID, groupID string) error {
-	span := createSpan(ctx, grm.tracer, removeUser)
+func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, userID, groupID string) error {
+	span := createSpan(ctx, grm.tracer, unassignUser)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.UnassignUser(ctx, userID, groupID)
+	return grm.repo.Unassign(ctx, userID, groupID)
 }
 
-func (grm groupRepositoryMiddleware) AssignUser(ctx context.Context, userID, groupID string) error {
+func (grm groupRepositoryMiddleware) Assign(ctx context.Context, userID, groupID string) error {
 	span := createSpan(ctx, grm.tracer, assignUser)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.AssignUser(ctx, userID, groupID)
+	return grm.repo.Assign(ctx, userID, groupID)
 }

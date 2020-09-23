@@ -71,7 +71,7 @@ func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (grm *groupRepositoryMock) UnassignUser(ctx context.Context, userID, groupID string) error {
+func (grm *groupRepositoryMock) Unassign(ctx context.Context, userID, groupID string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[groupID]; !ok {
@@ -147,7 +147,7 @@ func (grm *groupRepositoryMock) RetrieveByName(ctx context.Context, name string)
 	return val, err
 }
 
-func (grm *groupRepositoryMock) AssignUser(ctx context.Context, userID, groupID string) error {
+func (grm *groupRepositoryMock) Assign(ctx context.Context, userID, groupID string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[groupID]; !ok {
@@ -166,7 +166,7 @@ func (grm *groupRepositoryMock) AssignUser(ctx context.Context, userID, groupID 
 
 }
 
-func (grm *groupRepositoryMock) RetrieveAllForUser(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm *groupRepositoryMock) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []users.Group

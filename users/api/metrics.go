@@ -112,8 +112,8 @@ func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, grou
 
 func (ms *metricsMiddleware) Groups(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (users.GroupPage, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "list_groups").Add(1)
-		ms.latency.With("method", "list_groups").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "groups").Add(1)
+		ms.latency.With("method", "groups").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.Groups(ctx, token, id, offset, limit, meta)
@@ -158,8 +158,8 @@ func (ms *metricsMiddleware) Group(ctx context.Context, token, name string) (use
 
 func (ms *metricsMiddleware) Assign(ctx context.Context, token, userID, groupID string) error {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "assign_user_to_group").Add(1)
-		ms.latency.With("method", "assign_user_to_group").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "assign").Add(1)
+		ms.latency.With("method", "assign").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.Assign(ctx, token, userID, groupID)
@@ -167,8 +167,8 @@ func (ms *metricsMiddleware) Assign(ctx context.Context, token, userID, groupID 
 
 func (ms *metricsMiddleware) Unassign(ctx context.Context, token, userID, groupID string) error {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "remove_user_from_group").Add(1)
-		ms.latency.With("method", "remove_user_from_group").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "unassign").Add(1)
+		ms.latency.With("method", "unassign").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.Unassign(ctx, token, userID, groupID)
