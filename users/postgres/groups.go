@@ -153,12 +153,16 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
+	if mq != "" {
+		mq = fmt.Sprintf("WHERE %s", mq)
+	}
 
-	subQuery := fmt.Sprintf("SELECT id, owner_id, parent_id, name, description, metadata from groups WHERE 1=1 %s", mq)
-	q := fmt.Sprintf("%s ORDER BY id LIMIT :limit OFFSET :offset", subQuery)
-	cq := fmt.Sprintf("SELECT COUNT(*) FROM groups WHERE 1=1 %s", mq)
+	cq := fmt.Sprintf("SELECT COUNT(*) FROM groups %s", mq)
+	sq := fmt.Sprintf("SELECT id, owner_id, parent_id, name, description, metadata FROM groups %s", mq)
+	q := fmt.Sprintf("%s ORDER BY id LIMIT :limit OFFSET :offset", sq)
+
 	if groupID != "" {
-		subQuery = fmt.Sprintf(
+		sq = fmt.Sprintf(
 			`WITH RECURSIVE subordinates AS (
 				SELECT id, owner_id, parent_id, name, description, metadata
 				FROM groups
@@ -166,10 +170,10 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 				UNION
 					SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
 					FROM groups 
-					INNER JOIN subordinates s ON s.id = groups.parent_id WHERE 1=1 %s
+					INNER JOIN subordinates s ON s.id = groups.parent_id %s
 			)`, mq)
-		q = fmt.Sprintf("%s SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset", subQuery)
-		cq = fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates", subQuery)
+		q = fmt.Sprintf("%s SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset", sq)
+		cq = fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates", sq)
 	}
 
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
@@ -219,9 +223,12 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
+	if mq != "" {
+		mq = fmt.Sprintf("AND %s", mq)
+	}
 	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata 
 					  FROM group_relations gr, groups g
-					  WHERE gr.group_id = g.id and gr.user_id = :userID
+					  WHERE gr.group_id = g.id and gr.user_id = :userID 
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
@@ -421,7 +428,7 @@ func getGroupsMetadataQuery(m users.Metadata) ([]byte, string, error) {
 	mq := ""
 	mb := []byte("{}")
 	if len(m) > 0 {
-		mq = ` AND groups.metadata @> :metadata`
+		mq = `groups.metadata @> :metadata`
 
 		b, err := json.Marshal(m)
 		if err != nil {
