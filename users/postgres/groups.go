@@ -154,15 +154,23 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	q := fmt.Sprintf(`WITH RECURSIVE subordinates AS (
-						SELECT id, owner_id, parent_id, name, description, metadata
-						FROM groups
-						WHERE id = :id 
-						UNION
-							SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
-							FROM groups 
-							INNER JOIN subordinates s ON s.id = groups.parent_id %s
-					) SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset`, mq)
+	subQuery := fmt.Sprintf("SELECT id, owner_id, parent_id, name, description, metadata from groups WHERE 1=1 %s", mq)
+	q := fmt.Sprintf("%s ORDER BY id LIMIT :limit OFFSET :offset", subQuery)
+	cq := fmt.Sprintf("SELECT COUNT(*) FROM groups WHERE 1=1 %s", mq)
+	if groupID != "" {
+		subQuery = fmt.Sprintf(
+			`WITH RECURSIVE subordinates AS (
+				SELECT id, owner_id, parent_id, name, description, metadata
+				FROM groups
+				WHERE id = :id 
+				UNION
+					SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
+					FROM groups 
+					INNER JOIN subordinates s ON s.id = groups.parent_id WHERE 1=1 %s
+			)`, mq)
+		q = fmt.Sprintf("%s SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset", subQuery)
+		cq = fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates", subQuery)
+	}
 
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
@@ -173,7 +181,6 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
-
 	defer rows.Close()
 
 	var items []users.Group
@@ -188,16 +195,6 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 		}
 		items = append(items, gr)
 	}
-
-	cq := fmt.Sprintf(`WITH RECURSIVE subordinates AS (
-						SELECT id, owner_id, parent_id, name, description, metadata
-						FROM groups
-						WHERE id = :id 
-						UNION
-						SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
-						FROM groups
-						INNER JOIN subordinates s ON s.id = groups.parent_id %s
-					) SELECT COUNT(*) FROM subordinates`, mq)
 
 	total, err := total(ctx, gr.db, cq, dbPage)
 	if err != nil {
