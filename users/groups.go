@@ -31,11 +31,17 @@ type GroupRepository interface {
 	// RetrieveByID retrieves group by its unique identifier.
 	RetrieveByID(ctx context.Context, id string) (Group, error)
 
-	// RetrieveByName retrieves group by name
+	// RetrieveByName retrieves group by name.
 	RetrieveByName(ctx context.Context, name string) (Group, error)
 
-	// RetrieveAllWithAncestors retrieves all groups if groupID == "",  if groupID is specified returns children groups
-	RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	// RetrieveAll retrieves all groups.
+	RetrieveAll(ctx context.Context, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// RetrieveAllAncestors retrieves all groups that are ancestors to the group with given groupID.
+	RetrieveAllAncestors(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// RetrieveAllChildren retrieves all children from group with given groupID.
+	RetrieveAllChildren(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
 	// Memberships retrieves all groups that user belongs to
 	Memberships(ctx context.Context, userID string, offset, limit uint64, gm Metadata) (GroupPage, error)

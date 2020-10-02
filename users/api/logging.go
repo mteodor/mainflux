@@ -129,7 +129,7 @@ func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email,
 	return lm.svc.SendPasswordReset(ctx, host, email, token)
 }
 
-func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group users.Group) (u users.Group, err error) {
+func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group users.Group) (gp users.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_group with name %s took %s to complete", group.Name, time.Since(begin))
 		if err != nil {
@@ -142,9 +142,9 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return lm.svc.CreateGroup(ctx, token, group)
 }
 
-func (lm *loggingMiddleware) Groups(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.GroupPage, err error) {
+func (lm *loggingMiddleware) Groups(ctx context.Context, token string, offset, limit uint64, meta users.Metadata) (gp users.GroupPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method groups for parent %s took %s to complete", id, time.Since(begin))
+		message := fmt.Sprintf("Method groups for token %s took %s to complete", token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -152,10 +152,36 @@ func (lm *loggingMiddleware) Groups(ctx context.Context, token, id string, offse
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Groups(ctx, token, id, offset, limit, meta)
+	return lm.svc.Groups(ctx, token, offset, limit, meta)
 }
 
-func (lm *loggingMiddleware) Members(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (e users.UserPage, err error) {
+func (lm *loggingMiddleware) GroupsChildren(ctx context.Context, token, groupID string, offset, limit uint64, meta users.Metadata) (gp users.GroupPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method groups_children for parent %s took %s to complete", groupID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.GroupsChildren(ctx, token, groupID, offset, limit, meta)
+}
+
+func (lm *loggingMiddleware) GroupsAncestors(ctx context.Context, token, groupID string, offset, limit uint64, meta users.Metadata) (gp users.GroupPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method groups_ancestors for group %s took %s to complete", groupID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.GroupsAncestors(ctx, token, groupID, offset, limit, meta)
+}
+
+func (lm *loggingMiddleware) Members(ctx context.Context, token, id string, offset, limit uint64, meta users.Metadata) (gp users.UserPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method members for parent %s took %s to complete", id, time.Since(begin))
 		if err != nil {

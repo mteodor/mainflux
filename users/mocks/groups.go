@@ -187,7 +187,47 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, userID string, 
 	}, nil
 }
 
-func (grm *groupRepositoryMock) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm *groupRepositoryMock) RetrieveAllAncestors(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+	grm.mu.Lock()
+	defer grm.mu.Unlock()
+	var items []users.Group
+
+	// TO-DO this needs to be fixed.
+	for _, g := range grm.groups {
+		items = append(items, g)
+	}
+	return users.GroupPage{
+		Groups: items,
+		PageMetadata: users.PageMetadata{
+			Limit:  limit,
+			Offset: offset,
+			Total:  uint64(len(items)),
+		},
+	}, nil
+}
+
+func (grm *groupRepositoryMock) RetrieveAllChildren(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+	grm.mu.Lock()
+	defer grm.mu.Unlock()
+	var items []users.Group
+
+	groups := grm.childrenByGroups[groupID]
+
+	for _, g := range groups {
+		items = append(items, g)
+	}
+
+	return users.GroupPage{
+		Groups: items,
+		PageMetadata: users.PageMetadata{
+			Limit:  limit,
+			Offset: offset,
+			Total:  uint64(len(items)),
+		},
+	}, nil
+}
+
+func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []users.Group

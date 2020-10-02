@@ -271,7 +271,14 @@ func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, err
 		}
-		gp, err := svc.Groups(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		if req.groupID == "" {
+			gp, err := svc.Groups(ctx, req.token, req.offset, req.limit, req.metadata)
+			if err != nil {
+				return groupPageRes{}, err
+			}
+			return buildGroupsResponse(gp), nil
+		}
+		gp, err := svc.GroupsChildren(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return groupPageRes{}, err
 		}

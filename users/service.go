@@ -107,9 +107,15 @@ type Service interface {
 	// Group retrieves data about the group identified by ID.
 	Group(ctx context.Context, token, id string) (Group, error)
 
-	// ListGroups retrieves groups that are children to group identified by parenID
+	// ListGroups retrieves all groups.
+	Groups(ctx context.Context, token string, offset, limit uint64, meta Metadata) (GroupPage, error)
+
+	// GroupsChildren retrieves groups that are children to group identified by groupID
 	// if parentID is empty all groups are listed.
-	Groups(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	GroupsChildren(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+
+	// GroupsAncestors retrieves groups that are ancestors to group identified by groupID
+	GroupsAncestors(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error)
 
 	// Members retrieves users that are assigned to a group identified by groupID.
 	Members(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
@@ -322,12 +328,28 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 	return svc.groups.Save(ctx, group)
 }
 
-func (svc usersService) Groups(ctx context.Context, token string, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+func (svc usersService) Groups(ctx context.Context, token string, offset, limit uint64, meta Metadata) (GroupPage, error) {
 	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.RetrieveAllWithAncestors(ctx, parentID, offset, limit, meta)
+	return svc.groups.RetrieveAll(ctx, offset, limit, meta)
+}
+
+func (svc usersService) GroupsChildren(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.groups.RetrieveAllChildren(ctx, groupID, offset, limit, meta)
+}
+
+func (svc usersService) GroupsAncestors(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.groups.RetrieveAllAncestors(ctx, groupID, offset, limit, meta)
 }
 
 func (svc usersService) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error) {
