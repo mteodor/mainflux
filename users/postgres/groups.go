@@ -153,25 +153,25 @@ func (gr groupRepository) RetrieveAllAncestors(ctx context.Context, groupID stri
 	if groupID == "" {
 		return users.GroupPage{}, nil
 	}
-	_, mq, err := getGroupsMetadataQuery(gm)
+
+	_, mq, err := getGroupsMetadataQuery("subordinates", gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 	if mq != "" {
 		mq = fmt.Sprintf("WHERE %s", mq)
 	}
-	sq := fmt.Sprintf(
-		`WITH RECURSIVE subordinates AS (
+	sq := `WITH RECURSIVE subordinates AS (
 				SELECT id, owner_id, parent_id, name, description, metadata
 				FROM groups
-				WHERE id = :id 
+				WHERE parent_id = :id
 				UNION
 					SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
 					FROM groups 
-					INNER JOIN subordinates s ON s.parent_id = groups.id %s
-			)`, mq)
-	q := fmt.Sprintf("%s SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset", sq)
-	cq := fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates", sq)
+					INNER JOIN subordinates s ON s.parent_id = groups.id
+			)`
+	q := fmt.Sprintf("%s SELECT * FROM subordinates %s ORDER BY id LIMIT :limit OFFSET :offset", sq, mq)
+	cq := fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates %s", sq, mq)
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
@@ -209,25 +209,24 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	if groupID == "" {
 		return users.GroupPage{}, nil
 	}
-	_, mq, err := getGroupsMetadataQuery(gm)
+	_, mq, err := getGroupsMetadataQuery("subordinates", gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 	if mq != "" {
 		mq = fmt.Sprintf("WHERE %s", mq)
 	}
-	sq := fmt.Sprintf(
-		`WITH RECURSIVE subordinates AS (
+	sq := `WITH RECURSIVE subordinates AS (
 				SELECT id, owner_id, parent_id, name, description, metadata
 				FROM groups
 				WHERE id = :id 
 				UNION
 					SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
 					FROM groups 
-					INNER JOIN subordinates s ON s.id = groups.parent_id %s
-			)`, mq)
-	q := fmt.Sprintf("%s SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset", sq)
-	cq := fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates", sq)
+					INNER JOIN subordinates s ON s.id = groups.parent_id
+			)`
+	q := fmt.Sprintf("%s SELECT * FROM subordinates %s ORDER BY id LIMIT :limit OFFSET :offset", sq, mq)
+	cq := fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates %s", sq, mq)
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
@@ -262,7 +261,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 }
 
 func (gr groupRepository) RetrieveAll(ctx context.Context, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	_, mq, err := getGroupsMetadataQuery(gm)
+	_, mq, err := getGroupsMetadataQuery("groups", gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -307,7 +306,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, offset, limit uint64,
 }
 
 func (gr groupRepository) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	m, mq, err := getGroupsMetadataQuery(gm)
+	m, mq, err := getGroupsMetadataQuery("groups", gm)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -513,11 +512,11 @@ func toDBGroupRelation(userID, groupID string) (dbGroupRelation, error) {
 	}, nil
 }
 
-func getGroupsMetadataQuery(m users.Metadata) ([]byte, string, error) {
+func getGroupsMetadataQuery(db string, m users.Metadata) ([]byte, string, error) {
 	mq := ""
 	mb := []byte("{}")
 	if len(m) > 0 {
-		mq = `groups.metadata @> :metadata`
+		mq = db + `.metadata @> :metadata`
 
 		b, err := json.Marshal(m)
 		if err != nil {
