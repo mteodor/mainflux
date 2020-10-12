@@ -32,23 +32,16 @@ func MakeHandler(svc authn.Service, tracer opentracing.Tracer) http.Handler {
 
 	mux := bone.New()
 
-	mux.Post("/keys", kithttp.NewServer(
-		kitot.TraceServer(tracer, "issue")(issueEndpoint(svc)),
-		decodeIssue,
+	mux.Post("/policy", kithttp.NewServer(
+		kitot.TraceServer(tracer, "issue")(addPolicy(svc)),
+		decodeAddPolicyReq,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/keys/:id", kithttp.NewServer(
-		kitot.TraceServer(tracer, "retrieve")(retrieveEndpoint(svc)),
-		decodeKeyReq,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Delete("/keys/:id", kithttp.NewServer(
-		kitot.TraceServer(tracer, "revoke")(revokeEndpoint(svc)),
-		decodeKeyReq,
+	mux.Delete("/policy", kithttp.NewServer(
+		kitot.TraceServer(tracer, "issue")(removePolicy(svc)),
+		decodeRemovePolicyReq,
 		encodeResponse,
 		opts...,
 	))
@@ -59,31 +52,8 @@ func MakeHandler(svc authn.Service, tracer opentracing.Tracer) http.Handler {
 	return mux
 }
 
-func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
-	}
-	req := issueKeyReq{
-		token: r.Header.Get("Authorization"),
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
-	}
-
-	return req, nil
-}
-
-func decodeKeyReq(_ context.Context, r *http.Request) (interface{}, error) {
-	req := keyReq{
-		token: r.Header.Get("Authorization"),
-		id:    bone.GetValue(r, "id"),
-	}
-	return req, nil
-}
-
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
-
 	if ar, ok := response.(mainflux.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
@@ -95,8 +65,6 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	}
 	return json.NewEncoder(w).Encode(response)
 }
-
-
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
@@ -124,4 +92,30 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
+}
+
+func decodeAddPolicyReq(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errUnsupportedContentType
+	}
+	req := addPolicyReq{
+		token: r.Header.Get("Authorization"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
+	}
+	return req, nil
+}
+
+func decodeRemovePolicyReq(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errUnsupportedContentType
+	}
+	req := removePolicyReq{
+		token: r.Header.Get("Authorization"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
+	}
+	return nil, nil
 }

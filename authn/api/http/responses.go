@@ -70,6 +70,3 @@ func (res revokeKeyRes) Empty() bool {
 	return true
 }
 
-type errorRes struct {
-	Err string `json:"error"`
-}
