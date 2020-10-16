@@ -110,6 +110,8 @@ type Service interface {
 
 	// Identify returns thing ID for given thing key.
 	Identify(ctx context.Context, key string) (string, error)
+
+	GroupService
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -382,3 +384,39 @@ func (ts *thingsService) hasThing(ctx context.Context, chanID, thingKey string) 
 	}
 	return thingID, nil
 }
+
+
+
+	func (ts *thingsService)	CreateGroup(ctx context.Context, token string, group Group) (Group, error){
+		return nil, error
+	}
+
+	func (ts *thingsService)	UpdateGroup(ctx context.Context, token string, group Group) {
+		return nil, error
+	}
+	func (ts *thingsService)	Group(ctx context.Context, token, id string) (Group, error){
+		return nil, error
+	}
+
+	func (ts *thingsService)Groups(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error){
+		return GroupPage{}, error
+	}
+
+	func (ts *thingsService)	Members(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (MemberPage, error){
+		return MemberPage{},nil
+	}
+
+	func (ts *thingsService)	Memberships(ctx context.Context, token, memberID string, offset, limit uint64, meta Metadata) (GroupPage, error){
+		return GroupPage{}, nil
+	}
+
+	func (ts *thingsService)RemoveGroup(ctx context.Context, token, id string) error {
+		return  error
+	}
+	func (ts *thingsService)Assign(ctx context.Context, token, memberID, groupID string) error {
+		return  error
+	}
+
+	func (ts *thingsService) func (ts *thingsService)Unassign(ctx context.Context, token, memberID, groupID string) error{
+		return  error
+	}
