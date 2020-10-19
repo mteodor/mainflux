@@ -22,6 +22,14 @@ const (
 	errTruncation = "string_data_right_truncation"
 )
 
+var (
+	errSaveDB     = errors.New("Save to DB failed")
+	errUpdateDB   = errors.New("Update to DB failed")
+	errRetrieveDB = errors.New("Retreiving from DB failed")
+	errMarshal    = errors.New("Failed to marshal metadata")
+	errUnmarshal  = errors.New("Failed to unmarshal metadata")
+)
+
 var _ things.ThingRepository = (*thingRepository)(nil)
 
 type thingRepository struct {

@@ -15,16 +15,16 @@ const (
 	streamLen = 1000
 )
 
-var _ things.Service = (*eventStore)(nil)
+var _ things.ThingsService = (*eventStore)(nil)
 
 type eventStore struct {
-	svc    things.Service
+	svc    things.ThingsService
 	client *redis.Client
 }
 
 // NewEventStoreMiddleware returns wrapper around things service that sends
 // events to event store.
-func NewEventStoreMiddleware(svc things.Service, client *redis.Client) things.Service {
+func NewEventStoreMiddleware(svc things.ThingsService, client *redis.Client) things.ThingsService {
 	return eventStore{
 		svc:    svc,
 		client: client,

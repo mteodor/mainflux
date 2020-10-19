@@ -42,11 +42,14 @@ var (
 
 	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
+
+	// ErrFailedToRetrieveThings
+	ErrFailedToRetrieveThings = errors.New("failed to retrieve things for group")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
-type Service interface {
+type ThingsService interface {
 	// CreateThings adds a list of things to the user identified by the provided key.
 	CreateThings(ctx context.Context, token string, things ...Thing) ([]Thing, error)
 
@@ -116,7 +119,10 @@ type Service interface {
 
 	// Identify returns thing ID for given thing key.
 	Identify(ctx context.Context, key string) (string, error)
+}
 
+type Service interface {
+	ThingsService
 	GroupService
 }
 
@@ -416,7 +422,11 @@ func (ts *thingsService) Groups(ctx context.Context, token string, parentID stri
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return ts.groups.RetrieveAllWithAncestors(ctx, parentID, offset, limit, meta)
+	if parentID == "" {
+		return ts.groups.RetrieveAll(ctx, offset, limit, meta)
+	}
+
+	return ts.groups.RetrieveAllChildren(ctx, parentID, offset, limit, meta)
 }
 
 func (ts *thingsService) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (MemberPage, error) {
@@ -424,7 +434,23 @@ func (ts *thingsService) Members(ctx context.Context, token, groupID string, off
 	if err != nil {
 		return MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Members(ctx, groupID, offset, limit, meta)
+	p, err := ts.groups.Members(ctx, groupID, offset, limit, meta)
+	if err != nil {
+		return MemberPage{}, errors.Wrap(ErrFailedToRetrieveThings, err)
+	}
+	mp := MemberPage{
+		PageMetadata{
+			Total:  p.Total,
+			Offset: p.Offset,
+			Limit:  p.Limit,
+			Name:   "things",
+		},
+		make([]Member, 0),
+	}
+	for _, th := range p.Things {
+		mp.Members = append(mp.Members, th)
+	}
+	return mp, nil
 }
 
 func (ts *thingsService) RemoveGroup(ctx context.Context, token, id string) error {
@@ -443,10 +469,10 @@ func (ts *thingsService) Unassign(ctx context.Context, token, memberID, groupID 
 	return ts.groups.Unassign(ctx, memberID, groupID)
 }
 
-func (ts *thingsService) UpdateGroup(ctx context.Context, token string, group Group) error {
+func (ts *thingsService) UpdateGroup(ctx context.Context, token string, group Group) (Group, error) {
 	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
+		return nil, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Update(ctx, group)
 }
@@ -465,4 +491,12 @@ func (ts *thingsService) Assign(ctx context.Context, token, memberID, groupID st
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Assign(ctx, memberID, groupID)
+}
+
+func (ts *thingsService) Memberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm Metadata) (GroupPage, error) {
+	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.Memberships(ctx, memberID, offset, limit, gm)
 }

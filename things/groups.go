@@ -1,6 +1,8 @@
 package things
 
-import "context"
+import (
+	"context"
+)
 
 type Group interface {
 	ID() string
@@ -16,13 +18,6 @@ type Group interface {
 	SetName(id string)
 	SetDescription(id string)
 	SetMetadata(m Metadata)
-}
-
-type PageMetadata struct {
-	Total  uint64
-	Offset uint64
-	Limit  uint64
-	Name   string
 }
 
 type GroupPage struct {
@@ -126,4 +121,43 @@ func (g *group) SetMetadata(meta Metadata) {
 
 func NewGroup() Group {
 	return &group{}
+}
+
+type GroupRepository interface {
+
+	// Save group
+	Save(ctx context.Context, group Group) (Group, error)
+
+	// Update a group
+	Update(ctx context.Context, group Group) (Group, error)
+
+	// Delete a group
+	Delete(ctx context.Context, groupID string) error
+
+	// RetrieveByID retrieves group by its id
+	RetrieveByID(ctx context.Context, id string) (Group, error)
+
+	// RetrieveByName retrieves group by its name
+	RetrieveByName(ctx context.Context, name string) (Group, error)
+
+	// RetrieveAll retrieves all groups.
+	RetrieveAll(ctx context.Context, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// RetrieveAllAncestors retrieves all groups that are ancestors to the group with given groupID.
+	RetrieveAllAncestors(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// RetrieveAllChildren retrieves all children from group with given groupID.
+	RetrieveAllChildren(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// Retrieves list of groups that member belongs to
+	Memberships(ctx context.Context, memberID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+
+	// Members retrieves everything that is assigned to a group identified by groupID.
+	Members(ctx context.Context, groupID string, offset, limit uint64, meta Metadata) (Page, error)
+
+	// Assign adds member to group.
+	Assign(ctx context.Context, memberID, groupID string) error
+
+	// Unassign removes a member from a group
+	Unassign(ctx context.Context, memberID, groupID string) error
 }
