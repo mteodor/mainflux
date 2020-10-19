@@ -110,7 +110,7 @@ func migrateDB(db *sqlx.DB) error {
 						thing_id UUID NOT NULL,
 						group_id UUID NOT NULL,
 						FOREIGN KEY (thing_id)  REFERENCES things  (id) ON DELETE CASCADE ON UPDATE CASCADE,
-						FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+						FOREIGN KEY (group_id) REFERENCES thing_groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
 						PRIMARY KEY (thing_id, group_id)
 				   )`,
 				},

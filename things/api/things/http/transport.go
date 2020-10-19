@@ -174,7 +174,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	mux.Get("/things/:memberID/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "memberships")(things.ListMembership(svc)),
-		things.decodeListMembership,
+		things.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -188,14 +188,14 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	mux.Get("/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "groups")(things.ListGroupsEndpoint(svc)),
-		things.DecodeListGroups,
+		things.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Delete("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "delete_group")(things.DeleteGroupEndpoint(svc)),
-		things.DecodeDeleteGroupRequest,
+		things.DecodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -216,7 +216,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	mux.Get("/groups/:groupID/things", kithttp.NewServer(
 		kitot.TraceServer(tracer, "members")(things.ListMembersForGroupEndpoint(svc)),
-		things.DecodeMemberGroupRequest,
+		things.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -230,7 +230,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	mux.Get("/groups/:groupID/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_children_groups")(things.ListGroupsEndpoint(svc)),
-		things.DecodeGroupRequest,
+		things.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))

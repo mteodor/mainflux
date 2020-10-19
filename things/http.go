@@ -2,22 +2,86 @@ package things
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
 
-	"github.com/mainflux/mainflux/users"
+	"github.com/go-kit/kit/endpoint"
+	"github.com/go-zoo/bone"
+	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const maxNameSize = 1024
+const (
+	maxNameSize = 1024
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	nameKey     = "name"
+	metadataKey = "metadata"
+	contentType = "application/json"
 
-// mux.Post("/groups", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "add_group")(things.CreateGroupEndpoint(svc)),
-// 	things.DecodeGroupCreate,
-// 	encodeResponse,
-// 	opts...,
-// ))
+	defOffset = 0
+	defLimit  = 10
+)
 
-func CreateGroupEndpoint(svc Service) {
+var (
+	errUnsupportedContentType = errors.New("unsupported content type")
+	errInvalidQueryParams     = errors.New("invalid query params")
+	errInvalidLimitParam      = errors.New("invalid limit query param")
+	errInvalidOffsetParam     = errors.New("invalid offset query param")
+
+	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
+	ErrUnsupportedContentType = errors.New("unsupported content type")
+	// ErrFailedDecode indicates failed to decode request body
+	ErrFailedDecode = errors.New("failed to decode request body")
+)
+
+func ListMembership(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listGroupReq)
+		req := request.(listMemberGroupReq)
+		if err := req.validate(); err != nil {
+			return memberPageRes{}, err
+		}
+		mp, err := svc.Memberships(ctx, req.token, req.memberID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return memberPageRes{}, err
+		}
+		return buildGroupsResponse(mp), nil
+	}
+}
+
+func CreateGroupEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(createGroupReq)
+		if err := req.validate(); err != nil {
+			return createGroupRes{}, err
+		}
+
+		group := NewGroup()
+		group.SetName(req.Name)
+		group.SetDescription(req.Description)
+		group.SetMetadata(req.Metadata)
+
+		gp, err := svc.CreateGroup(ctx, req.token, group)
+		if err != nil {
+			return createGroupRes{}, err
+		}
+		return createGroupRes{
+			created:     true,
+			ID:          gp.ID(),
+			ParentID:    gp.ParentID(),
+			Description: gp.Description(),
+			Metadata:    gp.Metadata(),
+			Name:        gp.Name(),
+		}, nil
+	}
+}
+
+func ListGroupsEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listMemberGroupReq)
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, err
 		}
@@ -29,61 +93,176 @@ func CreateGroupEndpoint(svc Service) {
 	}
 }
 
-// mux.Get("/groups", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "groups")(things.ListGroupsEndpoint(svc)),
-// 	things.DecodeListGroups,
-// 	encodeResponse,
-// 	opts...,
-// ))
+func DeleteGroupEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
+			return nil, err
+		}
+		return groupDeleteRes{}, nil
+	}
+}
 
-// mux.Delete("/groups/:groupID", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "delete_group")(things.DeleteGroupEndpoint(svc)),
-// 	things.DecodeDeleteGroupRequest,
-// 	encodeResponse,
-// 	opts...,
-// ))
+func AssignMemberToGroup(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(memberGroupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.Assign(ctx, req.token, req.memberID, req.groupID); err != nil {
+			return nil, err
+		}
+		return assignMemberToGroupRes{}, nil
+	}
+}
 
-// mux.Put("/groups/:groupID/things/:memberID", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "assign_user_to_group")(things.AssignMemberToGroup(svc)),
-// 	things.DecodeMemberGroupRequest,
-// 	encodeResponse,
-// 	opts...,
-// ))
+func RemoveMemberFromGroup(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(memberGroupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.Unassign(ctx, req.token, req.memberID, req.groupID); err != nil {
+			return nil, err
+		}
+		return removeMemberFromGroupRes{}, nil
+	}
+}
 
-// mux.Delete("/groups/:groupID/things/:memberID", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "remove_thing_from_group")(things.RemoveUserFromGroup(svc)),
-// 	things.DecodeMemberGroupRequest,
-// 	encodeResponse,
-// 	opts...,
-// ))
+func ListMembersForGroupEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listMemberGroupReq)
+		if err := req.validate(); err != nil {
+			return memberPageRes{}, err
+		}
+		mp, err := svc.Members(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return memberPageRes{}, err
+		}
+		return buildUsersResponse(mp), nil
+	}
+}
 
-// mux.Get("/groups/:groupID/things", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "members")(things.ListMembersForGroupEndpoint(svc)),
-// 	things.DecodeMemberGroupRequest,
-// 	encodeResponse,
-// 	opts...,
-// ))
+func UpdateGroupEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateGroupReq)
+		if err := req.validate(); err != nil {
+			return createGroupRes{}, err
+		}
 
-// mux.Patch("/groups/:groupID", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "update_group")(things.UpdateGroupEndpoint(svc)),
-// 	things.DecodeGroupCreate,
-// 	encodeResponse,
-// 	opts...,
-// ))
+		group := NewGroup()
+		group.SetID(req.ID)
+		group.SetDescription(req.Description)
+		group.SetMetadata(req.Metadata)
 
-// mux.Get("/groups/:groupID/groups", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "list_children_groups")(things.ListGroupsEndpoint(svc)),
-// 	things.DecodeGroupRequest,
-// 	encodeResponse,
-// 	opts...,
-// ))
+		g, err := svc.UpdateGroup(ctx, req.token, group)
+		if err != nil {
+			return createGroupRes{}, err
+		}
 
-// mux.Get("/groups/:groupID", kithttp.NewServer(
-// 	kitot.TraceServer(tracer, "group")(things.ViewGroupEndpoint(svc)),
-// 	things.DecodeGroupRequest,
-// 	encodeResponse,
-// 	opts...,
-// ))
+		res := createGroupRes{
+			Name:        g.Name(),
+			Description: g.Description(),
+			Metadata:    g.Metadata(),
+			created:     false,
+		}
+		return res, nil
+	}
+}
+
+func ViewGroupEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return viewGroupRes{}, err
+		}
+
+		g, err := svc.Group(ctx, req.token, req.groupID)
+		if err != nil {
+			return viewGroupRes{}, err
+		}
+		res := viewGroupRes{
+			Name:        g.Name(),
+			Description: g.Description(),
+			Metadata:    g.Metadata(),
+			ParentID:    g.ParentID(),
+		}
+		return res, nil
+	}
+}
+
+func DecodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := readStringQuery(r, nameKey)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	groupID := bone.GetValue(r, "groupID")
+	memberID := bone.GetValue(r, "memberID")
+
+	req := listMemberGroupReq{
+		token:    r.Header.Get("Authorization"),
+		groupID:  groupID,
+		memberID: memberID,
+		offset:   o,
+		limit:    l,
+		name:     n,
+		metadata: m,
+	}
+	return req, nil
+}
+
+func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+	var req createGroupReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(ErrFailedDecode, err)
+	}
+	req.token = r.Header.Get("Authorization")
+	return req, nil
+}
+
+func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := groupReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupID"),
+		name:    bone.GetValue(r, "name"),
+	}
+
+	return req, nil
+}
+
+func DecodeMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := memberGroupReq{
+		token:    r.Header.Get("Authorization"),
+		groupID:  bone.GetValue(r, "groupID"),
+		memberID: bone.GetValue(r, "userID"),
+	}
+	return req, nil
+}
 
 // endpoint.go
 func buildGroupsResponse(gp GroupPage) groupPageRes {
@@ -97,43 +276,48 @@ func buildGroupsResponse(gp GroupPage) groupPageRes {
 	}
 	for _, group := range gp.Groups {
 		view := viewGroupRes{
-			ID:          group.ID,
-			ParentID:    group.ParentID,
-			Name:        group.Name,
-			Description: group.Description,
-			Metadata:    group.Metadata,
+			ID:          group.ID(),
+			ParentID:    group.ParentID(),
+			Name:        group.Name(),
+			Description: group.Description(),
+			Metadata:    group.Metadata(),
 		}
 		res.Groups = append(res.Groups, view)
 	}
 	return res
 }
 
-func buildUsersResponse(mp MemberPage) userPageRes {
+func buildUsersResponse(mp MemberPage) memberPageRes {
 	res := memberPageRes{
 		pageRes: pageRes{
-			Total:  up.Total,
-			Offset: up.Offset,
-			Limit:  up.Limit,
+			Total:  mp.Total,
+			Offset: mp.Offset,
+			Limit:  mp.Limit,
 		},
 		Members: []interface{}{},
 	}
-	for _, m := range up.Members {
+	for _, m := range mp.Members {
 		res.Members = append(res.Members, m)
 	}
 	return res
 }
 
-
 // responses.go
-_ mainflux.Response = (*memberPageRes)(nil)
-_ mainflux.Response = (*createGroupRes)(nil)
-_ mainflux.Response = (*updateGroupRes)(nil)
-_ mainflux.Response = (*viewGroupRes)(nil)
-_ mainflux.Response = (*groupDeleteRes)(nil)
-_ mainflux.Response = (*assignMemberToGroupRes)(nil)
-_ mainflux.Response = (*removeMemberFromGroupRes)(nil)
+var (
+	_ mainflux.Response = (*memberPageRes)(nil)
+	_ mainflux.Response = (*createGroupRes)(nil)
+	_ mainflux.Response = (*updateGroupRes)(nil)
+	_ mainflux.Response = (*viewGroupRes)(nil)
+	_ mainflux.Response = (*groupDeleteRes)(nil)
+	_ mainflux.Response = (*assignMemberToGroupRes)(nil)
+	_ mainflux.Response = (*removeMemberFromGroupRes)(nil)
+)
 
-
+type pageRes struct {
+	Total  uint64 `json:"total"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
+}
 type memberPageRes struct {
 	pageRes
 	Members []interface{}
@@ -150,7 +334,6 @@ func (res memberPageRes) Headers() map[string]string {
 func (res memberPageRes) Empty() bool {
 	return false
 }
-
 
 type createGroupRes struct {
 	ID          string                 `json:"id"`
@@ -254,7 +437,7 @@ func (res assignMemberToGroupRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res assignUserToGroupRes) Headers() map[string]string {
+func (res assignMemberToGroupRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
@@ -288,66 +471,65 @@ type createGroupReq struct {
 
 func (req createGroupReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess
 	}
 	if len(req.Name) > maxNameSize || req.Name == "" {
-		return things.ErrMalformedEntity
+		return ErrMalformedEntity
 	}
 	return nil
 }
 
 type updateGroupReq struct {
 	token       string
-	Name        string                 `json:"name,omitempty"`
+	ID          string                 `json:"id,omitempty"`
 	Description string                 `json:"description,omitempty"`
+	ParentID    string                 `json:"parent_id,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req updateGroupReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess
 	}
-	if req.Name == "" {
-		return users.ErrMalformedEntity
+	if req.ID == "" {
+		return ErrMalformedEntity
 	}
-	if len(req.Name) > maxNameSize {
-		return users.ErrMalformedEntity
-	}
+
 	return nil
 }
 
-type listUserGroupReq struct {
+type listMemberGroupReq struct {
 	token    string
 	offset   uint64
 	limit    uint64
-	metadata users.Metadata
+	metadata Metadata
 	name     string
 	groupID  string
-	userID   string
+	memberID string
 }
 
-func (req listUserGroupReq) validate() error {
+func (req listMemberGroupReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess
+	}
+	if req.groupID == "" && req.memberID == "" {
+		return ErrMalformedEntity
 	}
 	return nil
 }
 
-type userGroupReq struct {
-	token   string
-	groupID string
-	userID  string
+type memberGroupReq struct {
+	token    string
+	groupID  string
+	memberID string
 }
 
-func (req userGroupReq) validate() error {
+func (req memberGroupReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess
 	}
-	if req.groupID == "" {
-		return users.ErrMalformedEntity
-	}
-	if req.userID == "" {
-		return users.ErrMalformedEntity
+	if req.groupID == "" && req.memberID == "" {
+		return ErrMalformedEntity
 	}
 	return nil
 }
@@ -360,10 +542,61 @@ type groupReq struct {
 
 func (req groupReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess
 	}
 	if req.groupID == "" && req.name == "" {
-		return users.ErrMalformedEntity
+		return ErrMalformedEntity
 	}
 	return nil
+}
+
+func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return 0, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return def, nil
+	}
+
+	strval := vals[0]
+	val, err := strconv.ParseUint(strval, 10, 64)
+	if err != nil {
+		return 0, errInvalidQueryParams
+	}
+
+	return val, nil
+}
+
+func readStringQuery(r *http.Request, key string) (string, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return "", errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return "", nil
+	}
+
+	return vals[0], nil
+}
+
+func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return nil, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(vals[0]), &m)
+	if err != nil {
+		return nil, errors.Wrap(errInvalidQueryParams, err)
+	}
+
+	return m, nil
 }

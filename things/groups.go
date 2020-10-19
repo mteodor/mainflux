@@ -42,7 +42,7 @@ type GroupService interface {
 	CreateGroup(ctx context.Context, token string, group Group) (Group, error)
 
 	// UpdateGroup updates the group identified by the provided ID.
-	UpdateGroup(ctx context.Context, token string, group Group) error
+	UpdateGroup(ctx context.Context, token string, group Group) (Group, error)
 
 	// Group retrieves data about the group identified by ID.
 	Group(ctx context.Context, token, id string) (Group, error)
@@ -65,4 +65,65 @@ type GroupService interface {
 
 	// Unassign removes member with memberID from group identified by groupID.
 	Unassign(ctx context.Context, token, memberID, groupID string) error
+}
+
+type group struct {
+	id          string
+	parentID    string
+	ownerID     string
+	name        string
+	description string
+	metadata    map[string]interface{}
+}
+
+func (g *group) ID() string {
+	return g.id
+}
+
+func (g *group) ParentID() string {
+	return g.parentID
+}
+
+func (g *group) OwnerID() string {
+	return g.ownerID
+}
+
+func (g *group) Name() string {
+	return g.name
+}
+
+func (g *group) Description() string {
+	return g.description
+}
+
+func (g *group) Metadata() Metadata {
+	return g.metadata
+}
+
+func (g *group) SetID(id string) {
+	g.id = id
+}
+
+func (g *group) SetParentID(uid string) {
+	g.parentID = uid
+}
+
+func (g *group) SetOwnerID(uid string) {
+	g.ownerID = uid
+}
+
+func (g *group) SetName(name string) {
+	g.name = name
+}
+
+func (g *group) SetDescription(desc string) {
+	g.description = desc
+}
+
+func (g *group) SetMetadata(meta Metadata) {
+	g.metadata = meta
+}
+
+func NewGroup() Group {
+	return &group{}
 }
