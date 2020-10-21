@@ -15,16 +15,16 @@ const (
 	streamLen = 1000
 )
 
-var _ things.ThingsService = (*eventStore)(nil)
+var _ things.Service = (*eventStore)(nil)
 
 type eventStore struct {
-	svc    things.ThingsService
+	svc    things.Service
 	client *redis.Client
 }
 
 // NewEventStoreMiddleware returns wrapper around things service that sends
 // events to event store.
-func NewEventStoreMiddleware(svc things.ThingsService, client *redis.Client) things.ThingsService {
+func NewEventStoreMiddleware(svc things.Service, client *redis.Client) things.Service {
 	return eventStore{
 		svc:    svc,
 		client: client,
@@ -238,4 +238,47 @@ func (es eventStore) CanAccessByID(ctx context.Context, chanID string, thingID s
 
 func (es eventStore) Identify(ctx context.Context, key string) (string, error) {
 	return es.svc.Identify(ctx, key)
+}
+
+func (es eventStore) CreateGroup(ctx context.Context, token string, group things.Group) (things.Group, error) {
+	return es.svc.CreateGroup(ctx, token, group)
+}
+
+func (es eventStore) Group(ctx context.Context, token, id string) (things.Group, error) {
+	return es.svc.Group(ctx, token, id)
+}
+
+func (es eventStore) Groups(ctx context.Context, token string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	return es.svc.Groups(ctx, token, offset, limit, meta)
+}
+
+func (es eventStore) Parents(ctx context.Context, token, childID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	return es.svc.Parents(ctx, token, childID, offset, limit, meta)
+}
+func (es eventStore) Children(ctx context.Context, token, parentID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	return es.svc.Children(ctx, token, parentID, offset, limit, meta)
+}
+
+func (es eventStore) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta things.Metadata) (things.MemberPage, error) {
+	return es.svc.Members(ctx, token, groupID, offset, limit, meta)
+}
+
+func (es eventStore) RemoveGroup(ctx context.Context, token, id string) error {
+	return es.svc.RemoveGroup(ctx, token, id)
+}
+
+func (es eventStore) Unassign(ctx context.Context, token, memberID, groupID string) error {
+	return es.svc.Unassign(ctx, token, memberID, groupID)
+}
+
+func (es eventStore) UpdateGroup(ctx context.Context, token string, group things.Group) (things.Group, error) {
+	return es.svc.UpdateGroup(ctx, token, group)
+}
+
+func (es eventStore) Assign(ctx context.Context, token, memberID, groupID string) error {
+	return es.svc.Assign(ctx, token, memberID, groupID)
+}
+
+func (es eventStore) Memberships(ctx context.Context, token, memberID string, offset, limit uint64, gm things.Metadata) (things.GroupPage, error) {
+	return es.svc.Memberships(ctx, token, memberID, offset, limit, gm)
 }

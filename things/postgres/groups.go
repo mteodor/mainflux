@@ -14,7 +14,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
-	"github.com/mainflux/mainflux/users"
 )
 
 var (
@@ -54,13 +53,13 @@ func (gr groupRepository) Save(ctx context.Context, group things.Group) (things.
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return nil, errors.Wrap(users.ErrMalformedEntity, err)
+				return nil, errors.Wrap(things.ErrMalformedEntity, err)
 			case errDuplicate:
-				return nil, errors.Wrap(users.ErrGroupConflict, err)
+				return nil, errors.Wrap(things.ErrGroupConflict, err)
 			}
 		}
 
-		return nil, errors.Wrap(users.ErrCreateGroup, err)
+		return nil, errors.Wrap(things.ErrCreateGroup, err)
 	}
 
 	defer row.Close()
@@ -107,7 +106,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 	}
 
 	if cnt != 1 {
-		return errors.Wrap(users.ErrDeleteGroupMissing, err)
+		return errors.Wrap(things.ErrDeleteGroupMissing, err)
 	}
 	return nil
 }
@@ -120,7 +119,7 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (things.G
 
 	if err := gr.db.QueryRowxContext(ctx, q, id).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(users.ErrNotFound, err)
+			return nil, errors.Wrap(things.ErrNotFound, err)
 
 		}
 		return nil, errors.Wrap(errRetrieveDB, err)
@@ -138,7 +137,7 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (thin
 
 	if err := gr.db.QueryRowxContext(ctx, q, name).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(users.ErrNotFound, err)
+			return nil, errors.Wrap(things.ErrNotFound, err)
 
 		}
 		return nil, errors.Wrap(errRetrieveDB, err)
@@ -148,7 +147,7 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (thin
 	return group, nil
 }
 
-func (gr groupRepository) RetrieveAllAncestors(ctx context.Context, groupID string, offset, limit uint64, gm things.Metadata) (things.GroupPage, error) {
+func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string, offset, limit uint64, gm things.Metadata) (things.GroupPage, error) {
 	if groupID == "" {
 		return things.GroupPage{}, nil
 	}
@@ -162,10 +161,10 @@ func (gr groupRepository) RetrieveAllAncestors(ctx context.Context, groupID stri
 	}
 	sq := `WITH RECURSIVE subordinates AS (
 				SELECT id, owner_id, parent_id, name, description, metadata
-				FROM groups
-				WHERE parent_id = :id
+				FROM thing_groups
+				WHERE id = :id
 				UNION
-					SELECT groups.id, thing_groups.owner_id, thing_groups.parent_id, thing_groups.name, thing_groups.description, thing_groups.metadata
+					SELECT thing_groups.id, thing_groups.owner_id, thing_groups.parent_id, thing_groups.name, thing_groups.description, thing_groups.metadata
 					FROM thing_groups 
 					INNER JOIN subordinates s ON s.parent_id = thing_groups.id
 			)`
@@ -343,7 +342,7 @@ func (gr groupRepository) Members(ctx context.Context, groupID string, offset, l
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things th, thing_group_relations g
-	WHERE th.id = g.user_id AND g.group_id = :group  %s;`, mq)
+	WHERE th.id = g.thing_id AND g.group_id = :group  %s;`, mq)
 
 	total, err := total(ctx, gr.db, cq, params)
 	if err != nil {
@@ -372,8 +371,8 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata 
-					  FROM group_relations gr, thing_groups g
-					  WHERE gr.group_id = g.id and gr.user_id = :userID 
+					  FROM thing_group_relations gr, thing_groups g
+					  WHERE gr.group_id = g.id and gr.thing_id = :userID 
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
@@ -403,8 +402,8 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) 
-					   FROM group_relations gr, thing_groups g
-					   WHERE gr.group_id = g.id and gr.user_id = :userID %s;`, mq)
+					   FROM thing_group_relations gr, thing_groups g
+					   WHERE gr.group_id = g.id and gr.thing_id = :userID %s;`, mq)
 
 	total, err := total(ctx, gr.db, cq, params)
 	if err != nil {
@@ -423,40 +422,40 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 	return page, nil
 }
 
-func (gr groupRepository) Assign(ctx context.Context, userID, groupID string) error {
-	dbr, err := toDBGroupRelation(userID, groupID)
+func (gr groupRepository) Assign(ctx context.Context, thingID, groupID string) error {
+	dbr, err := toDBGroupRelation(thingID, groupID)
 	if err != nil {
-		return errors.Wrap(users.ErrAssignUserToGroup, err)
+		return errors.Wrap(things.ErrAssignToGroup, err)
 	}
 
-	qIns := `INSERT INTO group_relations (group_id, user_id) VALUES (:group_id, :user_id)`
+	qIns := `INSERT INTO thing_group_relations (group_id, thing_id) VALUES (:group_id, :thing_id)`
 	_, err = gr.db.NamedQueryContext(ctx, qIns, dbr)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return errors.Wrap(users.ErrMalformedEntity, err)
+				return errors.Wrap(things.ErrMalformedEntity, err)
 			case errDuplicate:
-				return errors.Wrap(users.ErrGroupConflict, err)
+				return errors.Wrap(things.ErrGroupConflict, err)
 			case errFK:
-				return errors.Wrap(users.ErrNotFound, err)
+				return errors.Wrap(things.ErrNotFound, err)
 			}
 		}
-		return errors.Wrap(users.ErrAssignUserToGroup, err)
+		return errors.Wrap(things.ErrAssignToGroup, err)
 	}
 
 	return nil
 }
 
 func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) error {
-	q := `DELETE FROM group_relations WHERE user_id = :user_id AND group_id = :group_id`
+	q := `DELETE FROM thing_group_relations WHERE thing_id = :thing_id AND group_id = :group_id`
 	dbr, err := toDBGroupRelation(userID, groupID)
 	if err != nil {
-		return errors.Wrap(users.ErrNotFound, err)
+		return errors.Wrap(things.ErrNotFound, err)
 	}
 	if _, err := gr.db.NamedExecContext(ctx, q, dbr); err != nil {
-		return errors.Wrap(users.ErrConflict, err)
+		return errors.Wrap(things.ErrConflict, err)
 	}
 	return nil
 }

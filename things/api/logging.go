@@ -267,7 +267,7 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id strin
 
 func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group things.Group) (g things.Group, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method create_group for key %s and name %s took %s to complete", token, g.Name(), time.Since(begin))
+		message := fmt.Sprintf("Method create_group for key %s and name %s took %s to complete", token, group.Name(), time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -317,9 +317,9 @@ func (lm *loggingMiddleware) Group(ctx context.Context, token, id string) (g thi
 	return lm.svc.Group(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) Groups(ctx context.Context, token, parentID string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+func (lm *loggingMiddleware) Groups(ctx context.Context, token string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method groups for key %s and parent id %s took %s to complete", token, parentID, time.Since(begin))
+		message := fmt.Sprintf("Method groups for key %s took %s to complete", token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -327,7 +327,33 @@ func (lm *loggingMiddleware) Groups(ctx context.Context, token, parentID string,
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Groups(ctx, token, parentID, offset, limit, meta)
+	return lm.svc.Groups(ctx, token, offset, limit, meta)
+}
+
+func (lm *loggingMiddleware) Children(ctx context.Context, token, parentID string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method children for key %s and parent %s took %s to complete", token, parentID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.Children(ctx, token, parentID, offset, limit, meta)
+}
+
+func (lm *loggingMiddleware) Parents(ctx context.Context, token, childID string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method parents for key %s took for child %s to complete", token, childID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.Parents(ctx, token, childID, offset, limit, meta)
 }
 
 func (lm *loggingMiddleware) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta things.Metadata) (gp things.MemberPage, err error) {

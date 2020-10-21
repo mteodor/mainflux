@@ -188,7 +188,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	r.Get("/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "groups")(things.ListGroupsEndpoint(svc)),
-		things.DecodeListMemberGroupRequest,
+		things.DecodeListGroupsRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -228,9 +228,16 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/groups/:groupID/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_children_groups")(things.ListGroupsEndpoint(svc)),
-		things.DecodeListMemberGroupRequest,
+	r.Get("/groups/:groupID/children", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_children_groups")(things.ListGroupChildrenEndpoint(svc)),
+		things.DecodeListGroupsRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/groups/:groupID/parents", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_parent_groups")(things.ListGroupParentsEndpoint(svc)),
+		things.DecodeListGroupsRequest,
 		encodeResponse,
 		opts...,
 	))

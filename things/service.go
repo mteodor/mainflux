@@ -49,7 +49,7 @@ var (
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
-type ThingsService interface {
+type Service interface {
 	// CreateThings adds a list of things to the user identified by the provided key.
 	CreateThings(ctx context.Context, token string, things ...Thing) ([]Thing, error)
 
@@ -119,10 +119,7 @@ type ThingsService interface {
 
 	// Identify returns thing ID for given thing key.
 	Identify(ctx context.Context, key string) (string, error)
-}
 
-type Service interface {
-	ThingsService
 	GroupService
 }
 
@@ -403,7 +400,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group Gr
 	if group.Name() == "" || !groupRegexp.MatchString(group.Name()) {
 		return nil, ErrMalformedEntity
 	}
-	userID, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return nil, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -413,19 +410,39 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group Gr
 		return nil, errors.Wrap(ErrCreateGroup, err)
 	}
 	group.SetID(uid)
-	group.SetOwnerID(userID.GetValue())
+
+	// Temporary solution, until we have ID in response
+	// from Identify gRPC call.
+	owner, err := uuidProvider.New().ID()
+	if err != nil {
+		return nil, errors.Wrap(ErrCreateGroup, err)
+	}
+	group.SetOwnerID(owner)
 	return ts.groups.Save(ctx, group)
 }
 
-func (ts *thingsService) Groups(ctx context.Context, token string, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+func (ts *thingsService) Groups(ctx context.Context, token string, offset, limit uint64, meta Metadata) (GroupPage, error) {
 	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	if parentID == "" {
-		return ts.groups.RetrieveAll(ctx, offset, limit, meta)
-	}
+	return ts.groups.RetrieveAll(ctx, offset, limit, meta)
 
+}
+
+func (ts *thingsService) Parents(ctx context.Context, token string, childID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.RetrieveAllParents(ctx, childID, offset, limit, meta)
+}
+
+func (ts *thingsService) Children(ctx context.Context, token string, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error) {
+	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
 	return ts.groups.RetrieveAllChildren(ctx, parentID, offset, limit, meta)
 }
 

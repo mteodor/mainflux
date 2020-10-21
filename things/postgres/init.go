@@ -96,6 +96,7 @@ func migrateDB(db *sqlx.DB) error {
 			{
 				Id: "things_4",
 				Up: []string{
+					`ALTER TABLE IF EXISTS things ADD CONSTRAINT things_id_key UNIQUE (id)`,
 					`CREATE TABLE IF NOT EXISTS thing_groups ( 
 						id          UUID NOT NULL,
 						parent_id   UUID, 
@@ -104,7 +105,7 @@ func migrateDB(db *sqlx.DB) error {
 						description VARCHAR(1024),
 						metadata    JSONB,
 						PRIMARY KEY (id),
-						FOREIGN KEY (parent_id) REFERENCES thing_groups (id)  ON DELETE CASCADE ON UPDATE CASCADE,
+						FOREIGN KEY (parent_id) REFERENCES thing_groups (id)  ON DELETE CASCADE ON UPDATE CASCADE
 				   )`,
 					`CREATE TABLE IF NOT EXISTS thing_group_relations (
 						thing_id UUID NOT NULL,

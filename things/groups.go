@@ -42,9 +42,14 @@ type GroupService interface {
 	// Group retrieves data about the group identified by ID.
 	Group(ctx context.Context, token, id string) (Group, error)
 
-	// ListGroups retrieves groups that are children to group identified by parentID
-	// if parentID is empty all groups are listed.
-	Groups(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	// Groups retrieves groups.
+	Groups(ctx context.Context, token string, offset, limit uint64, meta Metadata) (GroupPage, error)
+
+	// Children retrieves groups that are children to group identified by parentID
+	Children(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+
+	// Parents retrieves groups that are parent to group identified by childID.
+	Parents(ctx context.Context, token, childID string, offset, limit uint64, meta Metadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.
 	Members(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (MemberPage, error)
@@ -143,8 +148,8 @@ type GroupRepository interface {
 	// RetrieveAll retrieves all groups.
 	RetrieveAll(ctx context.Context, offset, limit uint64, gm Metadata) (GroupPage, error)
 
-	// RetrieveAllAncestors retrieves all groups that are ancestors to the group with given groupID.
-	RetrieveAllAncestors(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	// RetrieveAllParents retrieves all groups that are ancestors to the group with given groupID.
+	RetrieveAllParents(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
 	// RetrieveAllChildren retrieves all children from group with given groupID.
 	RetrieveAllChildren(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)

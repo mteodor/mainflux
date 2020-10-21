@@ -63,6 +63,7 @@ func CreateGroupEndpoint(svc Service) endpoint.Endpoint {
 		group.SetName(req.Name)
 		group.SetDescription(req.Description)
 		group.SetMetadata(req.Metadata)
+		group.SetParentID(req.ParentID)
 
 		gp, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
@@ -81,11 +82,39 @@ func CreateGroupEndpoint(svc Service) endpoint.Endpoint {
 
 func ListGroupsEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMemberGroupReq)
+		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, err
 		}
-		gp, err := svc.Groups(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		gp, err := svc.Groups(ctx, req.token, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return groupPageRes{}, err
+		}
+		return buildGroupsResponse(gp), nil
+	}
+}
+
+func ListGroupChildrenEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listGroupsReq)
+		if err := req.validate(); err != nil {
+			return groupPageRes{}, err
+		}
+		gp, err := svc.Children(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return groupPageRes{}, err
+		}
+		return buildGroupsResponse(gp), nil
+	}
+}
+
+func ListGroupParentsEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listGroupsReq)
+		if err := req.validate(); err != nil {
+			return groupPageRes{}, err
+		}
+		gp, err := svc.Parents(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return groupPageRes{}, err
 		}
@@ -194,6 +223,41 @@ func ViewGroupEndpoint(svc Service) endpoint.Endpoint {
 	}
 }
 
+func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := readStringQuery(r, nameKey)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listGroupsReq{
+		token:    r.Header.Get("Authorization"),
+		offset:   o,
+		limit:    l,
+		name:     n,
+		metadata: m,
+		groupID:  bone.GetValue(r, "groupID"),
+	}
+	return req, nil
+}
+
 func DecodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, ErrUnsupportedContentType
@@ -218,13 +282,10 @@ func DecodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface
 		return nil, err
 	}
 
-	groupID := bone.GetValue(r, "groupID")
-	memberID := bone.GetValue(r, "memberID")
-
 	req := listMemberGroupReq{
 		token:    r.Header.Get("Authorization"),
-		groupID:  groupID,
-		memberID: memberID,
+		groupID:  bone.GetValue(r, "groupID"),
+		memberID: bone.GetValue(r, "memberID"),
 		offset:   o,
 		limit:    l,
 		name:     n,
@@ -259,7 +320,7 @@ func DecodeMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, 
 	req := memberGroupReq{
 		token:    r.Header.Get("Authorization"),
 		groupID:  bone.GetValue(r, "groupID"),
-		memberID: bone.GetValue(r, "userID"),
+		memberID: bone.GetValue(r, "memberID"),
 	}
 	return req, nil
 }
@@ -495,6 +556,22 @@ func (req updateGroupReq) validate() error {
 		return ErrMalformedEntity
 	}
 
+	return nil
+}
+
+type listGroupsReq struct {
+	token    string
+	offset   uint64
+	limit    uint64
+	metadata Metadata
+	name     string
+	groupID  string
+}
+
+func (req listGroupsReq) validate() error {
+	if req.token == "" {
+		return ErrUnauthorizedAccess
+	}
 	return nil
 }
 
