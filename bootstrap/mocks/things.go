@@ -230,3 +230,57 @@ func findIndex(list []string, val string) int {
 
 	return -1
 }
+
+func (svc *mainfluxThings) CreateGroup(ctx context.Context, token string, group things.Group) (things.Group, error) {
+	panic("not implemented")
+}
+
+// UpdateGroup updates the group identified by the provided ID.
+func (svc *mainfluxThings) UpdateGroup(ctx context.Context, token string, group things.Group) (things.Group, error) {
+	panic("not implemented")
+}
+
+// Group retrieves data about the group identified by ID.
+func (svc *mainfluxThings) Group(ctx context.Context, token, id string) (things.Group, error) {
+	panic("not implemented")
+}
+
+// Groups retrieves groups.
+func (svc *mainfluxThings) Groups(ctx context.Context, token string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	panic("not implemented")
+}
+
+// Children retrieves groups that are children to group identified by parentID
+func (svc *mainfluxThings) Children(ctx context.Context, token, parentID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	panic("not implemented")
+}
+
+// Parents retrieves groups that are parent to group identified by childID.
+func (svc *mainfluxThings) Parents(ctx context.Context, token, childID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	panic("not implemented")
+}
+
+// Members retrieves everything that is assigned to a group identified by groupID.
+func (svc *mainfluxThings) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta things.Metadata) (things.MemberPage, error) {
+	panic("not implemented")
+}
+
+// Memberships retrieves all groups for member that is identified with memberID belongs to.
+func (svc *mainfluxThings) Memberships(ctx context.Context, token, memberID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
+	panic("not implemented")
+}
+
+// RemoveGroup removes the group identified with the provided ID.
+func (svc *mainfluxThings) RemoveGroup(ctx context.Context, token, id string) error {
+	panic("not implemented")
+}
+
+// Assign adds  member with memberID into the group identified by groupID.
+func (svc *mainfluxThings) Assign(ctx context.Context, token, memberID, groupID string) error {
+	panic("not implemented")
+}
+
+// Unassign removes member with memberID from group identified by groupID.
+func (svc *mainfluxThings) Unassign(ctx context.Context, token, memberID, groupID string) error {
+	panic("not implemented")
+}
