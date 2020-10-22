@@ -38,7 +38,7 @@ const (
 	channelRemove = channelPrefix + "remove"
 )
 
-func newService(tokens map[string]string) things.ThingsService {
+func newService(tokens map[string]string) things.Service {
 	auth := mocks.NewAuthService(tokens)
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
