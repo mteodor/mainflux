@@ -8,7 +8,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/pkg/groups"
+	"github.com/mainflux/mainflux/internal/groups"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 

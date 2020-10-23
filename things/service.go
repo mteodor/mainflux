@@ -7,8 +7,8 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/groups"
 
 	"github.com/mainflux/mainflux"
 	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"

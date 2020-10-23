@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mainflux/mainflux/internal/groups"
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/groups"
 	"github.com/mainflux/mainflux/things"
 )
 

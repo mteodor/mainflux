@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/pkg/groups"
+	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/things"
 )
 
