@@ -28,15 +28,6 @@ var (
 
 	// ErrEntityConnected indicates error while checking connection in database
 	ErrEntityConnected = errors.New("check thing-channel connection in database error")
-
-	// ErrDeleteGroupMissing
-	ErrDeleteGroupMissing = errors.New("failed to delete a group")
-
-	// ErrGroupConflict
-	ErrGroupConflict = errors.New("group already exists")
-
-	// ErrAssignToGroup
-	ErrAssignToGroup = errors.New("failed assigning user to a group")
 )
 
 // Metadata to be used for mainflux thing or channel for customized

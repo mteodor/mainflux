@@ -346,7 +346,7 @@ func (lm *loggingMiddleware) ListChildren(ctx context.Context, token, parentID s
 
 func (lm *loggingMiddleware) ListParents(ctx context.Context, token, childID string, offset, limit uint64, meta groups.Metadata) (gp groups.GroupPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_parents for token %s took for child %s to complete", token, childID, time.Since(begin))
+		message := fmt.Sprintf("Method list_parents for token %s and child %s took for child %s to complete", token, childID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

@@ -44,7 +44,7 @@ var (
 	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
 
-	// ErrFailedToRetrieveThings
+	// ErrFailedToRetrieveThings failed to retrieve things.
 	ErrFailedToRetrieveThings = errors.New("failed to retrieve things for group")
 )
 
@@ -457,17 +457,15 @@ func (ts *thingsService) ListMembers(ctx context.Context, token, groupID string,
 		return groups.MemberPage{}, errors.Wrap(ErrFailedToRetrieveThings, err)
 	}
 	mp := groups.MemberPage{
-		groups.PageMetadata{
+		PageMetadata: groups.PageMetadata{
 			Total:  p.Total,
 			Offset: p.Offset,
 			Limit:  p.Limit,
 			Name:   "things",
 		},
-		make([]groups.Member, 0),
+		Members: make([]groups.Member, 0),
 	}
-	for _, m := range p.Members {
-		mp.Members = append(mp.Members, m)
-	}
+	mp.Members = append(mp.Members, p.Members)
 	return mp, nil
 }
 
