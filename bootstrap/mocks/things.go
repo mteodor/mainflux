@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/pkg/groups"
+	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/things"
 )
 
