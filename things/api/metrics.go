@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
+	"github.com/mainflux/mainflux/pkg/groups"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -193,7 +194,7 @@ func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, 
 	return ms.svc.Identify(ctx, key)
 }
 
-func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, group things.Group) (g things.Group, err error) {
+func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_group").Add(1)
 		ms.latency.With("method", "create_group").Observe(time.Since(begin).Seconds())
@@ -201,7 +202,7 @@ func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return ms.svc.CreateGroup(ctx, token, group)
 }
 
-func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group things.Group) (g things.Group, err error) {
+func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_group").Add(1)
 		ms.latency.With("method", "update_group").Observe(time.Since(begin).Seconds())
@@ -217,58 +218,58 @@ func (ms *metricsMiddleware) RemoveGroup(ctx context.Context, token string, id s
 	return ms.svc.RemoveGroup(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) Group(ctx context.Context, token, id string) (g things.Group, err error) {
+func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "group").Add(1)
-		ms.latency.With("method", "group").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "view_group").Add(1)
+		ms.latency.With("method", "view_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Group(ctx, token, id)
+	return ms.svc.ViewGroup(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) Groups(ctx context.Context, token string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, offset, limit uint64, meta groups.Metadata) (gp groups.GroupPage, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "groups").Add(1)
-		ms.latency.With("method", "groups").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "list_groups").Add(1)
+		ms.latency.With("method", "list_groups").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Groups(ctx, token, offset, limit, meta)
+	return ms.svc.ListGroups(ctx, token, offset, limit, meta)
 }
 
-func (ms *metricsMiddleware) Parents(ctx context.Context, token, childID string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+func (ms *metricsMiddleware) ListParents(ctx context.Context, token, childID string, offset, limit uint64, meta groups.Metadata) (gp groups.GroupPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "parents").Add(1)
 		ms.latency.With("method", "parents").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Parents(ctx, token, childID, offset, limit, meta)
+	return ms.svc.ListParents(ctx, token, childID, offset, limit, meta)
 }
 
-func (ms *metricsMiddleware) Children(ctx context.Context, token, parentID string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+func (ms *metricsMiddleware) ListChildren(ctx context.Context, token, parentID string, offset, limit uint64, meta groups.Metadata) (gp groups.GroupPage, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "children").Add(1)
-		ms.latency.With("method", "children").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "list_children").Add(1)
+		ms.latency.With("method", "list_children").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Children(ctx, token, parentID, offset, limit, meta)
+	return ms.svc.ListChildren(ctx, token, parentID, offset, limit, meta)
 }
 
-func (ms *metricsMiddleware) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta things.Metadata) (gp things.MemberPage, err error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta groups.Metadata) (gp groups.MemberPage, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "members").Add(1)
-		ms.latency.With("method", "members").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "list_members").Add(1)
+		ms.latency.With("method", "list_members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Members(ctx, token, groupID, offset, limit, meta)
+	return ms.svc.ListMembers(ctx, token, groupID, offset, limit, meta)
 }
 
-func (ms *metricsMiddleware) Memberships(ctx context.Context, token, groupID string, offset, limit uint64, meta things.Metadata) (gp things.GroupPage, err error) {
+func (ms *metricsMiddleware) ListMemberships(ctx context.Context, token, groupID string, offset, limit uint64, meta groups.Metadata) (gp groups.GroupPage, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "memberships").Add(1)
-		ms.latency.With("method", "membeships").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "list_memberships").Add(1)
+		ms.latency.With("method", "list_memberships").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Memberships(ctx, token, groupID, offset, limit, meta)
+	return ms.svc.ListMemberships(ctx, token, groupID, offset, limit, meta)
 }
 
 func (ms *metricsMiddleware) Assign(ctx context.Context, token, memberID, groupID string) (err error) {

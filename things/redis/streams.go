@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/go-redis/redis"
+	"github.com/mainflux/mainflux/pkg/groups"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -240,27 +241,27 @@ func (es eventStore) Identify(ctx context.Context, key string) (string, error) {
 	return es.svc.Identify(ctx, key)
 }
 
-func (es eventStore) CreateGroup(ctx context.Context, token string, group things.Group) (things.Group, error) {
+func (es eventStore) CreateGroup(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
 	return es.svc.CreateGroup(ctx, token, group)
 }
 
-func (es eventStore) Group(ctx context.Context, token, id string) (things.Group, error) {
-	return es.svc.Group(ctx, token, id)
+func (es eventStore) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
+	return es.svc.ViewGroup(ctx, token, id)
 }
 
-func (es eventStore) Groups(ctx context.Context, token string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
-	return es.svc.Groups(ctx, token, offset, limit, meta)
+func (es eventStore) ListGroups(ctx context.Context, token string, offset, limit uint64, meta groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListGroups(ctx, token, offset, limit, meta)
 }
 
-func (es eventStore) Parents(ctx context.Context, token, childID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
-	return es.svc.Parents(ctx, token, childID, offset, limit, meta)
+func (es eventStore) ListParents(ctx context.Context, token, childID string, offset, limit uint64, meta groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListParents(ctx, token, childID, offset, limit, meta)
 }
-func (es eventStore) Children(ctx context.Context, token, parentID string, offset, limit uint64, meta things.Metadata) (things.GroupPage, error) {
-	return es.svc.Children(ctx, token, parentID, offset, limit, meta)
+func (es eventStore) ListChildren(ctx context.Context, token, parentID string, offset, limit uint64, meta groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListChildren(ctx, token, parentID, offset, limit, meta)
 }
 
-func (es eventStore) Members(ctx context.Context, token, groupID string, offset, limit uint64, meta things.Metadata) (things.MemberPage, error) {
-	return es.svc.Members(ctx, token, groupID, offset, limit, meta)
+func (es eventStore) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta groups.Metadata) (groups.MemberPage, error) {
+	return es.svc.ListMembers(ctx, token, groupID, offset, limit, meta)
 }
 
 func (es eventStore) RemoveGroup(ctx context.Context, token, id string) error {
@@ -271,7 +272,7 @@ func (es eventStore) Unassign(ctx context.Context, token, memberID, groupID stri
 	return es.svc.Unassign(ctx, token, memberID, groupID)
 }
 
-func (es eventStore) UpdateGroup(ctx context.Context, token string, group things.Group) (things.Group, error) {
+func (es eventStore) UpdateGroup(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
 	return es.svc.UpdateGroup(ctx, token, group)
 }
 
@@ -279,6 +280,6 @@ func (es eventStore) Assign(ctx context.Context, token, memberID, groupID string
 	return es.svc.Assign(ctx, token, memberID, groupID)
 }
 
-func (es eventStore) Memberships(ctx context.Context, token, memberID string, offset, limit uint64, gm things.Metadata) (things.GroupPage, error) {
-	return es.svc.Memberships(ctx, token, memberID, offset, limit, gm)
+func (es eventStore) ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListMemberships(ctx, token, memberID, offset, limit, gm)
 }
