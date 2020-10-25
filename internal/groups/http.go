@@ -344,6 +344,8 @@ func buildGroupsResponse(gp GroupPage) groupPageRes {
 			Name:        group.Name,
 			Description: group.Description,
 			Metadata:    group.Metadata,
+			Path:        group.Path,
+			Level:       group.Level,
 		}
 		res.Groups = append(res.Groups, view)
 	}
@@ -449,6 +451,8 @@ type viewGroupRes struct {
 	OwnerID     string                 `json:"owner_id"`
 	Description string                 `json:"description"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Level       int                    `json:"level"`
+	Path        string                 `json:"path"`
 }
 
 func (res viewGroupRes) Code() int {

@@ -45,7 +45,7 @@ var (
 	ErrCreateGroup = errors.New("failed to create group")
 
 	// ErrFailedToRetrieveThings failed to retrieve things.
-	ErrFailedToRetrieveThings = errors.New("failed to retrieve things for group")
+	ErrFailedToRetrieveThings = errors.New("failed to retrieve group members")
 )
 
 // Service specifies an API that must be fullfiled by the domain service

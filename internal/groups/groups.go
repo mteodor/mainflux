@@ -15,6 +15,8 @@ type Group struct {
 	Name        string
 	Description string
 	Metadata    Metadata
+	Level       int
+	Path        string
 }
 
 type PageMetadata struct {
@@ -45,19 +47,19 @@ type Service interface {
 	ViewGroup(ctx context.Context, token, id string) (Group, error)
 
 	// ListGroups retrieves groups.
-	ListGroups(ctx context.Context, token string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	ListGroups(ctx context.Context, token string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// ListChildren retrieves groups that are children to group identified by parentID
-	ListChildren(ctx context.Context, token, parentID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	ListChildren(ctx context.Context, token, parentID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// ListParents retrieves groups that are parent to group identified by childID.
-	ListParents(ctx context.Context, token, childID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	ListParents(ctx context.Context, token, childID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (MemberPage, error)
+	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (MemberPage, error)
 
 	// ListMemberships retrieves all groups for member that is identified with memberID belongs to.
-	ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, meta Metadata) (GroupPage, error)
+	ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
@@ -99,7 +101,7 @@ type Repository interface {
 	Memberships(ctx context.Context, memberID string, offset, limit uint64, gm Metadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.
-	Members(ctx context.Context, groupID string, offset, limit uint64, meta Metadata) (MemberPage, error)
+	Members(ctx context.Context, groupID string, offset, limit uint64, m Metadata) (MemberPage, error)
 
 	// Assign adds member to group.
 	Assign(ctx context.Context, memberID, groupID string) error

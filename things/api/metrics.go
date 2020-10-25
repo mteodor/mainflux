@@ -194,20 +194,20 @@ func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, 
 	return ms.svc.Identify(ctx, key)
 }
 
-func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
+func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (gr groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_group").Add(1)
 		ms.latency.With("method", "create_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.CreateGroup(ctx, token, group)
+	return ms.svc.CreateGroup(ctx, token, g)
 }
 
-func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
+func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, g groups.Group) (gr groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_group").Add(1)
 		ms.latency.With("method", "update_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.UpdateGroup(ctx, token, group)
+	return ms.svc.UpdateGroup(ctx, token, g)
 }
 
 func (ms *metricsMiddleware) RemoveGroup(ctx context.Context, token string, id string) (err error) {

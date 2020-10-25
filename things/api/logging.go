@@ -266,9 +266,9 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id strin
 	return lm.svc.Identify(ctx, key)
 }
 
-func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
+func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (gr groups.Group, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method create_group for token %s and name %s took %s to complete", token, group.Name, time.Since(begin))
+		message := fmt.Sprintf("Method create_group for token %s and name %s took %s to complete", token, g.Name, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -276,12 +276,12 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, grou
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.CreateGroup(ctx, token, group)
+	return lm.svc.CreateGroup(ctx, token, g)
 }
 
-func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
+func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, g groups.Group) (gr groups.Group, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_group for token %s and name %s took %s to complete", token, group.Name, time.Since(begin))
+		message := fmt.Sprintf("Method update_group for token %s and name %s took %s to complete", token, g.Name, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -289,7 +289,7 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, grou
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.UpdateGroup(ctx, token, group)
+	return lm.svc.UpdateGroup(ctx, token, g)
 }
 
 func (lm *loggingMiddleware) RemoveGroup(ctx context.Context, token string, id string) (err error) {

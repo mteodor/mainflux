@@ -160,16 +160,16 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 	if mq != "" {
 		mq = fmt.Sprintf("WHERE %s", mq)
 	}
-	sq := `WITH RECURSIVE subordinates AS (
-				SELECT id, owner_id, parent_id, name, description, metadata
-				FROM thing_groups
-				WHERE id = :id
-				UNION
-					SELECT thing_groups.id, thing_groups.owner_id, thing_groups.parent_id, thing_groups.name, thing_groups.description, thing_groups.metadata
-					FROM thing_groups 
-					INNER JOIN subordinates s ON s.parent_id = thing_groups.id
-			)`
-	q := fmt.Sprintf("%s SELECT * FROM subordinates %s ORDER BY id LIMIT :limit OFFSET :offset", sq, mq)
+	sq := `WITH RECURSIVE subordinates (id, owner_id, parent_id, name, description, metadata, level, path) AS (
+		SELECT id, owner_id, parent_id, name, description, metadata, 0, ARRAY[thing_groups.name]
+		FROM thing_groups
+		WHERE id = :id
+		UNION
+			SELECT thing_groups.id, thing_groups.owner_id, thing_groups.parent_id, thing_groups.name, thing_groups.description, thing_groups.metadata, s.level + 1, ARRAY_PREPEND(thing_groups.name, s.path )
+			FROM thing_groups 
+			INNER JOIN subordinates s ON s.parent_id = thing_groups.id
+	)`
+	q := fmt.Sprintf("%s SELECT id, owner_id, parent_id, name, description, metadata, level, ARRAY_TO_STRING(path, '/') AS path FROM subordinates %s ORDER BY id LIMIT :limit OFFSET :offset", sq, mq)
 	cq := fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates %s", sq, mq)
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
@@ -215,16 +215,17 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	if mq != "" {
 		mq = fmt.Sprintf("WHERE %s", mq)
 	}
-	sq := `WITH RECURSIVE subordinates AS (
-				SELECT id, owner_id, parent_id, name, description, metadata
+
+	sq := `WITH RECURSIVE subordinates (id, owner_id, parent_id, name, description, metadata,  level, path) AS (
+				SELECT id, owner_id, parent_id, name, description, metadata, 0, ARRAY[thing_groups.name]
 				FROM thing_groups
 				WHERE id = :id 
 				UNION
-					SELECT thing_groups.id, thing_groups.owner_id, thing_groups.parent_id, thing_groups.name, thing_groups.description, thing_groups.metadata
+					SELECT thing_groups.id, thing_groups.owner_id, thing_groups.parent_id, thing_groups.name, thing_groups.description, thing_groups.metadata, s.level + 1, ARRAY_APPEND(s.path, thing_groups.name)
 					FROM thing_groups 
 					INNER JOIN subordinates s ON s.id = thing_groups.parent_id
 			)`
-	q := fmt.Sprintf("%s SELECT * FROM subordinates %s ORDER BY id LIMIT :limit OFFSET :offset", sq, mq)
+	q := fmt.Sprintf("%s SELECT id, owner_id, parent_id, name, description, metadata, level, ARRAY_TO_STRING(path, '/') AS path FROM subordinates %s ORDER BY id LIMIT :limit OFFSET :offset", sq, mq)
 	cq := fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates %s", sq, mq)
 	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
 	if err != nil {
@@ -468,6 +469,8 @@ type dbGroup struct {
 	ParentID    uuid.NullUUID `db:"parent_id"`
 	Description string        `db:"description"`
 	Metadata    dbMetadata    `db:"metadata"`
+	Path        string        `db:"path"`
+	Level       int           `db:"level"`
 }
 
 type dbGroupPage struct {
@@ -548,6 +551,8 @@ func toGroup(dbu dbGroup) groups.Group {
 		OwnerID:     dbu.OwnerID.UUID.String(),
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),
+		Level:       dbu.Level,
+		Path:        dbu.Path,
 	}
 }
 
