@@ -412,8 +412,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group gr
 	}
 	group.ID = uid
 
-	// Temporary solution, until we have ID in response
-	// from Identify gRPC call.
+	// Temporary solution, until we have ID in response from Identify gRPC call.
 	owner, err := uuidProvider.New().ID()
 	if err != nil {
 		return groups.Group{}, errors.Wrap(ErrCreateGroup, err)
