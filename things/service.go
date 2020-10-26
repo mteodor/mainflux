@@ -401,7 +401,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group gr
 	if group.Name == "" || !groupRegexp.MatchString(group.Name) {
 		return groups.Group{}, ErrMalformedEntity
 	}
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	user, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -410,14 +410,9 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group gr
 	if err != nil {
 		return groups.Group{}, errors.Wrap(ErrCreateGroup, err)
 	}
-	group.ID = uid
 
-	// Temporary solution, until we have ID in response from Identify gRPC call.
-	owner, err := uuidProvider.New().ID()
-	if err != nil {
-		return groups.Group{}, errors.Wrap(ErrCreateGroup, err)
-	}
-	group.OwnerID = owner
+	group.ID = uid
+	group.OwnerID = user.Value()
 	return ts.groups.Save(ctx, group)
 }
 

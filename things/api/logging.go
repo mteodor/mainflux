@@ -166,7 +166,7 @@ func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, off
 		if name != "" {
 			nlog = fmt.Sprintf("with name %s ", name)
 		}
-		message := fmt.Sprintf("Method list_channels %sfor token %s took %s to complete", nlog, token, time.Since(begin))
+		message := fmt.Sprintf("Method list_channels %s for token %s took %s to complete", nlog, token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
