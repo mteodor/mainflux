@@ -224,7 +224,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	r.Patch("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_group")(groups.UpdateGroupEndpoint(svc)),
-		groups.DecodeGroupCreate,
+		groups.DecodeGroupUpdate,
 		encodeResponse,
 		opts...,
 	))
@@ -496,7 +496,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			errors.Contains(errorVal, things.ErrViewEntity),
 			errors.Contains(errorVal, things.ErrRemoveEntity),
 			errors.Contains(errorVal, things.ErrConnect),
-			errors.Contains(errorVal, things.ErrDisconnect):
+			errors.Contains(errorVal, things.ErrDisconnect),
+			errors.Contains(errorVal, groups.ErrCreateGroup):
 			w.WriteHeader(http.StatusBadRequest)
 
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF),

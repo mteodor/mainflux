@@ -72,8 +72,24 @@ func (gr groupRepository) Save(ctx context.Context, group groups.Group) (groups.
 }
 
 func (gr groupRepository) Update(ctx context.Context, group groups.Group) (groups.Group, error) {
-	q := `UPDATE thing_groups SET name = :name, description = :description, parent_id =: parent_id, metadata =: metadata  WHERE id = :id`
+	q := `UPDATE thing_groups SET name = :name, description = :description, parent_id = :parent_id, metadata = :metadata  WHERE id = :id`
 
+	old, err := gr.RetrieveByID(ctx, group.ID)
+	if err != nil {
+		return groups.Group{}, errors.Wrap(errUpdateDB, err)
+	}
+	if group.Name == "" {
+		group.Name = old.Name
+	}
+	if group.Description == "" {
+		group.Description = old.Description
+	}
+	if group.ParentID == "" {
+		group.ParentID = old.ParentID
+	}
+	if group.Metadata == nil {
+		group.Metadata = old.Metadata
+	}
 	dbu, err := toDBGroup(group)
 	if err != nil {
 		return groups.Group{}, errors.Wrap(errUpdateDB, err)
@@ -107,7 +123,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 	}
 
 	if cnt != 1 {
-		return errors.Wrap(groups.ErrDeleteGroupMissing, err)
+		return errors.Wrap(groups.ErrDeleteGroup, err)
 	}
 	return nil
 }
@@ -457,7 +473,7 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 		return errors.Wrap(groups.ErrNotFound, err)
 	}
 	if _, err := gr.db.NamedExecContext(ctx, q, dbr); err != nil {
-		return errors.Wrap(groups.ErrConflict, err)
+		return errors.Wrap(groups.ErrGroupConflict, err)
 	}
 	return nil
 }
@@ -494,6 +510,13 @@ func toUUID(id string) (uuid.NullUUID, error) {
 		}
 	}
 	return parentID, nil
+}
+
+func fromUUID(id uuid.NullUUID) string {
+	if id.Valid == true {
+		return id.UUID.String()
+	}
+	return ""
 }
 
 func toDBGroup(g groups.Group) (dbGroup, error) {
@@ -544,11 +567,13 @@ func toDBGroupPage(ownerID, groupID string, offset, limit uint64, metadata group
 }
 
 func toGroup(dbu dbGroup) groups.Group {
+	parentID := fromUUID(dbu.ParentID)
+	ownerID := fromUUID(dbu.OwnerID)
 	return groups.Group{
 		ID:          dbu.ID,
 		Name:        dbu.Name,
-		ParentID:    dbu.ParentID.UUID.String(),
-		OwnerID:     dbu.OwnerID.UUID.String(),
+		ParentID:    parentID,
+		OwnerID:     ownerID,
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),
 		Level:       dbu.Level,

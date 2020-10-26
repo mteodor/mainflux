@@ -94,6 +94,19 @@ func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 	return req, nil
 }
 
+func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+	var req updateGroupReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(ErrFailedDecode, err)
+	}
+	req.ID = bone.GetValue(r, "groupID")
+	req.token = r.Header.Get("Authorization")
+	return req, nil
+}
+
 func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupReq{
 		token:   r.Header.Get("Authorization"),

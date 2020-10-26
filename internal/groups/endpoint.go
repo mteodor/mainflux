@@ -19,18 +19,6 @@ const (
 	defLimit  = 10
 )
 
-var (
-	errUnsupportedContentType = errors.New("unsupported content type")
-	errInvalidQueryParams     = errors.New("invalid query params")
-	errInvalidLimitParam      = errors.New("invalid limit query param")
-	errInvalidOffsetParam     = errors.New("invalid offset query param")
-
-	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
-	ErrUnsupportedContentType = errors.New("unsupported content type")
-	// ErrFailedDecode indicates failed to decode request body
-	ErrFailedDecode = errors.New("failed to decode request body")
-)
-
 func ListMembership(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMemberGroupReq)
@@ -61,7 +49,7 @@ func CreateGroupEndpoint(svc Service) endpoint.Endpoint {
 
 		gp, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
-			return createGroupRes{}, err
+			return createGroupRes{}, errors.Wrap(ErrCreateGroup, err)
 		}
 		return createGroupRes{
 			created:     true,
@@ -78,11 +66,11 @@ func ListGroupsEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
-			return groupPageRes{}, err
+			return groupPageRes{}, errors.Wrap(ErrMalformedEntity, err)
 		}
 		gp, err := svc.ListGroups(ctx, req.token, req.offset, req.limit, req.metadata)
 		if err != nil {
-			return groupPageRes{}, err
+			return groupPageRes{}, errors.Wrap(ErrFetchGroups, err)
 		}
 		return buildGroupsResponse(gp), nil
 	}
@@ -92,11 +80,11 @@ func ListGroupChildrenEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
-			return groupPageRes{}, err
+			return groupPageRes{}, errors.Wrap(ErrMalformedEntity, err)
 		}
 		gp, err := svc.ListChildren(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
-			return groupPageRes{}, err
+			return groupPageRes{}, errors.Wrap(ErrFetchGroups, err)
 		}
 		return buildGroupsResponse(gp), nil
 	}
@@ -106,11 +94,11 @@ func ListGroupParentsEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
-			return groupPageRes{}, err
+			return groupPageRes{}, errors.Wrap(ErrMalformedEntity, err)
 		}
 		gp, err := svc.ListParents(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
-			return groupPageRes{}, err
+			return groupPageRes{}, errors.Wrap(ErrFetchGroups, err)
 		}
 		return buildGroupsResponse(gp), nil
 	}
@@ -120,10 +108,10 @@ func DeleteGroupEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(ErrMalformedEntity, err)
 		}
 		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
-			return nil, err
+			return nil, errors.Wrap(ErrDeleteGroup, err)
 		}
 		return groupDeleteRes{}, nil
 	}
@@ -133,10 +121,10 @@ func AssignMemberToGroup(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(memberGroupReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(ErrMalformedEntity, err)
 		}
 		if err := svc.Assign(ctx, req.token, req.memberID, req.groupID); err != nil {
-			return nil, err
+			return nil, errors.Wrap(ErrAssignToGroup, err)
 		}
 		return assignMemberToGroupRes{}, nil
 	}
@@ -146,10 +134,10 @@ func RemoveMemberFromGroup(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(memberGroupReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(ErrMalformedEntity, err)
 		}
 		if err := svc.Unassign(ctx, req.token, req.memberID, req.groupID); err != nil {
-			return nil, err
+			return nil, errors.Wrap(ErrUnasignFromGroup, err)
 		}
 		return removeMemberFromGroupRes{}, nil
 	}
@@ -159,7 +147,7 @@ func ListMembersForGroupEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMemberGroupReq)
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, err
+			return memberPageRes{}, errors.Wrap(ErrMalformedEntity, err)
 		}
 		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
@@ -173,10 +161,12 @@ func UpdateGroupEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
 		if err := req.validate(); err != nil {
-			return createGroupRes{}, err
+			return createGroupRes{}, errors.Wrap(ErrMalformedEntity, err)
 		}
 
 		group := Group{
+			ID:          req.ID,
+			Name:        req.Name,
 			Description: req.Description,
 			ParentID:    req.ParentID,
 			Metadata:    req.Metadata,
@@ -184,7 +174,7 @@ func UpdateGroupEndpoint(svc Service) endpoint.Endpoint {
 
 		g, err := svc.UpdateGroup(ctx, req.token, group)
 		if err != nil {
-			return createGroupRes{}, err
+			return createGroupRes{}, errors.Wrap(ErrUpdateGroup, err)
 		}
 
 		res := createGroupRes{
@@ -201,12 +191,12 @@ func ViewGroupEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
-			return viewGroupRes{}, err
+			return viewGroupRes{}, errors.Wrap(ErrMalformedEntity, err)
 		}
 
 		g, err := svc.ViewGroup(ctx, req.token, req.groupID)
 		if err != nil {
-			return viewGroupRes{}, err
+			return viewGroupRes{}, errors.Wrap(ErrFetchGroups, err)
 		}
 		res := viewGroupRes{
 			Name:        g.Name,

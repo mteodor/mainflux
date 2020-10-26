@@ -401,7 +401,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group gr
 	if group.Name == "" || !groupRegexp.MatchString(group.Name) {
 		return groups.Group{}, ErrMalformedEntity
 	}
-	user, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -412,7 +412,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group gr
 	}
 
 	group.ID = uid
-	group.OwnerID = user.Value()
+	group.OwnerID = uid
 	return ts.groups.Save(ctx, group)
 }
 
@@ -484,6 +484,7 @@ func (ts *thingsService) UpdateGroup(ctx context.Context, token string, group gr
 	if err != nil {
 		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
+	
 	return ts.groups.Update(ctx, group)
 }
 

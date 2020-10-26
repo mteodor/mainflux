@@ -21,6 +21,7 @@ func (req createGroupReq) validate() error {
 type updateGroupReq struct {
 	token       string
 	ID          string                 `json:"id,omitempty"`
+	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	ParentID    string                 `json:"parent_id,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
