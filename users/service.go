@@ -330,14 +330,9 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 		return Group{}, ErrMalformedEntity
 	}
 
-	email, err := svc.identify(ctx, token)
+	id, err := svc.identify(ctx, token)
 	if err != nil {
 		return Group{}, err
-	}
-
-	user, err := svc.users.RetrieveByEmail(ctx, email)
-	if err != nil {
-		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	uid, err := uuidProvider.New().ID()
@@ -346,7 +341,7 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 	}
 
 	group.ID = uid
-	group.OwnerID = user.ID
+	group.OwnerID = id
 
 	return svc.groups.Save(ctx, group)
 }
