@@ -203,6 +203,7 @@ func ViewGroupEndpoint(svc Service) endpoint.Endpoint {
 			Description: g.Description,
 			Metadata:    g.Metadata,
 			ParentID:    g.ParentID,
+			OwnerID:     g.OwnerID,
 		}
 		return res, nil
 	}
@@ -222,6 +223,7 @@ func buildGroupsResponse(gp GroupPage) groupPageRes {
 		view := viewGroupRes{
 			ID:          group.ID,
 			ParentID:    group.ParentID,
+			OwnerID:     group.OwnerID,
 			Name:        group.Name,
 			Description: group.Description,
 			Metadata:    group.Metadata,
