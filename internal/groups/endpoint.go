@@ -117,7 +117,7 @@ func DeleteGroupEndpoint(svc Service) endpoint.Endpoint {
 	}
 }
 
-func AssignMemberToGroup(svc Service) endpoint.Endpoint {
+func AssignEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(memberGroupReq)
 		if err := req.validate(); err != nil {
@@ -130,7 +130,7 @@ func AssignMemberToGroup(svc Service) endpoint.Endpoint {
 	}
 }
 
-func RemoveMemberFromGroup(svc Service) endpoint.Endpoint {
+func UnassignEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(memberGroupReq)
 		if err := req.validate(); err != nil {
@@ -143,7 +143,7 @@ func RemoveMemberFromGroup(svc Service) endpoint.Endpoint {
 	}
 }
 
-func ListMembersForGroupEndpoint(svc Service) endpoint.Endpoint {
+func ListMembersEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMemberGroupReq)
 		if err := req.validate(); err != nil {

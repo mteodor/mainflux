@@ -202,21 +202,21 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	))
 
 	r.Put("/groups/:groupID/things/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "assign_user_to_group")(groups.AssignMemberToGroup(svc)),
+		kitot.TraceServer(tracer, "assign_user_to_group")(groups.AssignEndpoint(svc)),
 		groups.DecodeMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/groups/:groupID/things/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "remove_thing_from_group")(groups.RemoveMemberFromGroup(svc)),
+		kitot.TraceServer(tracer, "remove_thing_from_group")(groups.UnassignEndpoint(svc)),
 		groups.DecodeMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/groups/:groupID/things", kithttp.NewServer(
-		kitot.TraceServer(tracer, "members")(groups.ListMembersForGroupEndpoint(svc)),
+		kitot.TraceServer(tracer, "members")(groups.ListMembersEndpoint(svc)),
 		groups.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
