@@ -354,7 +354,6 @@ func TestRetrieveAll(t *testing.T) {
 func TestGroupDelete(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.NewGroupRepo(dbMiddleware)
-	userRepo := postgres.NewUserRepo(dbMiddleware)
 	uid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	user := things.User{
