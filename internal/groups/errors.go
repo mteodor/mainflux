@@ -3,8 +3,6 @@ package groups
 import "github.com/mainflux/mainflux/pkg/errors"
 
 var (
-	errInvalidQueryParams = errors.New("invalid query params")
-
 	// ErrUnauthorizedAccess
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
 
