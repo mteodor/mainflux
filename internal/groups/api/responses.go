@@ -9,9 +9,7 @@ import (
 
 var (
 	_ mainflux.Response = (*memberPageRes)(nil)
-	_ mainflux.Response = (*createGroupRes)(nil)
-	_ mainflux.Response = (*updateGroupRes)(nil)
-	_ mainflux.Response = (*viewGroupRes)(nil)
+	_ mainflux.Response = (*groupRes)(nil)
 	_ mainflux.Response = (*groupDeleteRes)(nil)
 	_ mainflux.Response = (*assignMemberToGroupRes)(nil)
 	_ mainflux.Response = (*removeMemberFromGroupRes)(nil)
@@ -39,59 +37,15 @@ func (res memberPageRes) Empty() bool {
 	return false
 }
 
-type createGroupRes struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name,omitempty"`
-	Description string                 `json:"description,omitempty"`
-	ParentID    string                 `json:"parent_id"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	created     bool
-}
-
-func (res createGroupRes) Code() int {
-	if res.created {
-		return http.StatusCreated
-	}
-
-	return http.StatusOK
-}
-
-func (res createGroupRes) Headers() map[string]string {
-	if res.created {
-		return map[string]string{
-			"Location": fmt.Sprintf("/groups/%s", res.ID),
-		}
-	}
-	return map[string]string{}
-}
-
-func (res createGroupRes) Empty() bool {
-	return true
-}
-
-type updateGroupRes struct{}
-
-func (res updateGroupRes) Code() int {
-	return http.StatusOK
-}
-
-func (res updateGroupRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res updateGroupRes) Empty() bool {
-	return true
-}
-
 type viewGroupRes struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	ParentID    string                 `json:"parent_id"`
-	OwnerID     string                 `json:"owner_id"`
-	Description string                 `json:"description"`
+	ID          string                 `json:"id,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	ParentID    string                 `json:"parent_id,omitempty"`
+	OwnerID     string                 `json:"owner_id,omitempty"`
+	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Level       int                    `json:"level"`
-	Path        string                 `json:"path"`
+	Level       int                    `json:"level,omitempty"`
+	Path        string                 `json:"path,omitempty"`
 }
 
 func (res viewGroupRes) Code() int {
@@ -104,6 +58,32 @@ func (res viewGroupRes) Headers() map[string]string {
 
 func (res viewGroupRes) Empty() bool {
 	return false
+}
+
+type groupRes struct {
+	ID      string `json:"id"`
+	created bool
+}
+
+func (res groupRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
+}
+
+func (res groupRes) Headers() map[string]string {
+	if res.created {
+		return map[string]string{
+			"Location": fmt.Sprintf("/groups/%s", res.ID),
+		}
+	}
+	return map[string]string{}
+}
+
+func (res groupRes) Empty() bool {
+	return true
 }
 
 type groupPageRes struct {

@@ -412,7 +412,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, group gr
 	}
 
 	group.ID = uid
-	group.OwnerID = user.GetValue()
+	group.OwnerID = user.GetId()
 	return ts.groups.Save(ctx, group)
 }
 

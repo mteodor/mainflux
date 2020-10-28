@@ -38,7 +38,7 @@ func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
 		if err := req.validate(); err != nil {
-			return createGroupRes{}, err
+			return groupRes{}, err
 		}
 
 		group := groups.Group{
@@ -50,16 +50,9 @@ func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 
 		gp, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
-			return createGroupRes{}, errors.Wrap(groups.ErrCreateGroup, err)
+			return groupRes{}, errors.Wrap(groups.ErrCreateGroup, err)
 		}
-		return createGroupRes{
-			created:     true,
-			ID:          gp.ID,
-			ParentID:    gp.ParentID,
-			Description: gp.Description,
-			Metadata:    gp.Metadata,
-			Name:        gp.Name,
-		}, nil
+		return groupRes{created: true, ID: gp.ID}, nil
 	}
 }
 
@@ -162,7 +155,7 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
 		if err := req.validate(); err != nil {
-			return createGroupRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return groupRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 
 		group := groups.Group{
@@ -173,17 +166,12 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Metadata:    req.Metadata,
 		}
 
-		g, err := svc.UpdateGroup(ctx, req.token, group)
+		_, err := svc.UpdateGroup(ctx, req.token, group)
 		if err != nil {
-			return createGroupRes{}, errors.Wrap(groups.ErrUpdateGroup, err)
+			return groupRes{}, errors.Wrap(groups.ErrUpdateGroup, err)
 		}
 
-		res := createGroupRes{
-			Name:        g.Name,
-			Description: g.Description,
-			Metadata:    g.Metadata,
-			created:     false,
-		}
+		res := groupRes{created: false}
 		return res, nil
 	}
 }
@@ -200,6 +188,7 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			return viewGroupRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
 		res := viewGroupRes{
+			ID:          g.ID,
 			Name:        g.Name,
 			Description: g.Description,
 			Metadata:    g.Metadata,

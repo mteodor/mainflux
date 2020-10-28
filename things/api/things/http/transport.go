@@ -223,7 +223,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Patch("/groups/:groupID", kithttp.NewServer(
+	r.Put("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_group")(groupsAPI.UpdateGroupEndpoint(svc)),
 		groupsAPI.DecodeGroupUpdate,
 		encodeResponse,

@@ -3,7 +3,7 @@ package groups
 import "github.com/mainflux/mainflux/pkg/errors"
 
 var (
-	// ErrUnauthorizedAccess
+	// ErrUnauthorizedAccess unauthorized access.
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
 
 	// ErrMalformedEntity malformed entity.
