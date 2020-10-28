@@ -16,7 +16,7 @@ const (
 	saveGroup            = "save_group"
 	deleteGroup          = "delete_group"
 	updateGroup          = "update_group"
-	retrieveGroupByID    = "retrieve_group_by_id"
+	retrieveByID         = "retrieve_by_id"
 	retrieveAllAncestors = "retrieve_all_ancestors"
 	retrieveAllChildren  = "retrieve_all_children"
 	retrieveAll          = "retrieve_all_groups"
@@ -34,25 +34,27 @@ type groupRepositoryMiddleware struct {
 }
 
 // GroupRepositoryMiddleware tracks request and their latency, and adds spans to context.
-func GroupRepositoryMiddleware(tracer opentracing.Tracer, repo groups.Repository) groups.Repository {
+func GroupRepositoryMiddleware(tracer opentracing.Tracer, gr groups.Repository) groups.Repository {
 	return groupRepositoryMiddleware{
 		tracer: tracer,
-		repo:   repo,
+		repo:   gr,
 	}
 }
-func (grm groupRepositoryMiddleware) Save(ctx context.Context, group groups.Group) (groups.Group, error) {
+
+func (grm groupRepositoryMiddleware) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	span := createSpan(ctx, grm.tracer, saveGroup)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.Save(ctx, group)
+	return grm.repo.Save(ctx, g)
 }
-func (grm groupRepositoryMiddleware) Update(ctx context.Context, group groups.Group) (groups.Group, error) {
+
+func (grm groupRepositoryMiddleware) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
 	span := createSpan(ctx, grm.tracer, updateGroup)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.Update(ctx, group)
+	return grm.repo.Update(ctx, g)
 }
 
 func (grm groupRepositoryMiddleware) Delete(ctx context.Context, groupID string) error {
@@ -64,7 +66,7 @@ func (grm groupRepositoryMiddleware) Delete(ctx context.Context, groupID string)
 }
 
 func (grm groupRepositoryMiddleware) RetrieveByID(ctx context.Context, id string) (groups.Group, error) {
-	span := createSpan(ctx, grm.tracer, retrieveGroupByID)
+	span := createSpan(ctx, grm.tracer, retrieveByID)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
@@ -79,28 +81,28 @@ func (grm groupRepositoryMiddleware) RetrieveByName(ctx context.Context, name st
 	return grm.repo.RetrieveByName(ctx, name)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveAllParents(ctx context.Context, groupID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (grm groupRepositoryMiddleware) RetrieveAllParents(ctx context.Context, groupID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAllAncestors)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RetrieveAllParents(ctx, groupID, offset, limit, gm)
+	return grm.repo.RetrieveAllParents(ctx, groupID, level, gm)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveAllChildren(ctx context.Context, groupID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (grm groupRepositoryMiddleware) RetrieveAllChildren(ctx context.Context, groupID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAllChildren)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RetrieveAllChildren(ctx, groupID, offset, limit, gm)
+	return grm.repo.RetrieveAllChildren(ctx, groupID, level, gm)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (grm groupRepositoryMiddleware) RetrieveAll(ctx context.Context, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAll)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RetrieveAll(ctx, offset, limit, gm)
+	return grm.repo.RetrieveAll(ctx, level, gm)
 }
 
 func (grm groupRepositoryMiddleware) Memberships(ctx context.Context, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {

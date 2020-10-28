@@ -330,7 +330,7 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 		return Group{}, ErrMalformedEntity
 	}
 
-	id, err := svc.identify(ctx, token)
+	identity, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Group{}, err
 	}
@@ -341,7 +341,7 @@ func (svc usersService) CreateGroup(ctx context.Context, token string, group Gro
 	}
 
 	group.ID = uid
-	group.OwnerID = id
+	group.OwnerID = identity.GetId()
 
 	return svc.groups.Save(ctx, group)
 }
@@ -413,9 +413,9 @@ func (svc usersService) issue(ctx context.Context, id, email string, keyType uin
 }
 
 func (svc usersService) identify(ctx context.Context, token string) (string, error) {
-	email, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	identity, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return email.GetEmail(), nil
+	return identity.GetEmail(), nil
 }

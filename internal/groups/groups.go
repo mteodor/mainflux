@@ -5,7 +5,6 @@ import (
 )
 
 type Member interface{}
-
 type Metadata map[string]interface{}
 
 type Group struct {
@@ -15,8 +14,11 @@ type Group struct {
 	Name        string
 	Description string
 	Metadata    Metadata
-	Level       int
-	Path        string
+	// Level if retrieved with Parents or Children method
+	// indicates a level in hierarchy from first group node.
+	Level    int
+	Path     string
+	Children []*Group
 }
 
 type PageMetadata struct {
@@ -38,22 +40,22 @@ type MemberPage struct {
 
 type Service interface {
 	// CreateGroup creates new  group.
-	CreateGroup(ctx context.Context, token string, group Group) (Group, error)
+	CreateGroup(ctx context.Context, token string, g Group) (Group, error)
 
 	// UpdateGroup updates the group identified by the provided ID.
-	UpdateGroup(ctx context.Context, token string, group Group) (Group, error)
+	UpdateGroup(ctx context.Context, token string, g Group) (Group, error)
 
 	// ViewGroup retrieves data about the group identified by ID.
 	ViewGroup(ctx context.Context, token, id string) (Group, error)
 
 	// ListGroups retrieves groups.
-	ListGroups(ctx context.Context, token string, offset, limit uint64, m Metadata) (GroupPage, error)
+	ListGroups(ctx context.Context, token string, level uint64, m Metadata) (GroupPage, error)
 
 	// ListChildren retrieves groups that are children to group identified by parentID
-	ListChildren(ctx context.Context, token, parentID string, offset, limit uint64, m Metadata) (GroupPage, error)
+	ListChildren(ctx context.Context, token, parentID string, level uint64, m Metadata) (GroupPage, error)
 
 	// ListParents retrieves groups that are parent to group identified by childID.
-	ListParents(ctx context.Context, token, childID string, offset, limit uint64, m Metadata) (GroupPage, error)
+	ListParents(ctx context.Context, token, childID string, level uint64, m Metadata) (GroupPage, error)
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
 	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (MemberPage, error)
@@ -72,12 +74,11 @@ type Service interface {
 }
 
 type Repository interface {
-
 	// Save group
-	Save(ctx context.Context, group Group) (Group, error)
+	Save(ctx context.Context, g Group) (Group, error)
 
 	// Update a group
-	Update(ctx context.Context, group Group) (Group, error)
+	Update(ctx context.Context, g Group) (Group, error)
 
 	// Delete a group
 	Delete(ctx context.Context, groupID string) error
@@ -89,16 +90,16 @@ type Repository interface {
 	RetrieveByName(ctx context.Context, name string) (Group, error)
 
 	// RetrieveAll retrieves all groups.
-	RetrieveAll(ctx context.Context, offset, limit uint64, gm Metadata) (GroupPage, error)
+	RetrieveAll(ctx context.Context, level uint64, m Metadata) (GroupPage, error)
 
 	// RetrieveAllParents retrieves all groups that are ancestors to the group with given groupID.
-	RetrieveAllParents(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	RetrieveAllParents(ctx context.Context, groupID string, level uint64, m Metadata) (GroupPage, error)
 
-	// RetrieveAllChildren retrieves all children from group with given groupID.
-	RetrieveAllChildren(ctx context.Context, groupID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	// RetrieveAllChildren retrieves all children from group with given groupID up to the hierarchy level.
+	RetrieveAllChildren(ctx context.Context, groupID string, level uint64, m Metadata) (GroupPage, error)
 
 	// Retrieves list of groups that member belongs to
-	Memberships(ctx context.Context, memberID string, offset, limit uint64, gm Metadata) (GroupPage, error)
+	Memberships(ctx context.Context, memberID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.
 	Members(ctx context.Context, groupID string, offset, limit uint64, m Metadata) (MemberPage, error)

@@ -14,16 +14,27 @@ import (
 
 var errInvalidQueryParams = errors.New("invalid query params")
 
+const (
+	maxNameSize = 254
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	nameKey     = "name"
+	levelKey    = "level"
+	metadataKey = "metadata"
+	treeKey     = "tree"
+	contentType = "application/json"
+
+	defOffset = 0
+	defLimit  = 10
+	defLevel  = 1
+)
+
 func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, groups.ErrUnsupportedContentType
 	}
-	o, err := readUintQuery(r, offsetKey, defOffset)
-	if err != nil {
-		return nil, err
-	}
 
-	l, err := readUintQuery(r, limitKey, defLimit)
+	l, err := readUintQuery(r, levelKey, defLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +49,17 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, err
 	}
 
+	t, err := readBoolQuery(r, treeKey)
+	if err != nil {
+		return nil, err
+	}
+
 	req := listGroupsReq{
 		token:    r.Header.Get("Authorization"),
-		offset:   o,
-		limit:    l,
+		level:    l,
 		name:     n,
 		metadata: m,
+		tree:     t,
 		groupID:  bone.GetValue(r, "groupID"),
 	}
 	return req, nil
@@ -53,6 +69,7 @@ func DecodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, groups.ErrUnsupportedContentType
 	}
+
 	o, err := readUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
@@ -69,6 +86,11 @@ func DecodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface
 	}
 
 	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := readBoolQuery(r, treeKey)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +103,7 @@ func DecodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface
 		limit:    l,
 		name:     n,
 		metadata: m,
+		tree:     t,
 	}
 	return req, nil
 }
@@ -89,10 +112,12 @@ func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, groups.ErrUnsupportedContentType
 	}
+
 	var req createGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(groups.ErrFailedDecode, err)
 	}
+
 	req.token = r.Header.Get("Authorization")
 	return req, nil
 }
@@ -101,11 +126,13 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, groups.ErrUnsupportedContentType
 	}
+
 	var req updateGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(groups.ErrFailedDecode, err)
 	}
-	req.ID = bone.GetValue(r, "groupID")
+
+	req.id = bone.GetValue(r, "groupID")
 	req.token = r.Header.Get("Authorization")
 	return req, nil
 }
@@ -178,4 +205,22 @@ func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, err
 	}
 
 	return m, nil
+}
+
+func readBoolQuery(r *http.Request, key string) (bool, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return true, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return false, nil
+	}
+
+	b, err := strconv.ParseBool(vals[0])
+	if err != nil {
+		return false, errInvalidQueryParams
+	}
+
+	return b, nil
 }

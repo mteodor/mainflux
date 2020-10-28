@@ -9,6 +9,9 @@ var (
 	// ErrMalformedEntity malformed entity.
 	ErrMalformedEntity = errors.New("malformed entity")
 
+	// ErrBadGroupName malformed entity.
+	ErrBadGroupName = errors.New("incorrect group name")
+
 	// ErrGroupConflict group conflict.
 	ErrGroupConflict = errors.New("group already exists")
 
@@ -30,12 +33,17 @@ var (
 	// ErrAssignToGroup indicates failure to assign member to a group.
 	ErrAssignToGroup = errors.New("failed to assign member to a group")
 
-	// ErrUnasignFromGroup indicates failure to unassign member from a group.
-	ErrUnasignFromGroup = errors.New("failed to unassign member from a group")
+	// ErrUnassignFromGroup indicates failure to unassign member from a group.
+	ErrUnassignFromGroup = errors.New("failed to unassign member from a group")
 
 	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
 	ErrUnsupportedContentType = errors.New("unsupported content type")
 
 	// ErrFailedDecode indicates failed to decode request body
 	ErrFailedDecode = errors.New("failed to decode request body")
+
+	// ErrMissingParent indicates that parent cant be found
+	ErrMissingParent = errors.New("failed to retrieve parent")
+
+
 )

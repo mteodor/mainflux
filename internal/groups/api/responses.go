@@ -19,6 +19,7 @@ type pageRes struct {
 	Total  uint64 `json:"total"`
 	Offset uint64 `json:"offset"`
 	Limit  uint64 `json:"limit"`
+	Name   string `json:"name"`
 }
 type memberPageRes struct {
 	pageRes
@@ -44,8 +45,11 @@ type viewGroupRes struct {
 	OwnerID     string                 `json:"owner_id,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Level       int                    `json:"level,omitempty"`
-	Path        string                 `json:"path,omitempty"`
+	// Level if retrieved with Parents or Children method
+	// indicates a level in hierarchy from first group node.
+	Level    int             `json:"level,omitempty"`
+	Path     string          `json:"path"`
+	Children []*viewGroupRes `json:"children"`
 }
 
 func (res viewGroupRes) Code() int {
@@ -61,7 +65,7 @@ func (res viewGroupRes) Empty() bool {
 }
 
 type groupRes struct {
-	ID      string `json:"id"`
+	id      string
 	created bool
 }
 
@@ -76,7 +80,7 @@ func (res groupRes) Code() int {
 func (res groupRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/groups/%s", res.ID),
+			"Location": fmt.Sprintf("/groups/%s", res.id),
 		}
 	}
 	return map[string]string{}

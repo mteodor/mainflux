@@ -1,6 +1,13 @@
 package groups
 
-import "github.com/mainflux/mainflux/internal/groups"
+import (
+	"regexp"
+
+	"github.com/mainflux/mainflux/internal/groups"
+	"github.com/mainflux/mainflux/pkg/errors"
+)
+
+var groupRegexp = regexp.MustCompile("^[A-Za-z0-9]+[A-Za-z0-9_-]*$")
 
 type createGroupReq struct {
 	token       string
@@ -14,15 +21,16 @@ func (req createGroupReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
-	if len(req.Name) > maxNameSize || req.Name == "" {
-		return groups.ErrMalformedEntity
+	if len(req.Name) > maxNameSize || req.Name == "" || !groupRegexp.MatchString(req.Name) {
+		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrBadGroupName)
 	}
+
 	return nil
 }
 
 type updateGroupReq struct {
 	token       string
-	ID          string                 `json:"id,omitempty"`
+	id          string                 `json:"id,omitempty"`
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	ParentID    string                 `json:"parent_id,omitempty"`
@@ -33,7 +41,12 @@ func (req updateGroupReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
-	if req.ID == "" {
+
+	if req.id == "" {
+		return groups.ErrMalformedEntity
+	}
+
+	if req.Name == "" || len(req.Name) > maxNameSize {
 		return groups.ErrMalformedEntity
 	}
 
@@ -42,16 +55,19 @@ func (req updateGroupReq) validate() error {
 
 type listGroupsReq struct {
 	token    string
-	offset   uint64
-	limit    uint64
+	level    uint64
 	metadata groups.Metadata
 	name     string
 	groupID  string
+	tree     bool
 }
 
 func (req listGroupsReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
+	}
+	if req.level < 0 || req.level > 5 {
+		return groups.ErrMalformedEntity
 	}
 	return nil
 }
@@ -64,6 +80,7 @@ type listMemberGroupReq struct {
 	name     string
 	groupID  string
 	memberID string
+	tree     bool
 }
 
 func (req listMemberGroupReq) validate() error {

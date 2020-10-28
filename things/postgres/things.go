@@ -23,8 +23,8 @@ const (
 )
 
 var (
-	errUpdateDB   = errors.New("failed to update DB")
-	errRetrieveDB = errors.New("failed retrieving from DB")
+	errUpdateDB   = errors.New("failed to update db")
+	errRetrieveDB = errors.New("failed retrieving from db")
 )
 
 var _ things.ThingRepository = (*thingRepository)(nil)

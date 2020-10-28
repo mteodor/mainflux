@@ -241,27 +241,28 @@ func (es eventStore) Identify(ctx context.Context, key string) (string, error) {
 	return es.svc.Identify(ctx, key)
 }
 
-func (es eventStore) CreateGroup(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
-	return es.svc.CreateGroup(ctx, token, group)
+func (es eventStore) CreateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+	return es.svc.CreateGroup(ctx, token, g)
 }
 
 func (es eventStore) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
 	return es.svc.ViewGroup(ctx, token, id)
 }
 
-func (es eventStore) ListGroups(ctx context.Context, token string, offset, limit uint64, meta groups.Metadata) (groups.GroupPage, error) {
-	return es.svc.ListGroups(ctx, token, offset, limit, meta)
+func (es eventStore) ListGroups(ctx context.Context, token string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListGroups(ctx, token, level, gm)
 }
 
-func (es eventStore) ListParents(ctx context.Context, token, childID string, offset, limit uint64, meta groups.Metadata) (groups.GroupPage, error) {
-	return es.svc.ListParents(ctx, token, childID, offset, limit, meta)
-}
-func (es eventStore) ListChildren(ctx context.Context, token, parentID string, offset, limit uint64, meta groups.Metadata) (groups.GroupPage, error) {
-	return es.svc.ListChildren(ctx, token, parentID, offset, limit, meta)
+func (es eventStore) ListParents(ctx context.Context, token, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListParents(ctx, token, childID, level, gm)
 }
 
-func (es eventStore) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta groups.Metadata) (groups.MemberPage, error) {
-	return es.svc.ListMembers(ctx, token, groupID, offset, limit, meta)
+func (es eventStore) ListChildren(ctx context.Context, token, parentID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	return es.svc.ListChildren(ctx, token, parentID, level, gm)
+}
+
+func (es eventStore) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+	return es.svc.ListMembers(ctx, token, groupID, offset, limit, gm)
 }
 
 func (es eventStore) RemoveGroup(ctx context.Context, token, id string) error {
@@ -272,8 +273,8 @@ func (es eventStore) Unassign(ctx context.Context, token, memberID, groupID stri
 	return es.svc.Unassign(ctx, token, memberID, groupID)
 }
 
-func (es eventStore) UpdateGroup(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
-	return es.svc.UpdateGroup(ctx, token, group)
+func (es eventStore) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+	return es.svc.UpdateGroup(ctx, token, g)
 }
 
 func (es eventStore) Assign(ctx context.Context, token, memberID, groupID string) error {

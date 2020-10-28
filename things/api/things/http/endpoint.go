@@ -132,12 +132,12 @@ func viewThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		res := thingRes{
+		res := viewThingRes{
 			ID:       thing.ID,
+			Owner:    thing.Owner,
 			Name:     thing.Name,
 			Key:      thing.Key,
 			Metadata: thing.Metadata,
-			created:  false,
 		}
 		return res, nil
 	}

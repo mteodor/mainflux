@@ -175,7 +175,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	))
 
 	r.Get("/things/:memberID/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "memberships")(groupsAPI.ListMembership(svc)),
+		kitot.TraceServer(tracer, "list_memberships")(groupsAPI.ListMembership(svc)),
 		groupsAPI.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
@@ -189,7 +189,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	))
 
 	r.Get("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "groups")(groupsAPI.ListGroupsEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_groups")(groupsAPI.ListGroupsEndpoint(svc)),
 		groupsAPI.DecodeListGroupsRequest,
 		encodeResponse,
 		opts...,
@@ -203,21 +203,21 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	))
 
 	r.Put("/groups/:groupID/things/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "assign_user_to_group")(groupsAPI.AssignEndpoint(svc)),
+		kitot.TraceServer(tracer, "assign")(groupsAPI.AssignEndpoint(svc)),
 		groupsAPI.DecodeMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/groups/:groupID/things/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "remove_thing_from_group")(groupsAPI.UnassignEndpoint(svc)),
+		kitot.TraceServer(tracer, "unassign")(groupsAPI.UnassignEndpoint(svc)),
 		groupsAPI.DecodeMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/groups/:groupID/things", kithttp.NewServer(
-		kitot.TraceServer(tracer, "members")(groupsAPI.ListMembersEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_things")(groupsAPI.ListMembersEndpoint(svc)),
 		groupsAPI.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
@@ -245,7 +245,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	))
 
 	r.Get("/groups/:groupID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "group")(groupsAPI.ViewGroupEndpoint(svc)),
+		kitot.TraceServer(tracer, "view_group")(groupsAPI.ViewGroupEndpoint(svc)),
 		groupsAPI.DecodeGroupRequest,
 		encodeResponse,
 		opts...,
