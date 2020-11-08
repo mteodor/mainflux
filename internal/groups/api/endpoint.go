@@ -23,11 +23,12 @@ func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Metadata:    req.Metadata,
 		}
 
-		g, err := svc.CreateGroup(ctx, req.token, group)
+		created, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
 			return groupRes{}, errors.Wrap(groups.ErrCreateGroup, err)
 		}
-		return groupRes{created: true, id: g.ID}, nil
+
+		return groupRes{created: true, id: created.ID}, nil
 	}
 }
 
@@ -42,6 +43,7 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err != nil {
 			return viewGroupRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
+
 		res := viewGroupRes{
 			ID:          g.ID,
 			Name:        g.Name,
@@ -50,6 +52,7 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			ParentID:    g.ParentID,
 			OwnerID:     g.OwnerID,
 		}
+
 		return res, nil
 	}
 }
@@ -109,6 +112,7 @@ func ListGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 		if req.tree {
 			return buildGroupsResponseTree(page), nil
 		}
+
 		return buildGroupsResponse(page), nil
 	}
 }
@@ -128,6 +132,7 @@ func ListMembership(svc groups.Service) endpoint.Endpoint {
 		if req.tree {
 			return buildGroupsResponseTree(page), nil
 		}
+
 		return buildGroupsResponse(page), nil
 	}
 }
@@ -147,6 +152,7 @@ func ListGroupChildrenEndpoint(svc groups.Service) endpoint.Endpoint {
 		if req.tree {
 			return buildGroupsResponseTree(page), nil
 		}
+
 		return buildGroupsResponse(page), nil
 	}
 }
@@ -157,15 +163,17 @@ func ListGroupParentsEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
+
 		page, err := svc.ListParents(ctx, req.token, req.groupID, req.level, req.metadata)
 		if err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
+
 		if req.tree {
 			return buildGroupsResponseTree(page), nil
 		}
-		return buildGroupsResponse(page), nil
 
+		return buildGroupsResponse(page), nil
 	}
 }
 
@@ -175,9 +183,11 @@ func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
+
 		if err := svc.Assign(ctx, req.token, req.memberID, req.groupID); err != nil {
 			return nil, errors.Wrap(groups.ErrAssignToGroup, err)
 		}
+
 		return assignMemberToGroupRes{}, nil
 	}
 }
@@ -188,9 +198,11 @@ func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
+
 		if err := svc.Unassign(ctx, req.token, req.memberID, req.groupID); err != nil {
 			return nil, errors.Wrap(groups.ErrUnassignFromGroup, err)
 		}
+
 		return removeMemberFromGroupRes{}, nil
 	}
 }
@@ -201,10 +213,12 @@ func ListMembersEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return memberPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
+
 		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return memberPageRes{}, err
 		}
+
 		return buildUsersResponse(page), nil
 	}
 }
@@ -251,6 +265,7 @@ func buildGroupsResponseTree(page groups.GroupPage) groupPageRes {
 			res.Groups = append(res.Groups, view)
 		}
 	}
+
 	return res
 }
 
@@ -271,6 +286,7 @@ func toViewGroupRes(g groups.Group) viewGroupRes {
 		child := toViewGroupRes(*ch)
 		view.Children = append(view.Children, &child)
 	}
+
 	return view
 }
 
@@ -283,6 +299,7 @@ func buildGroupsResponse(gp groups.GroupPage) groupPageRes {
 		},
 		Groups: []viewGroupRes{},
 	}
+
 	for _, group := range gp.Groups {
 		view := viewGroupRes{
 			ID:          group.ID,
@@ -296,6 +313,7 @@ func buildGroupsResponse(gp groups.GroupPage) groupPageRes {
 		}
 		res.Groups = append(res.Groups, view)
 	}
+
 	return res
 }
 
@@ -309,8 +327,10 @@ func buildUsersResponse(mp groups.MemberPage) memberPageRes {
 		},
 		Members: []interface{}{},
 	}
+
 	for _, m := range mp.Members {
 		res.Members = append(res.Members, m)
 	}
+
 	return res
 }

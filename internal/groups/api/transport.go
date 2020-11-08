@@ -153,6 +153,7 @@ func DecodeMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, 
 		groupID:  bone.GetValue(r, "groupID"),
 		memberID: bone.GetValue(r, "memberID"),
 	}
+
 	return req, nil
 }
 

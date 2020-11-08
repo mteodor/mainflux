@@ -30,7 +30,7 @@ func (req createGroupReq) validate() error {
 
 type updateGroupReq struct {
 	token       string
-	id          string                 `json:"id,omitempty"`
+	id          string
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	ParentID    string                 `json:"parent_id,omitempty"`
@@ -66,9 +66,11 @@ func (req listGroupsReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
+
 	if req.level < 0 || req.level > 5 {
 		return groups.ErrMalformedEntity
 	}
+
 	return nil
 }
 
@@ -87,9 +89,11 @@ func (req listMemberGroupReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
+
 	if req.groupID == "" && req.memberID == "" {
 		return groups.ErrMalformedEntity
 	}
+
 	return nil
 }
 
@@ -103,9 +107,11 @@ func (req memberGroupReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
+
 	if req.groupID == "" && req.memberID == "" {
 		return groups.ErrMalformedEntity
 	}
+
 	return nil
 }
 
@@ -119,8 +125,10 @@ func (req groupReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
+
 	if req.groupID == "" && req.name == "" {
 		return groups.ErrMalformedEntity
 	}
+	
 	return nil
 }

@@ -83,6 +83,7 @@ func (res groupRes) Headers() map[string]string {
 			"Location": fmt.Sprintf("/groups/%s", res.id),
 		}
 	}
+	
 	return map[string]string{}
 }
 
