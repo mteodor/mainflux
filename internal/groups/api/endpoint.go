@@ -39,18 +39,18 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			return viewGroupRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 
-		g, err := svc.ViewGroup(ctx, req.token, req.groupID)
+		group, err := svc.ViewGroup(ctx, req.token, req.groupID)
 		if err != nil {
 			return viewGroupRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
 
 		res := viewGroupRes{
-			ID:          g.ID,
-			Name:        g.Name,
-			Description: g.Description,
-			Metadata:    g.Metadata,
-			ParentID:    g.ParentID,
-			OwnerID:     g.OwnerID,
+			ID:          group.ID,
+			Name:        group.Name,
+			Description: group.Description,
+			Metadata:    group.Metadata,
+			ParentID:    group.ParentID,
+			OwnerID:     group.OwnerID,
 		}
 
 		return res, nil
@@ -227,11 +227,10 @@ func buildGroupsResponseTree(page groups.GroupPage) groupPageRes {
 	groupsMap := map[string]*groups.Group{}
 	// Parents map keeps its array of children.
 	parentsMap := map[string][]*groups.Group{}
-	for _, g := range page.Groups {
-		group := g
-		if _, ok := groupsMap[group.ID]; !ok {
-			groupsMap[group.ID] = &group
-			parentsMap[group.ID] = make([]*groups.Group, 0)
+	for i := range page.Groups {
+		if _, ok := groupsMap[page.Groups[i].ID]; !ok {
+			groupsMap[page.Groups[i].ID] = &page.Groups[i]
+			parentsMap[page.Groups[i].ID] = make([]*groups.Group, 0)
 		}
 	}
 

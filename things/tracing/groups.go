@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	assignMember         = "assign_member"
+	assign               = "assign"
 	saveGroup            = "save_group"
 	deleteGroup          = "delete_group"
 	updateGroup          = "update_group"
@@ -23,7 +23,7 @@ const (
 	retrieveByName       = "retrieve_by_name"
 	memberships          = "memberships"
 	members              = "members"
-	unassignMember       = "unassign_member"
+	unassign             = "unassign"
 )
 
 var _ groups.Repository = (*groupRepositoryMiddleware)(nil)
@@ -122,7 +122,7 @@ func (grm groupRepositoryMiddleware) Members(ctx context.Context, memberID strin
 }
 
 func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, memberID, groupID string) error {
-	span := createSpan(ctx, grm.tracer, unassignMember)
+	span := createSpan(ctx, grm.tracer, unassign)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
@@ -130,7 +130,7 @@ func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, memberID, gro
 }
 
 func (grm groupRepositoryMiddleware) Assign(ctx context.Context, memberID, groupID string) error {
-	span := createSpan(ctx, grm.tracer, assignMember)
+	span := createSpan(ctx, grm.tracer, assign)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
