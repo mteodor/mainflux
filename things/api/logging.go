@@ -266,7 +266,7 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id strin
 	return lm.svc.Identify(ctx, key)
 }
 
-func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (gr groups.Group, err error) {
+func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (id string, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_group for token %s and name %s took %s to complete", token, g.Name, time.Since(begin))
 		if err != nil {

@@ -194,7 +194,7 @@ func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, 
 	return ms.svc.Identify(ctx, key)
 }
 
-func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (gr groups.Group, err error) {
+func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (id string, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_group").Add(1)
 		ms.latency.With("method", "create_group").Observe(time.Since(begin).Seconds())

@@ -397,20 +397,24 @@ func (ts *thingsService) hasThing(ctx context.Context, chanID, thingKey string) 
 	return thingID, nil
 }
 
-func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
 	user, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	uid, err := uuidProvider.New().ID()
 	if err != nil {
-		return groups.Group{}, errors.Wrap(ErrCreateGroup, err)
+		return "", errors.Wrap(ErrCreateGroup, err)
 	}
 
 	g.ID = uid
 	g.OwnerID = user.GetId()
-	return ts.groups.Save(ctx, g)
+	if _, err := ts.groups.Save(ctx, g); err != nil {
+		return "", err
+	}
+
+	return g.ID, nil
 }
 
 func (ts *thingsService) ListGroups(ctx context.Context, token string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {

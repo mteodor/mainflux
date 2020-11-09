@@ -241,7 +241,7 @@ func (es eventStore) Identify(ctx context.Context, key string) (string, error) {
 	return es.svc.Identify(ctx, key)
 }
 
-func (es eventStore) CreateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+func (es eventStore) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
 	return es.svc.CreateGroup(ctx, token, g)
 }
 
