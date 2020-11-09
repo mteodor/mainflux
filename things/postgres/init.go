@@ -99,17 +99,17 @@ func migrateDB(db *sqlx.DB) error {
 					`ALTER TABLE IF EXISTS things ADD CONSTRAINT things_id_key UNIQUE (id)`,
 					`CREATE extension LTREE`,
 					`CREATE TABLE IF NOT EXISTS thing_groups ( 
-						id          UUID NOT NULL,
+						id          UUID UNIQUE NOT NULL,
 						parent_id   UUID, 
 						owner_id    UUID,
-						name        VARCHAR(254) UNIQUE NOT NULL,
+						name        VARCHAR(254) NOT NULL,
 						description VARCHAR(1024),
 						metadata    JSONB,
 						path        LTREE, 
-						PRIMARY KEY (id),
+						PRIMARY KEY (name, path),
 						FOREIGN KEY (parent_id) REFERENCES thing_groups (id) ON DELETE CASCADE ON UPDATE CASCADE
 				   )`,
-					`CREATE TABLE IF NOT EXISTS thing_group_relations (
+					`CREATE TABLE IF NOT EXISTS id (
 						thing_id UUID NOT NULL,
 						group_id UUID NOT NULL,
 						FOREIGN KEY (thing_id) REFERENCES things (id) ON DELETE CASCADE ON UPDATE CASCADE,
