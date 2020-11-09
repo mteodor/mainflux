@@ -45,9 +45,10 @@ type viewGroupRes struct {
 	OwnerID     string                 `json:"owner_id,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	// Level if retrieved with Parents or Children method
-	// indicates a level in hierarchy from first group node.
-	Level    int             `json:"level,omitempty"`
+	// Indicates a level in tree hierarchy from first group node.
+	Level int `json:"level,omitempty"`
+	// Path is a path in a tree, consisted of group names
+	// parentName.childrenName1.childrenName2 .
 	Path     string          `json:"path"`
 	Children []*viewGroupRes `json:"children"`
 }
@@ -83,7 +84,7 @@ func (res groupRes) Headers() map[string]string {
 			"Location": fmt.Sprintf("/groups/%s", res.id),
 		}
 	}
-	
+
 	return map[string]string{}
 }
 

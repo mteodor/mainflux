@@ -232,7 +232,7 @@ func findIndex(list []string, val string) int {
 	return -1
 }
 
-func (svc *mainfluxThings) CreateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+func (svc *mainfluxThings) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
 	panic("not implemented")
 }
 

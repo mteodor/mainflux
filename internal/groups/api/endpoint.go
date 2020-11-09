@@ -2,7 +2,6 @@ package groups
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/internal/groups"
@@ -23,12 +22,12 @@ func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Metadata:    req.Metadata,
 		}
 
-		created, err := svc.CreateGroup(ctx, req.token, group)
+		id, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
 			return groupRes{}, errors.Wrap(groups.ErrCreateGroup, err)
 		}
 
-		return groupRes{created: true, id: created.ID}, nil
+		return groupRes{created: true, id: id}, nil
 	}
 }
 
@@ -234,11 +233,10 @@ func buildGroupsResponseTree(page groups.GroupPage) groupPageRes {
 		}
 	}
 
-	for _, g := range groupsMap {
-		if ch, ok := parentsMap[g.ParentID]; ok {
-			ch = append(ch, g)
-			parentsMap[g.ParentID] = ch
-			fmt.Printf("%s, array> %d\n", g.ParentID, len(ch))
+	for _, group := range groupsMap {
+		if ch, ok := parentsMap[group.ParentID]; ok {
+			ch = append(ch, group)
+			parentsMap[group.ParentID] = ch
 		}
 	}
 
@@ -251,16 +249,16 @@ func buildGroupsResponseTree(page groups.GroupPage) groupPageRes {
 		Groups: []viewGroupRes{},
 	}
 
-	for _, g := range groupsMap {
-		if children, ok := parentsMap[g.ID]; ok {
-			g.Children = children
+	for _, group := range groupsMap {
+		if children, ok := parentsMap[group.ID]; ok {
+			group.Children = children
 		}
 
 	}
 
-	for _, g := range groupsMap {
-		view := toViewGroupRes(*g)
-		if children, ok := parentsMap[g.ParentID]; len(children) == 0 || !ok {
+	for _, group := range groupsMap {
+		view := toViewGroupRes(*group)
+		if children, ok := parentsMap[group.ParentID]; len(children) == 0 || !ok {
 			res.Groups = append(res.Groups, view)
 		}
 	}

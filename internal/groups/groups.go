@@ -14,9 +14,11 @@ type Group struct {
 	Name        string
 	Description string
 	Metadata    Metadata
-	// Level if retrieved with Parents or Children method
-	// indicates a level in hierarchy from first group node.
-	Level    int
+	// Indicates a level in hierarchy from first group node.
+	// For a root node level is 1.
+	Level int
+	// Path is a path in a tree, consisted of group names
+	// parentName.childrenName1.childrenName2 .
 	Path     string
 	Children []*Group
 }
@@ -40,7 +42,7 @@ type MemberPage struct {
 
 type Service interface {
 	// CreateGroup creates new  group.
-	CreateGroup(ctx context.Context, token string, g Group) (Group, error)
+	CreateGroup(ctx context.Context, token string, g Group) (string, error)
 
 	// UpdateGroup updates the group identified by the provided ID.
 	UpdateGroup(ctx context.Context, token string, g Group) (Group, error)
