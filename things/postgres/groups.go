@@ -169,7 +169,8 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm grou
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf("SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level FROM thing_groups WHERE nlevel(path) <= :level %s ORDER BY path", mq)
+	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level FROM thing_groups 
+					  WHERE nlevel(path) <= :level %s ORDER BY path`, mq)
 	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE nlevel(path) <= :level %s", mq)
 
 	dbPage, err := toDBGroupPage("", "", level, gm)
@@ -216,7 +217,8 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf("SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups WHERE path @> :path AND nlevel(:path) - nlevel(path) >= 0 AND nlevel(:path) - nlevel(path) <= :level %s", mq)
+	q := fmt.Sprintf(`SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups 
+					  WHERE path @> :path AND nlevel(:path) - nlevel(path) >= 0 AND nlevel(:path) - nlevel(path) <= :level %s`, mq)
 	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE path @> :path AND nlevel(:path) - nlevel(path) >= 0 AND nlevel(:path) - nlevel(path) <= :level %s", mq)
 	g, err := gr.RetrieveByID(ctx, groupID)
 	if err != nil {
@@ -269,7 +271,8 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf("SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups WHERE path <@ :path AND nlevel(path) - nlevel(:path) <= :level %s", mq)
+	q := fmt.Sprintf(`SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups 
+					  WHERE path <@ :path AND nlevel(path) - nlevel(:path) <= :level %s`, mq)
 	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE path <@ :path AND nlevel(path) - nlevel(:path) <= :level %s", mq)
 	g, err := gr.RetrieveByID(ctx, groupID)
 	if err != nil {
@@ -352,7 +355,7 @@ func (gr groupRepository) Members(ctx context.Context, groupID string, offset, l
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things th, thing_group_relations g
-	WHERE th.id = g.thing_id AND g.group_id = :group  %s;`, mq)
+					   WHERE th.id = g.thing_id AND g.group_id = :group  %s;`, mq)
 
 	total, err := total(ctx, gr.db, cq, params)
 	if err != nil {
@@ -411,8 +414,7 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 		items = append(items, gr)
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) 
-					   FROM thing_group_relations gr, thing_groups g
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM thing_group_relations gr, thing_groups g
 					   WHERE gr.group_id = g.id and gr.thing_id = :userID %s;`, mq)
 
 	total, err := total(ctx, gr.db, cq, params)
@@ -604,6 +606,9 @@ func getGroupsMetadataQuery(db string, m groups.Metadata) ([]byte, string, error
 	mb := []byte("{}")
 	if len(m) > 0 {
 		mq = db + `.metadata @> :metadata`
+		if db == "" {
+			mq = `metadata @> :metadata`
+		}
 
 		b, err := json.Marshal(m)
 		if err != nil {
