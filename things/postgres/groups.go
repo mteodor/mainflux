@@ -84,22 +84,6 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
 	q := `UPDATE thing_groups SET name = :name, description = :description, parent_id = :parent_id, metadata = :metadata  WHERE id = :id`
 
-	old, err := gr.RetrieveByID(ctx, g.ID)
-	if err != nil {
-		return groups.Group{}, errors.Wrap(errUpdateDB, err)
-	}
-	if g.Name == "" {
-		g.Name = old.Name
-	}
-	if g.Description == "" {
-		g.Description = old.Description
-	}
-	if g.ParentID == "" {
-		g.ParentID = old.ParentID
-	}
-	if g.Metadata == nil {
-		g.Metadata = old.Metadata
-	}
 	dbu, err := toDBGroup(g)
 	if err != nil {
 		return groups.Group{}, errors.Wrap(errUpdateDB, err)

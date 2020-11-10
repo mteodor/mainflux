@@ -433,16 +433,14 @@ func (ts *thingsService) ListParents(ctx context.Context, token string, childID 
 }
 
 func (ts *thingsService) ListChildren(ctx context.Context, token string, parentID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.RetrieveAllChildren(ctx, parentID, level, gm)
 }
 
 func (ts *thingsService) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return groups.MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	p, err := ts.groups.Members(ctx, groupID, offset, limit, gm)
@@ -463,24 +461,21 @@ func (ts *thingsService) ListMembers(ctx context.Context, token, groupID string,
 }
 
 func (ts *thingsService) RemoveGroup(ctx context.Context, token, id string) error {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Delete(ctx, id)
 }
 
 func (ts *thingsService) Unassign(ctx context.Context, token, memberID, groupID string) error {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Unassign(ctx, memberID, groupID)
 }
 
 func (ts *thingsService) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
@@ -488,24 +483,21 @@ func (ts *thingsService) UpdateGroup(ctx context.Context, token string, g groups
 }
 
 func (ts *thingsService) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.RetrieveByID(ctx, id)
 }
 
 func (ts *thingsService) Assign(ctx context.Context, token, memberID, groupID string) error {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Assign(ctx, memberID, groupID)
 }
 
 func (ts *thingsService) ListMemberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Memberships(ctx, memberID, offset, limit, gm)
