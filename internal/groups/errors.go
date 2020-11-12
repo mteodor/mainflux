@@ -42,8 +42,6 @@ var (
 	// ErrFailedDecode indicates failed to decode request body
 	ErrFailedDecode = errors.New("failed to decode request body")
 
-	// ErrMissingParent indicates that parent cant be found
+	// ErrMissingParent indicates that parent can't be found
 	ErrMissingParent = errors.New("failed to retrieve parent")
-
-
 )
