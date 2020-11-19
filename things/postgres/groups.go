@@ -76,7 +76,7 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 }
 
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
-	q := `UPDATE thing_groups SET name = :name, description = :description, metadata = :metadata  WHERE id = :id`
+	q := `UPDATE thing_groups SET description = :description, metadata = :metadata  WHERE id = :id`
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
@@ -202,7 +202,7 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM 
 					  (SELECT thing_groups.path FROM thing_groups where id = :parent_id) parent LEFT JOIN
 					  (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
-					   ON path @> :path %s`, mq)
+					   ON g.path @> parent.path %s`, mq)
 
 	if level > maxLevel {
 		level = maxLevel
@@ -258,7 +258,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM 
 					  (SELECT thing_groups.path FROM thing_groups where id = :id) parent LEFT JOIN
 				      (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
-					   ON path <@ :path %s`, mq)
+					   ON g.path <@ parent.path %s`, mq)
 
 	if level > maxLevel {
 		level = maxLevel
