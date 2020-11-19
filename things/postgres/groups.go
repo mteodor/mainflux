@@ -195,14 +195,11 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level FROM 
-					 (SELECT thing_groups.path FROM thing_groups where id = :parent_id) parent LEFT JOIN
-					 (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
-					  ON g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) >= 0 AND nlevel(parent.path) - nlevel(g.path) <= :level %s`, mq)
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM 
-					  (SELECT thing_groups.path FROM thing_groups where id = :parent_id) parent LEFT JOIN
-					  (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
-					   ON g.path @> parent.path %s`, mq)
+	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level 
+					  FROM thing_groups parent, thing_groups g
+					  WHERE parent.id = :parent_id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level %s`, mq)
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM thing_groups parent, thing_groups g WHERE parent.id = :parent_id AND g.path @> parent.path %s`, mq)
 
 	if level > maxLevel {
 		level = maxLevel
@@ -251,14 +248,11 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level FROM 
-					 (SELECT thing_groups.path FROM thing_groups where id = :id) parent LEFT JOIN
-				     (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
-					  ON g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) <= :level %s`, mq)
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM 
-					  (SELECT thing_groups.path FROM thing_groups where id = :id) parent LEFT JOIN
-				      (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
-					   ON g.path <@ parent.path %s`, mq)
+	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level 
+					  FROM thing_groups parent, thing_groups g
+					  WHERE parent.id = :id AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) <= :level %s`, mq)
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM thing_groups parent, thing_groups g WHERE parent.id = :id AND g.path <@ parent.path %s`, mq)
 
 	if level > maxLevel {
 		level = maxLevel

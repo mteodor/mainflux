@@ -109,7 +109,7 @@ func migrateDB(db *sqlx.DB) error {
 						PRIMARY KEY (owner_id, path),
 						FOREIGN KEY (parent_id) REFERENCES thing_groups (id) ON DELETE CASCADE ON UPDATE CASCADE
 				   )`,
-					`CREATE TABLE IF NOT EXISTS id (
+					`CREATE TABLE IF NOT EXISTS thing_group_relations (
 						thing_id UUID NOT NULL,
 						group_id UUID NOT NULL,
 						FOREIGN KEY (thing_id) REFERENCES things (id) ON DELETE CASCADE ON UPDATE CASCADE,
