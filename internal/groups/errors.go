@@ -44,4 +44,10 @@ var (
 
 	// ErrMissingParent indicates that parent can't be found
 	ErrMissingParent = errors.New("failed to retrieve parent")
+
+	// ErrNameInvariant indicates that name can't be changed
+	ErrNameInvariant = errors.New("name can't be changed")
+
+	// ErrParentInvariant indicates that parent can't be changed
+	ErrParentInvariant = errors.New("parent can't be changed")
 )

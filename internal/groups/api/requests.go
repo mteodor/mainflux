@@ -46,8 +46,12 @@ func (req updateGroupReq) validate() error {
 		return groups.ErrMalformedEntity
 	}
 
-	if req.Name == "" || len(req.Name) > maxNameSize {
-		return groups.ErrMalformedEntity
+	if req.ParentID != "" {
+		return groups.ErrParentInvariant
+	}
+
+	if req.Name != "" {
+		return groups.ErrNameInvariant
 	}
 
 	return nil
@@ -129,6 +133,6 @@ func (req groupReq) validate() error {
 	if req.groupID == "" && req.name == "" {
 		return groups.ErrMalformedEntity
 	}
-	
+
 	return nil
 }
