@@ -40,17 +40,11 @@ func NewGroupRepo(db Database) groups.Repository {
 
 func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	var id string
-	path := g.Name
-	q := `INSERT INTO thing_groups (name, description, id, owner_id, metadata, path) VALUES (:name, :description, :id, :owner_id, :metadata, :path) RETURNING id`
+	q := `INSERT INTO thing_groups (name, description, id, owner_id, metadata, path) VALUES (:name, :description, :id, :owner_id, :metadata, :name) RETURNING id`
 	if g.ParentID != "" {
-		q = `INSERT INTO thing_groups (name, description, id, owner_id, parent_id, metadata, path) VALUES (:name, :description, :id, :owner_id, :parent_id, :metadata, :path) RETURNING id`
-		parent, err := gr.RetrieveByID(ctx, g.ParentID)
-		if err != nil {
-			return groups.Group{}, errors.Wrap(groups.ErrMissingParent, err)
-		}
-		path = parent.Path + "." + g.Name
+		q = `INSERT INTO thing_groups (name, description, id, owner_id, parent_id, metadata, path) 
+			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name) FROM thing_groups tg WHERE id = :parent_id RETURNING id`
 	}
-	g.Path = path
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
@@ -82,7 +76,7 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 }
 
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
-	q := `UPDATE thing_groups SET name = :name, description = :description, parent_id = :parent_id, metadata = :metadata  WHERE id = :id`
+	q := `UPDATE thing_groups SET name = :name, description = :description, metadata = :metadata  WHERE id = :id`
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
@@ -144,22 +138,6 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (groups.G
 	return toGroup(dbu)
 }
 
-func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (groups.Group, error) {
-	dbu := dbGroup{
-		Name: name,
-	}
-	q := `SELECT id, name, description, metadata FROM thing_groups WHERE name = $1`
-	if err := gr.db.QueryRowxContext(ctx, q, name).StructScan(&dbu); err != nil {
-		if err == sql.ErrNoRows {
-			return groups.Group{}, errors.Wrap(groups.ErrNotFound, err)
-
-		}
-		return groups.Group{}, errors.Wrap(errRetrieveDB, err)
-	}
-
-	return toGroup(dbu)
-}
-
 func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
 	_, mq, err := getGroupsMetadataQuery("thing_groups", gm)
 	if err != nil {
@@ -173,7 +151,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm grou
 					  WHERE nlevel(path) <= :level %s ORDER BY path`, mq)
 	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE nlevel(path) <= :level %s", mq)
 
-	dbPage, err := toDBGroupPage("", "", level, gm)
+	dbPage, err := toDBGroupPage("", "", "", "", level, gm)
 	if err != nil {
 		return groups.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
@@ -217,18 +195,20 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups 
-					  WHERE path @> :path AND nlevel(:path) - nlevel(path) >= 0 AND nlevel(:path) - nlevel(path) <= :level %s`, mq)
-	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE path @> :path AND nlevel(:path) - nlevel(path) >= 0 AND nlevel(:path) - nlevel(path) <= :level %s", mq)
-	g, err := gr.RetrieveByID(ctx, groupID)
-	if err != nil {
-		return groups.GroupPage{}, errors.Wrap(groups.ErrNotFound, err)
-	}
+	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level FROM 
+					 (SELECT thing_groups.path FROM thing_groups where id = :parent_id) parent LEFT JOIN
+					 (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
+					  ON g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) >= 0 AND nlevel(parent.path) - nlevel(g.path) <= :level %s`, mq)
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM 
+					  (SELECT thing_groups.path FROM thing_groups where id = :parent_id) parent LEFT JOIN
+					  (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
+					   ON path @> :path %s`, mq)
+
 	if level > maxLevel {
 		level = maxLevel
 	}
 
-	dbPage, err := toDBGroupPage("", g.Path, level, gm)
+	dbPage, err := toDBGroupPage("", "", groupID, "", level, gm)
 	if err != nil {
 		return groups.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
@@ -271,21 +251,20 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups 
-					  WHERE path <@ :path AND nlevel(path) - nlevel(:path) <= :level %s`, mq)
-	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE path <@ :path AND nlevel(path) - nlevel(:path) <= :level %s", mq)
-	g, err := gr.RetrieveByID(ctx, groupID)
-	if err != nil {
-		return groups.GroupPage{}, errors.Wrap(groups.ErrNotFound, err)
-	}
+	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level FROM 
+					 (SELECT thing_groups.path FROM thing_groups where id = :id) parent LEFT JOIN
+				     (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
+					  ON g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) <= :level %s`, mq)
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM 
+					  (SELECT thing_groups.path FROM thing_groups where id = :id) parent LEFT JOIN
+				      (SELECT id, name, owner_id, parent_id, description,metadata, path FROM thing_groups) g 
+					   ON path <@ :path %s`, mq)
 
 	if level > maxLevel {
 		level = maxLevel
 	}
 
-	level = uint64(g.Level) + level
-
-	dbPage, err := toDBGroupPage("", g.Path, level, gm)
+	dbPage, err := toDBGroupPage("", groupID, "", "", level, gm)
 	if err != nil {
 		return groups.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
@@ -323,8 +302,8 @@ func (gr groupRepository) Members(ctx context.Context, groupID string, offset, l
 	}
 
 	q := fmt.Sprintf(`SELECT th.id, th.name, th.key, th.metadata FROM things th, thing_group_relations g
-                      WHERE th.id = g.thing_id AND g.group_id = :group 
-                      %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
+					  WHERE th.id = g.thing_id AND g.group_id = :group 
+					  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
 		"group":    groupID,
@@ -539,20 +518,31 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 	}, nil
 }
 
-func toDBGroupPage(ownerID, path string, level uint64, metadata groups.Metadata) (dbGroupPage, error) {
+func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata groups.Metadata) (dbGroupPage, error) {
 	owner, err := toUUID(ownerID)
 	if err != nil {
 		return dbGroupPage{}, err
 	}
 
+	gid, err := toUUID(id)
+	if err != nil {
+		return dbGroupPage{}, err
+	}
+
+	parent, err := toUUID(parentID)
+	if err != nil {
+		return dbGroupPage{}, err
+	}
 	if err != nil {
 		return dbGroupPage{}, err
 	}
 	return dbGroupPage{
 		Metadata: dbMetadata(metadata),
+		ID:       gid,
 		OwnerID:  owner,
 		Level:    level,
 		Path:     path,
+		ParentID: parent,
 	}, nil
 }
 

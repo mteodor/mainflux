@@ -73,14 +73,6 @@ func (grm groupRepositoryMiddleware) RetrieveByID(ctx context.Context, id string
 	return grm.repo.RetrieveByID(ctx, id)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveByName(ctx context.Context, name string) (groups.Group, error) {
-	span := createSpan(ctx, grm.tracer, retrieveByName)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
-	return grm.repo.RetrieveByName(ctx, name)
-}
-
 func (grm groupRepositoryMiddleware) RetrieveAllParents(ctx context.Context, groupID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAllAncestors)
 	defer span.Finish()
