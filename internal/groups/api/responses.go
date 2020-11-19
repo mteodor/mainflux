@@ -21,6 +21,7 @@ type pageRes struct {
 	Limit  uint64 `json:"limit"`
 	Name   string `json:"name"`
 }
+
 type memberPageRes struct {
 	pageRes
 	Members []interface{}
