@@ -40,7 +40,8 @@ func NewGroupRepo(db Database) groups.Repository {
 
 func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	var id string
-	q := `INSERT INTO thing_groups (name, description, id, owner_id, metadata, path) VALUES (:name, :description, :id, :owner_id, :metadata, :name) RETURNING id`
+	q := `INSERT INTO thing_groups (name, description, id, owner_id, metadata, path, created_at, updated_at) 
+		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, date(now()), date(now())) RETURNING id`
 	if g.ParentID != "" {
 		q = `INSERT INTO thing_groups (name, description, id, owner_id, parent_id, metadata, path) 
 			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name) FROM thing_groups tg WHERE id = :parent_id RETURNING id`
