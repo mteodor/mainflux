@@ -77,7 +77,7 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 }
 
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
-	q := `UPDATE thing_groups SET description = :description, metadata = :metadata  WHERE id = :id`
+	q := `UPDATE thing_groups SET description = :description, metadata = :metadata, updated_at = date(now())  WHERE id = :id`
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
