@@ -2,6 +2,7 @@ package groups
 
 import (
 	"context"
+	"time"
 )
 
 type Member interface{}
@@ -19,8 +20,10 @@ type Group struct {
 	Level int
 	// Path is a path in a tree, consisted of group names
 	// parentName.childrenName1.childrenName2 .
-	Path     string
-	Children []*Group
+	Path      string
+	Children  []*Group
+	CreatedAt time.Time
+	UpdateAt  time.Time
 }
 
 type PageMetadata struct {

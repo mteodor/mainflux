@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -41,7 +42,7 @@ func NewGroupRepo(db Database) groups.Repository {
 func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	var id string
 	q := `INSERT INTO thing_groups (name, description, id, owner_id, metadata, path, created_at, updated_at) 
-		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, date(now()), date(now())) RETURNING id`
+		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, now(), now()) RETURNING id`
 	if g.ParentID != "" {
 		q = `INSERT INTO thing_groups (name, description, id, owner_id, parent_id, metadata, path) 
 			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name) FROM thing_groups tg WHERE id = :parent_id RETURNING id`
@@ -77,7 +78,7 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 }
 
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
-	q := `UPDATE thing_groups SET description = :description, metadata = :metadata, updated_at = date(now())  WHERE id = :id`
+	q := `UPDATE thing_groups SET description = :description, metadata = :metadata, updated_at = now()  WHERE id = :id`
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
@@ -148,7 +149,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm grou
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level FROM thing_groups 
+	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM thing_groups 
 					  WHERE nlevel(path) <= :level %s ORDER BY path`, mq)
 	cq := fmt.Sprintf("SELECT COUNT(*) FROM thing_groups WHERE nlevel(path) <= :level %s", mq)
 
@@ -196,7 +197,7 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level 
+	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level, g.created_at, g.updated_at
 					  FROM thing_groups parent, thing_groups g
 					  WHERE parent.id = :parent_id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level %s`, mq)
 
@@ -249,7 +250,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level 
+	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level, g.created_at, g.updated_at 
 					  FROM thing_groups parent, thing_groups g
 					  WHERE parent.id = :id AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) <= :level %s`, mq)
 
@@ -455,6 +456,8 @@ type dbGroup struct {
 	Metadata    dbMetadata    `db:"metadata"`
 	Level       int           `db:"level"`
 	Path        string        `db:"path"`
+	CreatedAt   time.Time     `db:"created_at"`
+	UpdatedAt   time.Time     `db:"updated_at"`
 }
 
 type dbGroupPage struct {
@@ -510,6 +513,8 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 		Description: g.Description,
 		Metadata:    meta,
 		Path:        g.Path,
+		CreatedAt:   g.CreatedAt,
+		UpdatedAt:   g.UpdateAt,
 	}, nil
 }
 
@@ -563,6 +568,8 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 		Metadata:    groups.Metadata(dbu.Metadata),
 		Level:       dbu.Level,
 		Path:        dbu.Path,
+		UpdateAt:    dbu.UpdatedAt,
+		CreatedAt:   dbu.CreatedAt,
 	}, nil
 }
 

@@ -3,6 +3,7 @@ package groups
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mainflux/mainflux"
 )
@@ -50,8 +51,10 @@ type viewGroupRes struct {
 	Level int `json:"level,omitempty"`
 	// Path is a path in a tree, consisted of group names
 	// parentName.childrenName1.childrenName2 .
-	Path     string          `json:"path"`
-	Children []*viewGroupRes `json:"children"`
+	Path      string          `json:"path"`
+	Children  []*viewGroupRes `json:"children"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 func (res viewGroupRes) Code() int {

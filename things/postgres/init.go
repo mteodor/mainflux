@@ -106,8 +106,8 @@ func migrateDB(db *sqlx.DB) error {
 						description VARCHAR(1024),
 						metadata    JSONB,
 						path        LTREE, 
-						created_at  TIMESTAMP,
-						updated_at  TIMESTAMP,
+						created_at  TIMESTAMPTZ,
+						updated_at  TIMESTAMPTZ,
 						PRIMARY KEY (owner_id, path),
 						FOREIGN KEY (parent_id) REFERENCES thing_groups (id) ON DELETE CASCADE ON UPDATE CASCADE
 				   )`,
