@@ -514,7 +514,7 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 		Metadata:    meta,
 		Path:        g.Path,
 		CreatedAt:   g.CreatedAt,
-		UpdatedAt:   g.UpdateAt,
+		UpdatedAt:   g.UpdatedAt,
 	}, nil
 }
 
@@ -568,7 +568,7 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 		Metadata:    groups.Metadata(dbu.Metadata),
 		Level:       dbu.Level,
 		Path:        dbu.Path,
-		UpdateAt:    dbu.UpdatedAt,
+		UpdatedAt:   dbu.UpdatedAt,
 		CreatedAt:   dbu.CreatedAt,
 	}, nil
 }
