@@ -23,7 +23,7 @@ type Group struct {
 	Path      string
 	Children  []*Group
 	CreatedAt time.Time
-	UpdateAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type PageMetadata struct {

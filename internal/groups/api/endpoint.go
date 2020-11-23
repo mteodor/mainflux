@@ -278,7 +278,7 @@ func toViewGroupRes(g groups.Group) viewGroupRes {
 		Path:        g.Path,
 		Children:    make([]*viewGroupRes, 0),
 		CreatedAt:   g.CreatedAt,
-		UpdatedAt:   g.UpdateAt,
+		UpdatedAt:   g.UpdatedAt,
 	}
 
 	for _, ch := range g.Children {
@@ -310,7 +310,7 @@ func buildGroupsResponse(gp groups.GroupPage) groupPageRes {
 			Level:       group.Level,
 			Path:        group.Path,
 			CreatedAt:   group.CreatedAt,
-			UpdatedAt:   group.UpdateAt,
+			UpdatedAt:   group.UpdatedAt,
 		}
 		res.Groups = append(res.Groups, view)
 	}
