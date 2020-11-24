@@ -89,26 +89,26 @@ func (m *AuthorizeReq) GetAct() string {
 	return ""
 }
 
-type AddThingsReq struct {
-	Owner                string   `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
-	Ids                  []string `protobuf:"bytes,2,rep,name=ids,proto3" json:"ids,omitempty"`
+type AuthorizeRes struct {
+	Authorized           bool     `protobuf:"varint,1,opt,name=authorized,proto3" json:"authorized,omitempty"`
+	Err                  string   `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AddThingsReq) Reset()         { *m = AddThingsReq{} }
-func (m *AddThingsReq) String() string { return proto.CompactTextString(m) }
-func (*AddThingsReq) ProtoMessage()    {}
-func (*AddThingsReq) Descriptor() ([]byte, []int) {
+func (m *AuthorizeRes) Reset()         { *m = AuthorizeRes{} }
+func (m *AuthorizeRes) String() string { return proto.CompactTextString(m) }
+func (*AuthorizeRes) ProtoMessage()    {}
+func (*AuthorizeRes) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6b30dada73a254d2, []int{1}
 }
-func (m *AddThingsReq) XXX_Unmarshal(b []byte) error {
+func (m *AuthorizeRes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *AddThingsReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *AuthorizeRes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AddThingsReq.Marshal(b, m, deterministic)
+		return xxx_messageInfo_AuthorizeRes.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -118,238 +118,26 @@ func (m *AddThingsReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *AddThingsReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddThingsReq.Merge(m, src)
+func (m *AuthorizeRes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AuthorizeRes.Merge(m, src)
 }
-func (m *AddThingsReq) XXX_Size() int {
+func (m *AuthorizeRes) XXX_Size() int {
 	return m.Size()
 }
-func (m *AddThingsReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddThingsReq.DiscardUnknown(m)
+func (m *AuthorizeRes) XXX_DiscardUnknown() {
+	xxx_messageInfo_AuthorizeRes.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AddThingsReq proto.InternalMessageInfo
+var xxx_messageInfo_AuthorizeRes proto.InternalMessageInfo
 
-func (m *AddThingsReq) GetOwner() string {
+func (m *AuthorizeRes) GetAuthorized() bool {
 	if m != nil {
-		return m.Owner
+		return m.Authorized
 	}
-	return ""
+	return false
 }
 
-func (m *AddThingsReq) GetIds() []string {
-	if m != nil {
-		return m.Ids
-	}
-	return nil
-}
-
-type AddChannelsReq struct {
-	Owner                string   `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
-	Ids                  []string `protobuf:"bytes,2,rep,name=ids,proto3" json:"ids,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *AddChannelsReq) Reset()         { *m = AddChannelsReq{} }
-func (m *AddChannelsReq) String() string { return proto.CompactTextString(m) }
-func (*AddChannelsReq) ProtoMessage()    {}
-func (*AddChannelsReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b30dada73a254d2, []int{2}
-}
-func (m *AddChannelsReq) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *AddChannelsReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_AddChannelsReq.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *AddChannelsReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddChannelsReq.Merge(m, src)
-}
-func (m *AddChannelsReq) XXX_Size() int {
-	return m.Size()
-}
-func (m *AddChannelsReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddChannelsReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AddChannelsReq proto.InternalMessageInfo
-
-func (m *AddChannelsReq) GetOwner() string {
-	if m != nil {
-		return m.Owner
-	}
-	return ""
-}
-
-func (m *AddChannelsReq) GetIds() []string {
-	if m != nil {
-		return m.Ids
-	}
-	return nil
-}
-
-type RemoveThingReq struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Owner                string   `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RemoveThingReq) Reset()         { *m = RemoveThingReq{} }
-func (m *RemoveThingReq) String() string { return proto.CompactTextString(m) }
-func (*RemoveThingReq) ProtoMessage()    {}
-func (*RemoveThingReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b30dada73a254d2, []int{3}
-}
-func (m *RemoveThingReq) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RemoveThingReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RemoveThingReq.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RemoveThingReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RemoveThingReq.Merge(m, src)
-}
-func (m *RemoveThingReq) XXX_Size() int {
-	return m.Size()
-}
-func (m *RemoveThingReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_RemoveThingReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RemoveThingReq proto.InternalMessageInfo
-
-func (m *RemoveThingReq) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *RemoveThingReq) GetOwner() string {
-	if m != nil {
-		return m.Owner
-	}
-	return ""
-}
-
-type RemoveChannelReq struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Owner                string   `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RemoveChannelReq) Reset()         { *m = RemoveChannelReq{} }
-func (m *RemoveChannelReq) String() string { return proto.CompactTextString(m) }
-func (*RemoveChannelReq) ProtoMessage()    {}
-func (*RemoveChannelReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b30dada73a254d2, []int{4}
-}
-func (m *RemoveChannelReq) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RemoveChannelReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RemoveChannelReq.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RemoveChannelReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RemoveChannelReq.Merge(m, src)
-}
-func (m *RemoveChannelReq) XXX_Size() int {
-	return m.Size()
-}
-func (m *RemoveChannelReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_RemoveChannelReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RemoveChannelReq proto.InternalMessageInfo
-
-func (m *RemoveChannelReq) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *RemoveChannelReq) GetOwner() string {
-	if m != nil {
-		return m.Owner
-	}
-	return ""
-}
-
-type ErrorRes struct {
-	Err                  string   `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ErrorRes) Reset()         { *m = ErrorRes{} }
-func (m *ErrorRes) String() string { return proto.CompactTextString(m) }
-func (*ErrorRes) ProtoMessage()    {}
-func (*ErrorRes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b30dada73a254d2, []int{5}
-}
-func (m *ErrorRes) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ErrorRes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ErrorRes.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *ErrorRes) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ErrorRes.Merge(m, src)
-}
-func (m *ErrorRes) XXX_Size() int {
-	return m.Size()
-}
-func (m *ErrorRes) XXX_DiscardUnknown() {
-	xxx_messageInfo_ErrorRes.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ErrorRes proto.InternalMessageInfo
-
-func (m *ErrorRes) GetErr() string {
+func (m *AuthorizeRes) GetErr() string {
 	if m != nil {
 		return m.Err
 	}
@@ -358,37 +146,25 @@ func (m *ErrorRes) GetErr() string {
 
 func init() {
 	proto.RegisterType((*AuthorizeReq)(nil), "authz.AuthorizeReq")
-	proto.RegisterType((*AddThingsReq)(nil), "authz.AddThingsReq")
-	proto.RegisterType((*AddChannelsReq)(nil), "authz.AddChannelsReq")
-	proto.RegisterType((*RemoveThingReq)(nil), "authz.RemoveThingReq")
-	proto.RegisterType((*RemoveChannelReq)(nil), "authz.RemoveChannelReq")
-	proto.RegisterType((*ErrorRes)(nil), "authz.ErrorRes")
+	proto.RegisterType((*AuthorizeRes)(nil), "authz.AuthorizeRes")
 }
 
 func init() { proto.RegisterFile("authz.proto", fileDescriptor_6b30dada73a254d2) }
 
 var fileDescriptor_6b30dada73a254d2 = []byte{
-	// 319 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xcd, 0x4a, 0xf3, 0x40,
-	0x14, 0x86, 0x9b, 0x09, 0xfd, 0xf8, 0x7a, 0x5a, 0x63, 0x18, 0x15, 0x83, 0x48, 0x28, 0x59, 0xb9,
-	0xea, 0xc2, 0x42, 0x2d, 0xb8, 0x8a, 0x3f, 0x37, 0x10, 0x5d, 0xb9, 0x4b, 0x32, 0x83, 0x99, 0xa2,
-	0x19, 0x9d, 0x24, 0x15, 0x7a, 0x25, 0xde, 0x81, 0xb7, 0xe2, 0xd2, 0x4b, 0x90, 0x78, 0x23, 0x32,
-	0x99, 0xa4, 0x99, 0x40, 0x04, 0xdd, 0xcd, 0x79, 0xe1, 0x79, 0xcf, 0xe1, 0x61, 0x60, 0x1c, 0x16,
-	0x79, 0xb2, 0x99, 0x3d, 0x09, 0x9e, 0x73, 0x3c, 0xac, 0x06, 0xef, 0x0a, 0x26, 0x7e, 0x91, 0x27,
-	0x5c, 0xb0, 0x0d, 0x0d, 0xe8, 0x33, 0xb6, 0xc1, 0xcc, 0x8a, 0xc8, 0x31, 0xa6, 0xc6, 0xc9, 0x28,
-	0x90, 0x4f, 0x99, 0xf0, 0x68, 0xe5, 0x20, 0x95, 0xf0, 0x68, 0x25, 0x93, 0x30, 0xce, 0x1d, 0x53,
-	0x25, 0x61, 0x9c, 0x7b, 0x0b, 0x98, 0xf8, 0x84, 0xdc, 0x26, 0x2c, 0xbd, 0xcf, 0x64, 0xcb, 0x3e,
-	0x0c, 0xf9, 0x4b, 0x4a, 0x45, 0xdd, 0xa3, 0x06, 0xc9, 0x31, 0x92, 0x39, 0x68, 0x6a, 0x4a, 0x8e,
-	0x91, 0xcc, 0x5b, 0x82, 0xe5, 0x13, 0x72, 0x99, 0x84, 0x69, 0x4a, 0x1f, 0xfe, 0x44, 0x2e, 0xc0,
-	0x0a, 0xe8, 0x23, 0x5f, 0xd3, 0x6a, 0xa9, 0x24, 0x2d, 0x40, 0x8c, 0xd4, 0x18, 0x62, 0xa4, 0x6d,
-	0x42, 0x5a, 0x93, 0xb7, 0x04, 0x5b, 0x71, 0xf5, 0xd2, 0xdf, 0x93, 0xc7, 0xf0, 0xff, 0x5a, 0x08,
-	0x2e, 0x02, 0x9a, 0xc9, 0x7b, 0xa8, 0x68, 0x6e, 0x94, 0xcf, 0xd3, 0x37, 0xa4, 0x44, 0xde, 0xdd,
-	0x50, 0xb1, 0x66, 0x31, 0xc5, 0x73, 0x18, 0x6d, 0xc5, 0xe2, 0xbd, 0x99, 0x52, 0xaf, 0xab, 0x3e,
-	0xda, 0xad, 0xc3, 0xa6, 0xd5, 0x1b, 0x54, 0x50, 0xe3, 0xb1, 0x85, 0x34, 0xb3, 0x7d, 0xd0, 0x19,
-	0x8c, 0x35, 0x89, 0xf8, 0xa0, 0xc5, 0x34, 0xb1, 0x3f, 0x80, 0x9a, 0xc3, 0x2d, 0xd8, 0xf5, 0xda,
-	0x07, 0x9e, 0xc3, 0x4e, 0x47, 0x22, 0x3e, 0xec, 0xa0, 0xad, 0xda, 0x1e, 0xf8, 0xc2, 0x7e, 0x2f,
-	0x5d, 0xe3, 0xa3, 0x74, 0x8d, 0xcf, 0xd2, 0x35, 0x5e, 0xbf, 0xdc, 0x41, 0xf4, 0xaf, 0xfa, 0x91,
-	0xf3, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0x43, 0x1d, 0x6c, 0xe9, 0xa0, 0x02, 0x00, 0x00,
+	// 182 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2c, 0x2d, 0xc9,
+	0xa8, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0x5c, 0xb8, 0x78, 0x1c,
+	0x4b, 0x4b, 0x32, 0xf2, 0x8b, 0x32, 0xab, 0x52, 0x83, 0x52, 0x0b, 0x85, 0x04, 0xb8, 0x98, 0x8b,
+	0x4b, 0x93, 0x24, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0x40, 0x4c, 0x90, 0x48, 0x7e, 0x52, 0x96,
+	0x04, 0x13, 0x44, 0x24, 0x3f, 0x29, 0x0b, 0x24, 0x92, 0x98, 0x5c, 0x22, 0xc1, 0x0c, 0x11, 0x49,
+	0x4c, 0x2e, 0x51, 0x72, 0x40, 0x31, 0xa5, 0x58, 0x48, 0x8e, 0x8b, 0x2b, 0x11, 0xc6, 0x4f, 0x01,
+	0x1b, 0xc6, 0x11, 0x84, 0x24, 0x02, 0x32, 0x21, 0xb5, 0xa8, 0x08, 0x66, 0x66, 0x6a, 0x51, 0x91,
+	0x91, 0x3b, 0xc4, 0x84, 0xa8, 0xe0, 0xd4, 0xa2, 0xb2, 0xcc, 0xe4, 0x54, 0x21, 0x73, 0x2e, 0x4e,
+	0xb8, 0x89, 0x42, 0xc2, 0x7a, 0x10, 0x97, 0x23, 0xbb, 0x54, 0x0a, 0x8b, 0x60, 0xb1, 0x12, 0x83,
+	0x93, 0xc0, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe3,
+	0xb1, 0x1c, 0x43, 0x12, 0x1b, 0xd8, 0xc3, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x61, 0x2f,
+	0x56, 0xda, 0xff, 0x00, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -403,11 +179,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type AuthZServiceClient interface {
-	Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*ErrorRes, error)
-	AddThings(ctx context.Context, in *AddThingsReq, opts ...grpc.CallOption) (*ErrorRes, error)
-	AddChannels(ctx context.Context, in *AddChannelsReq, opts ...grpc.CallOption) (*ErrorRes, error)
-	RemoveThing(ctx context.Context, in *RemoveThingReq, opts ...grpc.CallOption) (*ErrorRes, error)
-	RemoveChannel(ctx context.Context, in *RemoveChannelReq, opts ...grpc.CallOption) (*ErrorRes, error)
+	Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error)
 }
 
 type authZServiceClient struct {
@@ -418,45 +190,9 @@ func NewAuthZServiceClient(cc *grpc.ClientConn) AuthZServiceClient {
 	return &authZServiceClient{cc}
 }
 
-func (c *authZServiceClient) Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*ErrorRes, error) {
-	out := new(ErrorRes)
+func (c *authZServiceClient) Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error) {
+	out := new(AuthorizeRes)
 	err := c.cc.Invoke(ctx, "/authz.AuthZService/Authorize", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authZServiceClient) AddThings(ctx context.Context, in *AddThingsReq, opts ...grpc.CallOption) (*ErrorRes, error) {
-	out := new(ErrorRes)
-	err := c.cc.Invoke(ctx, "/authz.AuthZService/AddThings", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authZServiceClient) AddChannels(ctx context.Context, in *AddChannelsReq, opts ...grpc.CallOption) (*ErrorRes, error) {
-	out := new(ErrorRes)
-	err := c.cc.Invoke(ctx, "/authz.AuthZService/AddChannels", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authZServiceClient) RemoveThing(ctx context.Context, in *RemoveThingReq, opts ...grpc.CallOption) (*ErrorRes, error) {
-	out := new(ErrorRes)
-	err := c.cc.Invoke(ctx, "/authz.AuthZService/RemoveThing", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authZServiceClient) RemoveChannel(ctx context.Context, in *RemoveChannelReq, opts ...grpc.CallOption) (*ErrorRes, error) {
-	out := new(ErrorRes)
-	err := c.cc.Invoke(ctx, "/authz.AuthZService/RemoveChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -465,31 +201,15 @@ func (c *authZServiceClient) RemoveChannel(ctx context.Context, in *RemoveChanne
 
 // AuthZServiceServer is the server API for AuthZService service.
 type AuthZServiceServer interface {
-	Authorize(context.Context, *AuthorizeReq) (*ErrorRes, error)
-	AddThings(context.Context, *AddThingsReq) (*ErrorRes, error)
-	AddChannels(context.Context, *AddChannelsReq) (*ErrorRes, error)
-	RemoveThing(context.Context, *RemoveThingReq) (*ErrorRes, error)
-	RemoveChannel(context.Context, *RemoveChannelReq) (*ErrorRes, error)
+	Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error)
 }
 
 // UnimplementedAuthZServiceServer can be embedded to have forward compatible implementations.
 type UnimplementedAuthZServiceServer struct {
 }
 
-func (*UnimplementedAuthZServiceServer) Authorize(ctx context.Context, req *AuthorizeReq) (*ErrorRes, error) {
+func (*UnimplementedAuthZServiceServer) Authorize(ctx context.Context, req *AuthorizeReq) (*AuthorizeRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
-}
-func (*UnimplementedAuthZServiceServer) AddThings(ctx context.Context, req *AddThingsReq) (*ErrorRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddThings not implemented")
-}
-func (*UnimplementedAuthZServiceServer) AddChannels(ctx context.Context, req *AddChannelsReq) (*ErrorRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddChannels not implemented")
-}
-func (*UnimplementedAuthZServiceServer) RemoveThing(ctx context.Context, req *RemoveThingReq) (*ErrorRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveThing not implemented")
-}
-func (*UnimplementedAuthZServiceServer) RemoveChannel(ctx context.Context, req *RemoveChannelReq) (*ErrorRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveChannel not implemented")
 }
 
 func RegisterAuthZServiceServer(s *grpc.Server, srv AuthZServiceServer) {
@@ -514,78 +234,6 @@ func _AuthZService_Authorize_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthZService_AddThings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddThingsReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthZServiceServer).AddThings(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/authz.AuthZService/AddThings",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthZServiceServer).AddThings(ctx, req.(*AddThingsReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthZService_AddChannels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddChannelsReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthZServiceServer).AddChannels(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/authz.AuthZService/AddChannels",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthZServiceServer).AddChannels(ctx, req.(*AddChannelsReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthZService_RemoveThing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveThingReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthZServiceServer).RemoveThing(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/authz.AuthZService/RemoveThing",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthZServiceServer).RemoveThing(ctx, req.(*RemoveThingReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthZService_RemoveChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveChannelReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthZServiceServer).RemoveChannel(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/authz.AuthZService/RemoveChannel",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthZServiceServer).RemoveChannel(ctx, req.(*RemoveChannelReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _AuthZService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "authz.AuthZService",
 	HandlerType: (*AuthZServiceServer)(nil),
@@ -593,22 +241,6 @@ var _AuthZService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authorize",
 			Handler:    _AuthZService_Authorize_Handler,
-		},
-		{
-			MethodName: "AddThings",
-			Handler:    _AuthZService_AddThings_Handler,
-		},
-		{
-			MethodName: "AddChannels",
-			Handler:    _AuthZService_AddChannels_Handler,
-		},
-		{
-			MethodName: "RemoveThing",
-			Handler:    _AuthZService_RemoveThing_Handler,
-		},
-		{
-			MethodName: "RemoveChannel",
-			Handler:    _AuthZService_RemoveChannel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -663,7 +295,7 @@ func (m *AuthorizeReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *AddThingsReq) Marshal() (dAtA []byte, err error) {
+func (m *AuthorizeRes) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -673,180 +305,12 @@ func (m *AddThingsReq) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AddThingsReq) MarshalTo(dAtA []byte) (int, error) {
+func (m *AuthorizeRes) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AddThingsReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Ids) > 0 {
-		for iNdEx := len(m.Ids) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Ids[iNdEx])
-			copy(dAtA[i:], m.Ids[iNdEx])
-			i = encodeVarintAuthz(dAtA, i, uint64(len(m.Ids[iNdEx])))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *AddChannelsReq) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AddChannelsReq) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AddChannelsReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Ids) > 0 {
-		for iNdEx := len(m.Ids) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Ids[iNdEx])
-			copy(dAtA[i:], m.Ids[iNdEx])
-			i = encodeVarintAuthz(dAtA, i, uint64(len(m.Ids[iNdEx])))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RemoveThingReq) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RemoveThingReq) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RemoveThingReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Id)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RemoveChannelReq) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RemoveChannelReq) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RemoveChannelReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Id)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ErrorRes) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ErrorRes) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ErrorRes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *AuthorizeRes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -860,7 +324,17 @@ func (m *ErrorRes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Err)
 		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Err)))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x12
+	}
+	if m.Authorized {
+		i--
+		if m.Authorized {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -900,96 +374,15 @@ func (m *AuthorizeReq) Size() (n int) {
 	return n
 }
 
-func (m *AddThingsReq) Size() (n int) {
+func (m *AuthorizeRes) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Owner)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
+	if m.Authorized {
+		n += 2
 	}
-	if len(m.Ids) > 0 {
-		for _, s := range m.Ids {
-			l = len(s)
-			n += 1 + l + sovAuthz(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *AddChannelsReq) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Owner)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	if len(m.Ids) > 0 {
-		for _, s := range m.Ids {
-			l = len(s)
-			n += 1 + l + sovAuthz(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *RemoveThingReq) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Id)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	l = len(m.Owner)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *RemoveChannelReq) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Id)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	l = len(m.Owner)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ErrorRes) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	l = len(m.Err)
 	if l > 0 {
 		n += 1 + l + sovAuthz(uint64(l))
@@ -1156,7 +549,7 @@ func (m *AuthorizeReq) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *AddThingsReq) Unmarshal(dAtA []byte) error {
+func (m *AuthorizeRes) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1179,17 +572,17 @@ func (m *AddThingsReq) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AddThingsReq: wiretype end group for non-group")
+			return fmt.Errorf("proto: AuthorizeRes: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddThingsReq: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: AuthorizeRes: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Authorized", wireType)
 			}
-			var stringLen uint64
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowAuthz
@@ -1199,465 +592,13 @@ func (m *AddThingsReq) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Owner = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
+			m.Authorized = bool(v != 0)
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Ids = append(m.Ids, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAuthz(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AddChannelsReq) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAuthz
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AddChannelsReq: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddChannelsReq: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Owner = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Ids = append(m.Ids, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAuthz(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RemoveThingReq) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAuthz
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RemoveThingReq: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RemoveThingReq: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Owner = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAuthz(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RemoveChannelReq) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAuthz
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RemoveChannelReq: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RemoveChannelReq: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Owner = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAuthz(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ErrorRes) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAuthz
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ErrorRes: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ErrorRes: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Err", wireType)
 			}

@@ -6,7 +6,7 @@ syntax = "proto3";
 package authz;
 
 service AuthZService {
-    rpc Authorize(AuthorizeReq) returns (ErrorRes) {}
+    rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
 }
 
 message AuthorizeReq {
@@ -15,26 +15,7 @@ message AuthorizeReq {
     string act = 3;
 }
 
-message AddThingsReq {
-    string owner = 1;
-    repeated string ids = 2;
-}
-
-message AddChannelsReq {
-    string owner = 1;
-    repeated string ids = 2;
-}
-
-message RemoveThingReq {
-    string id = 1;
-    string owner = 2;
-}
-
-message RemoveChannelReq {
-    string id = 1;
-    string owner = 2;
-}
-
-message ErrorRes {
-    string err = 1;
+message AuthorizeRes {
+    bool authorized = 1;
+    string err = 2;
 }

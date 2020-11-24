@@ -3,7 +3,7 @@
 
 package grpc
 
-type identityRes struct {
-	id  string
-	err error
+type authorizeRes struct {
+	authorized bool
+	err        error
 }

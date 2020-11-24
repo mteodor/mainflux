@@ -8,43 +8,23 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/authz"
 )
 
-func issueEndpoint(svc authn.Service) endpoint.Endpoint {
+func MakeAuthorizeEndpoint(svc authz.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(issueReq)
+		req := request.(AuthZReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		now := time.Now().UTC()
-		key := authn.Key{
-			Type:     req.keyType,
-			IssuedAt: now,
+		p := authz.Policy{
+			Subject: req.Sub,
+			Object:  req.Obj,
+			Action:  req.Act,
 		}
 
-		k, err := svc.Issue(ctx, req.issuer, key)
-		if err != nil {
-			return identityRes{}, err
-		}
-
-		return identityRes{k.Secret, nil}, nil
-	}
-}
-
-func identifyEndpoint(svc authn.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(identityReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		id, err := svc.Identify(ctx, req.token)
-		if err != nil {
-			return identityRes{}, err
-		}
-
-		return identityRes{id, nil}, nil
+		err := svc.Authorize(ctx, p)
+		return ErrorRes{Err: err}, nil
 	}
 }

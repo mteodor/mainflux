@@ -4,9 +4,8 @@ import (
 	"context"
 
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
-	"github.com/mainflux/mainflux/authz/api"
 	pb "github.com/mainflux/mainflux/authz/api/pb"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 type server struct {

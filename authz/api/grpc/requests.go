@@ -3,39 +3,29 @@
 
 package grpc
 
-import "github.com/mainflux/mainflux/authn"
+import "github.com/mainflux/mainflux/authz"
 
-type identityReq struct {
-	token string
-	kind  uint32
+// AuthZReq represents authorization request. It contains:
+// 1. subject - an action invoker
+// 2. object - an entity over which action will be executed
+// 3. action - type of action that will be executed (read/write)
+type AuthZReq struct {
+	Sub string
+	Obj string
+	Act string
 }
 
-func (req identityReq) validate() error {
-	if req.token == "" {
-		return authn.ErrMalformedEntity
-	}
-	if req.kind != authn.UserKey &&
-		req.kind != authn.APIKey &&
-		req.kind != authn.RecoveryKey {
-		return authn.ErrMalformedEntity
+func (req AuthZReq) validate() error {
+	if req.Sub == "" {
+		return ErrInvalidReq
 	}
 
-	return nil
-}
-
-type issueReq struct {
-	issuer  string
-	keyType uint32
-}
-
-func (req issueReq) validate() error {
-	if req.issuer == "" {
-		return authn.ErrUnauthorizedAccess
+	if req.Obj == "" {
+		return ErrInvalidReq
 	}
-	if req.keyType != authn.UserKey &&
-		req.keyType != authn.APIKey &&
-		req.keyType != authn.RecoveryKey {
-		return authn.ErrMalformedEntity
+
+	if req.Act == "" {
+		return ErrInvalidReq
 	}
 
 	return nil

@@ -58,27 +58,27 @@ func (svc service) RemovePolicy(ctx context.Context, p Policy) (bool, error) {
 
 func (svc service) Authorize(ctx context.Context, p Policy) (bool, error) {
 
-	user, err := svc.users.RetrieveByEmail(ctx, userID)
-	if err != nil {
-		return false, nil
-	}
-	allow, err := svc.enforcer.Enforce(userID, obj, action)
-	if err != nil {
-		return false, err
-	}
-	if allow {
-		return true, nil
-	}
+	// user, err := svc.users.RetrieveByEmail(ctx, userID)
+	// if err != nil {
+	// 	return false, nil
+	// }
+	// allow, err := svc.enforcer.Enforce(userID, obj, action)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// if allow {
+	// 	return true, nil
+	// }
 
-	gp, _ := svc.groups.RetrieveAllForUser(ctx, user.ID, 0, 10, nil)
-	for _, g := range gp.Groups {
-		sub := g.Name
-		allow, _ := svc.enforcer.Enforce(sub, obj, action)
-		if allow == true {
-			return true, nil
-		}
-	}
-	return false, nil
+	// gp, _ := svc.groups.RetrieveAllForUser(ctx, user.ID, 0, 10, nil)
+	// for _, g := range gp.Groups {
+	// 	sub := g.Name
+	// 	allow, _ := svc.enforcer.Enforce(sub, obj, action)
+	// 	if allow == true {
+	// 		return true, nil
+	// 	}
+	// }
+	// return false, nil
 
-	svc.enforcer.Enforce(p.Action, p.Object, p.Subject)
+	return svc.enforcer.Enforce(p.Action, p.Object, p.Subject)
 }
