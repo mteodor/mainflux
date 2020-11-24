@@ -17,7 +17,6 @@ package model
 import (
 	"strings"
 
-	"github.com/casbin/casbin/v2/log"
 	"github.com/casbin/casbin/v2/rbac"
 	"github.com/casbin/casbin/v2/util"
 )
@@ -56,17 +55,33 @@ func (model Model) BuildRoleLinks(rm rbac.RoleManager) error {
 
 // PrintPolicy prints the policy to log.
 func (model Model) PrintPolicy() {
-	if !log.GetLogger().IsEnabled() {
+	if !model.GetLogger().IsEnabled() {
 		return
 	}
-	log.LogPrint("Policy:")
+
+	policy := make(map[string][][]string)
+
 	for key, ast := range model["p"] {
-		log.LogPrint(key, ": ", ast.Value, ": ", ast.Policy)
+		value, found := policy[key]
+		if found {
+			value = append(value, ast.Policy...)
+			policy[key] = value
+		} else {
+			policy[key] = ast.Policy
+		}
 	}
 
 	for key, ast := range model["g"] {
-		log.LogPrint(key, ": ", ast.Value, ": ", ast.Policy)
+		value, found := policy[key]
+		if found {
+			value = append(value, ast.Policy...)
+			policy[key] = value
+		} else {
+			policy[key] = ast.Policy
+		}
 	}
+
+	model.GetLogger().LogPolicy(policy)
 }
 
 // ClearPolicy clears all current policy.
@@ -156,6 +171,21 @@ func (model Model) RemovePolicy(sec string, ptype string, rule []string) bool {
 	for i := index; i < len(model[sec][ptype].Policy); i++ {
 		model[sec][ptype].PolicyMap[strings.Join(model[sec][ptype].Policy[i], DefaultSep)] = i
 	}
+
+	return true
+}
+
+// UpdatePolicy updates a policy rule from the model.
+func (model Model) UpdatePolicy(sec string, ptype string, oldRule []string, newRule []string) bool {
+	oldPolicy := strings.Join(oldRule, DefaultSep)
+	index, ok := model[sec][ptype].PolicyMap[oldPolicy]
+	if !ok {
+		return false
+	}
+
+	model[sec][ptype].Policy[index] = newRule
+	delete(model[sec][ptype].PolicyMap, oldPolicy)
+	model[sec][ptype].PolicyMap[strings.Join(newRule, DefaultSep)] = index
 
 	return true
 }

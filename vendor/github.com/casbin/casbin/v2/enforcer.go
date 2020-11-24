@@ -17,8 +17,6 @@ package casbin
 import (
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/Knetic/govaluate"
 	"github.com/casbin/casbin/v2/effect"
 	"github.com/casbin/casbin/v2/log"
@@ -37,14 +35,18 @@ type Enforcer struct {
 	fm        model.FunctionMap
 	eft       effect.Effector
 
-	adapter persist.Adapter
-	watcher persist.Watcher
-	rm      rbac.RoleManager
+	adapter    persist.Adapter
+	watcher    persist.Watcher
+	dispatcher persist.Dispatcher
+	rm         rbac.RoleManager
 
-	enabled            bool
-	autoSave           bool
-	autoBuildRoleLinks bool
-	autoNotifyWatcher  bool
+	enabled              bool
+	autoSave             bool
+	autoBuildRoleLinks   bool
+	autoNotifyWatcher    bool
+	autoNotifyDispatcher bool
+
+	logger log.Logger
 }
 
 // NewEnforcer creates an enforcer via file or DB.
@@ -59,7 +61,7 @@ type Enforcer struct {
 // 	e := casbin.NewEnforcer("path/to/basic_model.conf", a)
 //
 func NewEnforcer(params ...interface{}) (*Enforcer, error) {
-	e := &Enforcer{}
+	e := &Enforcer{logger: &log.DefaultLogger{}}
 
 	parsedParamLen := 0
 	paramLen := len(params)
@@ -67,7 +69,14 @@ func NewEnforcer(params ...interface{}) (*Enforcer, error) {
 		enableLog, ok := params[paramLen-1].(bool)
 		if ok {
 			e.EnableLog(enableLog)
+			parsedParamLen++
+		}
+	}
 
+	if paramLen-parsedParamLen >= 1 {
+		logger, ok := params[paramLen-parsedParamLen-1].(log.Logger)
+		if ok {
+			e.logger = logger
 			parsedParamLen++
 		}
 	}
@@ -147,6 +156,7 @@ func (e *Enforcer) InitWithModelAndAdapter(m model.Model, adapter persist.Adapte
 	e.adapter = adapter
 
 	e.model = m
+	m.SetLogger(e.logger)
 	e.model.PrintModel()
 	e.fm = model.LoadFunctionMap()
 
@@ -164,6 +174,13 @@ func (e *Enforcer) InitWithModelAndAdapter(m model.Model, adapter persist.Adapte
 	return nil
 }
 
+// SetLogger changes the current enforcer's logger.
+func (e *Enforcer) SetLogger(logger log.Logger) {
+	e.logger = logger
+	e.model.SetLogger(e.logger)
+	e.rm.SetLogger(e.logger)
+}
+
 func (e *Enforcer) initialize() {
 	e.rm = defaultrolemanager.NewRoleManager(10)
 	e.eft = effect.NewDefaultEffector()
@@ -173,6 +190,8 @@ func (e *Enforcer) initialize() {
 	e.autoSave = true
 	e.autoBuildRoleLinks = true
 	e.autoNotifyWatcher = true
+
+	e.rm.SetLogger(e.logger)
 }
 
 // LoadModel reloads the model from the model CONF file.
@@ -183,6 +202,7 @@ func (e *Enforcer) LoadModel() error {
 	if err != nil {
 		return err
 	}
+	e.model.SetLogger(e.logger)
 
 	e.model.PrintModel()
 	e.fm = model.LoadFunctionMap()
@@ -202,6 +222,7 @@ func (e *Enforcer) SetModel(m model.Model) {
 	e.model = m
 	e.fm = model.LoadFunctionMap()
 
+	e.model.SetLogger(e.logger)
 	e.initialize()
 }
 
@@ -219,6 +240,11 @@ func (e *Enforcer) SetAdapter(adapter persist.Adapter) {
 func (e *Enforcer) SetWatcher(watcher persist.Watcher) error {
 	e.watcher = watcher
 	return watcher.SetUpdateCallback(func(string) { _ = e.LoadPolicy() })
+}
+
+// SetDispatcher sets the current dispatcher.
+func (e *Enforcer) SetDispatcher(dispatcher persist.Dispatcher) {
+	e.dispatcher = dispatcher
 }
 
 // GetRoleManager gets the current role manager.
@@ -329,12 +355,22 @@ func (e *Enforcer) EnableEnforce(enable bool) {
 
 // EnableLog changes whether Casbin will log messages to the Logger.
 func (e *Enforcer) EnableLog(enable bool) {
-	log.GetLogger().EnableLog(enable)
+	e.logger.EnableLog(enable)
+}
+
+// IsLogEnabled returns the current logger's enabled status.
+func (e *Enforcer) IsLogEnabled() bool {
+	return e.logger.IsEnabled()
 }
 
 // EnableAutoNotifyWatcher controls whether to save a policy rule automatically notify the Watcher when it is added or removed.
 func (e *Enforcer) EnableAutoNotifyWatcher(enable bool) {
 	e.autoNotifyWatcher = enable
+}
+
+// EnableAutoNotifyDispatcher controls whether to save a policy rule automatically notify the Dispatcher when it is added or removed.
+func (e *Enforcer) EnableAutoNotifyDispatcher(enable bool) {
+	e.autoNotifyDispatcher = enable
 }
 
 // EnableAutoSave controls whether to save a policy rule automatically to the adapter when it is added or removed.
@@ -441,21 +477,20 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 
 			if hasEval {
 				ruleNames := util.GetEvalValue(expString)
-				var expWithRule = expString
+				replacements := make(map[string]string)
 				for _, ruleName := range ruleNames {
 					if j, ok := parameters.pTokens[ruleName]; ok {
 						rule := util.EscapeAssertion(pvals[j])
-						expWithRule = util.ReplaceEval(expWithRule, rule)
+						replacements[ruleName] = rule
 					} else {
 						return false, errors.New("please make sure rule exists in policy when using eval() in matcher")
 					}
-
-					expression, err = govaluate.NewEvaluableExpressionWithFunctions(expWithRule, functions)
-					if err != nil {
-						return false, fmt.Errorf("p.sub_rule should satisfy the syntax of matcher: %s", err)
-					}
 				}
-
+				expWithRule := util.ReplaceEvalWithMap(expString, replacements)
+				expression, err = govaluate.NewEvaluableExpressionWithFunctions(expWithRule, functions)
+				if err != nil {
+					return false, fmt.Errorf("p.sub_rule should satisfy the syntax of matcher: %s", err)
+				}
 			}
 
 			result, err := expression.Eval(parameters)
@@ -511,7 +546,6 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 		parameters.pVals = make([]string, len(parameters.pTokens))
 
 		result, err := expression.Eval(parameters)
-		// log.LogPrint("Result: ", result)
 
 		if err != nil {
 			return false, err
@@ -524,46 +558,21 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 		}
 	}
 
-	// log.LogPrint("Rule Results: ", policyEffects)
-
 	result, explainIndex, err := e.eft.MergeEffects(e.model["e"]["e"].Value, policyEffects, matcherResults)
 	if err != nil {
 		return false, err
 	}
 
+	var logExplains [][]string
+
 	if explains != nil {
+		logExplains = append(logExplains, *explains)
 		if explainIndex != -1 && len(e.model["p"]["p"].Policy) > explainIndex {
 			*explains = e.model["p"]["p"].Policy[explainIndex]
 		}
 	}
 
-	// Log request.
-	if log.GetLogger().IsEnabled() {
-		var reqStr strings.Builder
-		reqStr.WriteString("Request: ")
-		for i, rval := range rvals {
-			if i != len(rvals)-1 {
-				reqStr.WriteString(fmt.Sprintf("%v, ", rval))
-			} else {
-				reqStr.WriteString(fmt.Sprintf("%v", rval))
-			}
-		}
-		reqStr.WriteString(fmt.Sprintf(" ---> %t\n", result))
-
-		if explains != nil {
-			reqStr.WriteString("Hit Policy: ")
-			for i, pval := range *explains {
-				if i != len(*explains)-1 {
-					reqStr.WriteString(fmt.Sprintf("%v, ", pval))
-				} else {
-					reqStr.WriteString(fmt.Sprintf("%v \n", pval))
-				}
-			}
-
-		}
-
-		log.LogPrint(reqStr.String())
-	}
+	e.logger.LogEnforce(expString, rvals, result, logExplains)
 
 	return result, nil
 }
