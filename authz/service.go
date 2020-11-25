@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	casbin "github.com/casbin/casbin/v2"
+	"github.com/mainflux/mainflux/logger"
 )
 
 var (
@@ -44,13 +45,15 @@ type Service interface {
 var _ Service = (*service)(nil)
 
 type service struct {
-	enforcer *casbin.Enforcer
+	enforcer *casbin.SyncedEnforcer
+	logger   logger.Logger
 }
 
 // New instantiates the auth service implementation.
-func New(e *casbin.Enforcer) Service {
+func New(e *casbin.SyncedEnforcer, logger logger.Logger) Service {
 	return &service{
 		enforcer: e,
+		logger:   logger,
 	}
 }
 

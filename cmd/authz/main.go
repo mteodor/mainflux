@@ -11,20 +11,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	pgadapter "github.com/casbin/casbin-pg-adapter"
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
-	xormadapter "github.com/casbin/xorm-adapter"
-	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/authn"
-	api "github.com/mainflux/mainflux/authn/api"
 	"github.com/mainflux/mainflux/authn/postgres"
 	"github.com/mainflux/mainflux/authz"
 	grpcapi "github.com/mainflux/mainflux/authz/api/grpc"
 	httpapi "github.com/mainflux/mainflux/authz/api/http"
+	"github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
-	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -86,13 +83,13 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	dbConfig := cfg.dbConfig
-	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s sslmode=disable", dbConfig.User, dbConfig.Pass, dbConfig.Host, dbConfig.Port)
-	adapter, err := xormadapter.NewAdapter("postgres", connStr)
+	adapter, err := pgadapter.NewAdapter(fmt.Sprintf("postgresql://%s:%s@%s:6001/casbin?sslmode=disable", cfg.dbConfig.User, cfg.dbConfig.Pass, cfg.dbConfig.Host)) // Your driver and data source.
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to configure policy enforcer: %s", err.Error()))
+	}
 	m, err := model.NewModelFromString("model.conf")
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -106,7 +103,7 @@ func main() {
 	tracer, closer := initJaeger("authz", cfg.jaegerURL, logger)
 	defer closer.Close()
 
-	svc := newService(enf, cfg.secret, logger)
+	svc := newService(enf, logger)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(tracer, svc, cfg.httpPort, cfg.serverCert, cfg.serverKey, logger, errs)
@@ -172,29 +169,29 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(enf *casbin.Enforcer, logger logger.Logger) authn.Service {
+func newService(enf *casbin.SyncedEnforcer, logger logger.Logger) authz.Service {
 	svc := authz.New(enf, logger)
-	svc = api.LoggingMiddleware(svc, logger)
-	svc = api.MetricsMiddleware(
-		svc,
-		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "authz",
-			Subsystem: "api",
-			Name:      "request_count",
-			Help:      "Number of requests received.",
-		}, []string{"method"}),
-		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "authz",
-			Subsystem: "api",
-			Name:      "request_latency_microseconds",
-			Help:      "Total duration of requests in microseconds.",
-		}, []string{"method"}),
-	)
+	// svc = api.LoggingMiddleware(svc, logger)
+	// svc = api.MetricsMiddleware(
+	// 	svc,
+	// 	kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+	// 		Namespace: "authz",
+	// 		Subsystem: "api",
+	// 		Name:      "request_count",
+	// 		Help:      "Number of requests received.",
+	// 	}, []string{"method"}),
+	// 	kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+	// 		Namespace: "authz",
+	// 		Subsystem: "api",
+	// 		Name:      "request_latency_microseconds",
+	// 		Help:      "Total duration of requests in microseconds.",
+	// 	}, []string{"method"}),
+	// )
 
 	return svc
 }
 
-func startHTTPServer(tracer opentracing.Tracer, svc authn.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
+func startHTTPServer(tracer opentracing.Tracer, svc authz.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	if certFile != "" || keyFile != "" {
 		logger.Info(fmt.Sprintf("Authorization service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
@@ -206,7 +203,7 @@ func startHTTPServer(tracer opentracing.Tracer, svc authn.Service, port string, 
 
 }
 
-func startGRPCServer(tracer opentracing.Tracer, svc authn.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
+func startGRPCServer(tracer opentracing.Tracer, svc authz.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	listener, err := net.Listen("tcp", p)
 	if err != nil {
@@ -227,7 +224,7 @@ func startGRPCServer(tracer opentracing.Tracer, svc authn.Service, port string, 
 		server = grpc.NewServer()
 	}
 
-	mainflux.RegisterAuthNServiceServer(server, grpcapi.NewServer(tracer, svc))
+	pb.RegisterAuthZServiceServer(server, grpcapi.NewServer(tracer, svc))
 	logger.Info(fmt.Sprintf("Authorization gRPC service started, exposed port %s", port))
 	errs <- server.Serve(listener)
 }

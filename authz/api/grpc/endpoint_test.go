@@ -15,6 +15,7 @@ import (
 	grpcapi "github.com/mainflux/mainflux/authn/api/grpc"
 	"github.com/mainflux/mainflux/authn/jwt"
 	"github.com/mainflux/mainflux/authn/mocks"
+	"github.com/mainflux/mainflux/authz"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -29,9 +30,9 @@ const (
 	email  = "test@example.com"
 )
 
-var svc authn.Service
+var svc authz.Service
 
-func newService() authn.Service {
+func newService() authz.Service {
 	repo := mocks.NewKeyRepository()
 	uuidProvider := uuid.NewMock()
 	t := jwt.New(secret)
@@ -39,7 +40,7 @@ func newService() authn.Service {
 	return authn.New(repo, uuidProvider, t)
 }
 
-func startGRPCServer(svc authn.Service, port int) {
+func startGRPCServer(svc authz.Service, port int) {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
 	mainflux.RegisterAuthNServiceServer(server, grpcapi.NewServer(mocktracer.New(), svc))
