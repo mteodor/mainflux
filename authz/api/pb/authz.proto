@@ -6,7 +6,7 @@ syntax = "proto3";
 package authz;
 
 service AuthZService {
-    rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
+    rpc Authorize(AuthorizeReq) returns (AuthorizeRes, error) {}
 }
 
 message AuthorizeReq {

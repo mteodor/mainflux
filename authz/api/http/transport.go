@@ -14,7 +14,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/authz"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -25,7 +25,7 @@ const contentType = "application/json"
 var errUnsupportedContentType = errors.New("unsupported content type")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc authn.Service, tracer opentracing.Tracer) http.Handler {
+func MakeHandler(svc authz.Service, tracer opentracing.Tracer) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -68,14 +68,12 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
-	case errors.Contains(err, authn.ErrMalformedEntity):
+	case errors.Contains(err, authz.ErrMalformedEntity):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, authn.ErrUnauthorizedAccess):
+	case errors.Contains(err, authz.ErrUnauthorizedAccess):
 		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, authn.ErrNotFound):
+	case errors.Contains(err, authz.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, authn.ErrConflict):
-		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, io.EOF):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, io.ErrUnexpectedEOF):
@@ -102,7 +100,7 @@ func decodeAddPolicyReq(_ context.Context, r *http.Request) (interface{}, error)
 		token: r.Header.Get("Authorization"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
+		return nil, errors.Wrap(authz.ErrMalformedEntity, err)
 	}
 	return req, nil
 }
@@ -115,7 +113,7 @@ func decodeRemovePolicyReq(_ context.Context, r *http.Request) (interface{}, err
 		token: r.Header.Get("Authorization"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
+		return nil, errors.Wrap(authz.ErrMalformedEntity, err)
 	}
 	return nil, nil
 }

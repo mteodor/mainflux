@@ -5,5 +5,5 @@ package grpc
 
 type authorizeRes struct {
 	authorized bool
-	err        error
+	err        string
 }

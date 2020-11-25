@@ -17,15 +17,15 @@ type AuthZReq struct {
 
 func (req AuthZReq) validate() error {
 	if req.Sub == "" {
-		return ErrInvalidReq
+		return authz.ErrInvalidReq
 	}
 
 	if req.Obj == "" {
-		return ErrInvalidReq
+		return authz.ErrInvalidReq
 	}
 
 	if req.Act == "" {
-		return ErrInvalidReq
+		return authz.ErrInvalidReq
 	}
 
 	return nil

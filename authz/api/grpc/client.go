@@ -2,13 +2,12 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
-	"github.com/mainflux/mainflux"
 	pb "github.com/mainflux/mainflux/authz/api/pb"
-	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 )
@@ -23,13 +22,14 @@ type grpcClient struct {
 }
 
 // NewClient returns new AuthZServiceClient instance.
-func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer) pb.AuthZServiceClient {
+func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer, timeout time.Duration) pb.AuthZServiceClient {
 	return &grpcClient{
 		authorize: kitgrpc.NewClient(
 			conn,
 			svcName,
+			"Authorize",
 			encodeAuthorizeRequest,
-			decodeErrorResponse,
+			decodeAuthorizeResponse,
 			pb.AuthorizeRes{},
 		).Endpoint(),
 		timeout: timeout,
@@ -37,21 +37,21 @@ func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer) pb.AuthZService
 
 }
 
-func (client grpcClient) Authorize(ctx context.Context, req *pb.AuthorizeReq, _ ...grpc.CallOption) (bool, error) {
+func (client grpcClient) Authorize(ctx context.Context, req *pb.AuthorizeReq, _ ...grpc.CallOption) (*pb.AuthorizeRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.authorize(ctx, AuthZReq{Act: req.Act, Obj: r })
+	res, err := client.authorize(ctx, AuthZReq{Act: req.Act, Obj: req.Obj, Sub: req.Sub})
 	if err != nil {
-		return nil, err
+		return &pb.AuthorizeRes{Authorized: false, Err: err.Error()}, err
 	}
 
-	ir := res.(identityRes)
-	return &mainflux.Token{Value: ir.id}, ir.err
+	ar := res.(authorizeRes)
+	return &pb.AuthorizeRes{Authorized: ar.authorized, Err: ar.err}, errors.New(ar.err)
 }
 
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(api.AuthZReq)
+	req := grpcReq.(AuthZReq)
 	return &pb.AuthorizeReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
@@ -59,9 +59,7 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 	}, nil
 }
 
-func decodeErrorResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*pb.ErrorRes)
-	return api.ErrorRes{
-		Err: errors.New(res.Err),
-	}, nil
+func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(*pb.AuthorizeRes)
+	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
 }

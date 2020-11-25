@@ -13,6 +13,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	xormadapter "github.com/casbin/xorm-adapter"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
@@ -85,7 +86,8 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s sslmode=disable", cfg.dbUser, cfg.dbPass, cfg.dbHost, cfg.dbPort)
+	dbConfig := cfg.dbConfig
+	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s sslmode=disable", dbConfig.User, dbConfig.Pass, dbConfig.Host, dbConfig.Port)
 	adapter, err := xormadapter.NewAdapter("postgres", connStr)
 	if err != nil {
 		log.Fatalf(err.Error())

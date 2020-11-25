@@ -5,13 +5,12 @@ package grpc
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/authz"
 )
 
-func MakeAuthorizeEndpoint(svc authz.Service) endpoint.Endpoint {
+func authorizeEndpoint(svc authz.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AuthZReq)
 		if err := req.validate(); err != nil {
@@ -24,7 +23,7 @@ func MakeAuthorizeEndpoint(svc authz.Service) endpoint.Endpoint {
 			Action:  req.Act,
 		}
 
-		err := svc.Authorize(ctx, p)
-		return ErrorRes{Err: err}, nil
+		authorized, err := svc.Authorize(ctx, p)
+		return authorizeRes{authorized: authorized, err: err.Error()}, err
 	}
 }

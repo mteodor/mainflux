@@ -4,7 +4,7 @@ import (
 	context "context"
 	"errors"
 
-	"github.com/casbin/casbin/v2"
+	casbin "github.com/casbin/casbin/v2"
 )
 
 var (
@@ -14,6 +14,12 @@ var (
 
 	// ErrMalformedEntity
 	ErrMalformedEntity = errors.New("malformed request")
+
+	// ErrNotFound
+	ErrNotFound = errors.New("entity not found")
+
+	// ErrInvalidReq
+	ErrInvalidReq = errors.New("invalid request")
 )
 
 type Policy struct {

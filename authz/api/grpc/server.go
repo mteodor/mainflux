@@ -3,60 +3,60 @@ package grpc
 import (
 	"context"
 
+	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
+	"github.com/mainflux/mainflux/authz"
 	pb "github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/mainflux/mainflux/pkg/errors"
+	opentracing "github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+var _ pb.AuthZServiceServer = (*server)(nil)
 
 type server struct {
 	authorize kitgrpc.Handler
 }
 
-// NewServer returns new AuthZServiceServer instance.
-func NewServer(svc api.Service) pb.AuthZServiceServer {
+// NewServer returns new AuthnServiceServer instance.
+func NewServer(tracer opentracing.Tracer, svc authz.Service) pb.AuthZServiceServer {
 	return &server{
 		authorize: kitgrpc.NewServer(
-			svc.AuthorizeEndpoint,
+			kitot.TraceServer(tracer, "authorize")(authorizeEndpoint(svc)),
 			decodeAuthorizeRequest,
-			encodeErrorResponse,
+			encodeAuthorizeResponse,
 		),
 	}
 }
-
-func (s *server) Authorize(ctx context.Context, req *pb.AuthorizeReq) (*pb.ErrorRes, error) {
+func (s *server) Authorize(ctx context.Context, req *pb.AuthorizeReq) (*pb.AuthorizeRes, error) {
 	_, resp, err := s.authorize.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.(*pb.ErrorRes), nil
+	return resp.(*pb.AuthorizeRes), nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*pb.AuthorizeReq)
-	return api.AuthZReq{
+	return AuthZReq{
 		Sub: req.GetSub(),
 		Obj: req.GetObj(),
 		Act: req.GetAct(),
 	}, nil
 }
 
-func encodeErrorResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(api.ErrorRes)
-	return &pb.ErrorRes{
-		Err: err2str(res.Err),
-	}, nil
+func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(authorizeRes)
+	return &pb.AuthorizeRes{Authorized: res.authorized, Err: res.err}, encodeError(errors.New(res.err))
 }
 
-func err2str(err error) string {
-	if err != nil {
-		e, ok := err.(errors.Error)
-		if !ok {
-			return err.Error()
-		}
-
-		return e.Msg()
+func encodeError(err error) error {
+	switch {
+	case errors.Contains(err, nil):
+		return nil
+	default:
+		return status.Error(codes.Internal, "internal server error")
 	}
-
-	return ""
 }

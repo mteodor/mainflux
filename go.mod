@@ -4,13 +4,16 @@ go 1.14
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/casbin/casbin v1.9.1 // indirect
 	github.com/casbin/casbin/v2 v2.18.0
+	github.com/casbin/xorm-adapter v1.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/fatih/color v1.9.0
 	github.com/go-kit/kit v0.10.0
 	github.com/go-redis/redis v6.15.8+incompatible
+	github.com/go-xorm/xorm v0.7.9 // indirect
 	github.com/go-zoo/bone v1.3.0
 	github.com/gocql/gocql v0.0.0-20200624222514-34081eda590e
 	github.com/gofrs/uuid v3.3.0+incompatible
