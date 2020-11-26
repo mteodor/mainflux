@@ -83,10 +83,13 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	adapter, err := pgadapter.NewAdapter(fmt.Sprintf("postgresql://%s:%s@%s:6001/casbin?sslmode=disable", cfg.dbConfig.User, cfg.dbConfig.Pass, cfg.dbConfig.Host)) // Your driver and data source.
+	dbcfg := cfg.dbConfig
+	conn := fmt.Sprintf(`postgresql://%s:%s@%s:%s/%s?sslmode=disable`, dbcfg.User, dbcfg.Pass, dbcfg.Host, dbcfg.Port, dbcfg.Name) // Your driver and data source.
+	adapter, err := pgadapter.NewAdapter(conn)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to configure policy enforcer: %s", err.Error()))
 	}
