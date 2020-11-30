@@ -10,15 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	"github.com/mainflux/mainflux/authn"
-	grpcapi "github.com/mainflux/mainflux/authn/api/grpc"
-	"github.com/mainflux/mainflux/authn/jwt"
-	"github.com/mainflux/mainflux/authn/mocks"
 	"github.com/mainflux/mainflux/authz"
-	"github.com/mainflux/mainflux/pkg/uuid"
+	grpcapi "github.com/mainflux/mainflux/authz/api/grpc"
+	pb "github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,46 +33,61 @@ const (
 var svc authz.Service
 
 func newService() authz.Service {
-	repo := mocks.NewKeyRepository()
-	uuidProvider := uuid.NewMock()
-	t := jwt.New(secret)
+	m := model.NewModel()
+	m.AddDef("r", "r", "sub, obj, act")
+	m.AddDef("p", "p", "sub, obj, act")
+	m.AddDef("g", "g", "_, _")
+	m.AddDef("e", "e", "some(where (p.eft == allow))")
+	m.AddDef("m", "m", "( g(r.sub, p.sub) && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act) ) || r.sub == 'admin@example.com'")
+	e, _ := casbin.NewSyncedEnforcer(m)
 
-	return authn.New(repo, uuidProvider, t)
+	_, _ = e.AddPolicy("admin", "data1", "read")
+
+	return authz.New(e)
 }
 
 func startGRPCServer(svc authz.Service, port int) {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
-	mainflux.RegisterAuthNServiceServer(server, grpcapi.NewServer(mocktracer.New(), svc))
+	pb.RegisterAuthZServiceServer(server, grpcapi.NewServer(mocktracer.New(), svc))
 	go server.Serve(listener)
 }
 
 func TestAuthorize(t *testing.T) {
-	userKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
 
 	authAddr := fmt.Sprintf("localhost:%d", port)
-	conn, _ := grpc.Dial(authAddr, grpc.WithInsecure())
-	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
+	conn, err := grpc.Dial(authAddr, grpc.WithInsecure())
+	require.Nil(t, err, fmt.Sprintf("user id unexpected error: %s", err))
+	client := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 
 	cases := []struct {
-		desc string
-		id   string
-		kind uint32
-		err  error
-		code codes.Code
+		desc    string
+		id      string
+		kind    uint32
+		err     error
+		code    codes.Code
+		request pb.AuthorizeReq
 	}{
 		{
-			desc: "issue for user with valid token",
-			id:   email,
-			kind: authn.UserKey,
-			err:  nil,
-			code: codes.OK,
+			desc:    "authorize with correct request",
+			id:      email,
+			kind:    authn.UserKey,
+			err:     nil,
+			code:    codes.OK,
+			request: pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
+		},
+		{
+			desc:    "authorize with incorrect request",
+			id:      email,
+			kind:    authn.UserKey,
+			err:     nil,
+			code:    codes.OK,
+			request: pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
 		},
 	}
 
 	for _, tc := range cases {
-		_, err := client.Issue(context.Background(), &mainflux.IssueReq{Issuer: tc.id, Type: tc.kind})
+		_, err := client.Authorize(context.Background(), &tc.request)
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))

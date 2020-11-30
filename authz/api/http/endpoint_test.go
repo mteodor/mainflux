@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	authn "github.com/mainflux/mainflux/authn"
-	httpapi "github.com/mainflux/mainflux/authn/api/http"
-	"github.com/mainflux/mainflux/authn/jwt"
+	authz "github.com/mainflux/mainflux/authz"
+	httpapi "github.com/mainflux/mainflux/authz/api/http"
+	"github.com/mainflux/mainflux/authz/jwt"
 	"github.com/mainflux/mainflux/authz"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -65,16 +65,16 @@ func toJSON(data interface{}) string {
 
 func TestIssue(t *testing.T) {
 	svc := newService()
-	userKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
+	userKey, err := svc.Issue(context.Background(), email, authz.Key{Type: authz.UserKey, IssuedAt: time.Now()})
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
 
-	uk := issueRequest{Type: authn.UserKey}
-	ak := issueRequest{Type: authn.APIKey, Duration: time.Hour}
-	rk := issueRequest{Type: authn.RecoveryKey}
+	uk := issueRequest{Type: authz.UserKey}
+	ak := issueRequest{Type: authz.APIKey, Duration: time.Hour}
+	rk := issueRequest{Type: authz.RecoveryKey}
 
 	cases := []struct {
 		desc   string
@@ -171,9 +171,9 @@ func TestIssue(t *testing.T) {
 
 func TestRetrieve(t *testing.T) {
 	svc := newService()
-	loginKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
+	loginKey, err := svc.Issue(context.Background(), email, authz.Key{Type: authz.UserKey, IssuedAt: time.Now()})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
-	key := authn.Key{Type: authn.APIKey, IssuedAt: time.Now()}
+	key := authz.Key{Type: authz.APIKey, IssuedAt: time.Now()}
 
 	k, err := svc.Issue(context.Background(), loginKey.Secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
@@ -223,9 +223,9 @@ func TestRetrieve(t *testing.T) {
 
 func TestRevoke(t *testing.T) {
 	svc := newService()
-	userKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
+	userKey, err := svc.Issue(context.Background(), email, authz.Key{Type: authz.UserKey, IssuedAt: time.Now()})
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
-	key := authn.Key{Type: authn.APIKey, IssuedAt: time.Now()}
+	key := authz.Key{Type: authz.APIKey, IssuedAt: time.Now()}
 
 	k, err := svc.Issue(context.Background(), userKey.Secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))

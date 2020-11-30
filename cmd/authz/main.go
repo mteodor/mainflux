@@ -13,15 +13,17 @@ import (
 
 	pgadapter "github.com/casbin/casbin-pg-adapter"
 	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn/postgres"
 	"github.com/mainflux/mainflux/authz"
+	"github.com/mainflux/mainflux/authz/api"
 	grpcapi "github.com/mainflux/mainflux/authz/api/grpc"
 	httpapi "github.com/mainflux/mainflux/authz/api/http"
 	"github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -93,15 +95,12 @@ func main() {
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to configure policy enforcer: %s", err.Error()))
 	}
-	m, err := model.NewModelFromString("model.conf")
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
 
-	enf, err := casbin.NewSyncedEnforcer(m, adapter)
+	enf, err := casbin.NewSyncedEnforcer("model.conf", adapter)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	enf.EnableAutoSave(true)
 
 	tracer, closer := initJaeger("authz", cfg.jaegerURL, logger)
 	defer closer.Close()
@@ -174,22 +173,22 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 
 func newService(enf *casbin.SyncedEnforcer, logger logger.Logger) authz.Service {
 	svc := authz.New(enf, logger)
-	// svc = api.LoggingMiddleware(svc, logger)
-	// svc = api.MetricsMiddleware(
-	// 	svc,
-	// 	kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-	// 		Namespace: "authz",
-	// 		Subsystem: "api",
-	// 		Name:      "request_count",
-	// 		Help:      "Number of requests received.",
-	// 	}, []string{"method"}),
-	// 	kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-	// 		Namespace: "authz",
-	// 		Subsystem: "api",
-	// 		Name:      "request_latency_microseconds",
-	// 		Help:      "Total duration of requests in microseconds.",
-	// 	}, []string{"method"}),
-	// )
+	svc = api.LoggingMiddleware(svc, logger)
+	svc = api.MetricsMiddleware(
+		svc,
+		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+			Namespace: "authz",
+			Subsystem: "api",
+			Name:      "request_count",
+			Help:      "Number of requests received.",
+		}, []string{"method"}),
+		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+			Namespace: "authz",
+			Subsystem: "api",
+			Name:      "request_latency_microseconds",
+			Help:      "Total duration of requests in microseconds.",
+		}, []string{"method"}),
+	)
 
 	return svc
 }

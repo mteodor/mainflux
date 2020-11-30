@@ -13,8 +13,6 @@ github.com/Microsoft/go-winio/pkg/guid
 github.com/Nvveen/Gotty
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
-# github.com/casbin/casbin v1.9.1
-## explicit
 # github.com/casbin/casbin-pg-adapter v0.1.6
 ## explicit
 github.com/casbin/casbin-pg-adapter
@@ -31,8 +29,6 @@ github.com/casbin/casbin/v2/persist/file-adapter
 github.com/casbin/casbin/v2/rbac
 github.com/casbin/casbin/v2/rbac/default-role-manager
 github.com/casbin/casbin/v2/util
-# github.com/casbin/xorm-adapter v1.0.0
-## explicit
 # github.com/cenkalti/backoff/v3 v3.0.0
 github.com/cenkalti/backoff/v3
 # github.com/cespare/xxhash/v2 v2.1.1
@@ -103,8 +99,6 @@ github.com/go-redis/redis/internal/proto
 github.com/go-redis/redis/internal/util
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/go-xorm/xorm v0.7.9
-## explicit
 # github.com/go-zoo/bone v1.3.0
 ## explicit
 github.com/go-zoo/bone

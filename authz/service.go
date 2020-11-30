@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	casbin "github.com/casbin/casbin/v2"
-	"github.com/mainflux/mainflux/logger"
 )
 
 var (
@@ -30,7 +29,6 @@ type Policy struct {
 }
 
 type Service interface {
-
 	// AddPolicy creates new policy
 	AddPolicy(context.Context, Policy) (bool, error)
 
@@ -46,14 +44,12 @@ var _ Service = (*service)(nil)
 
 type service struct {
 	enforcer *casbin.SyncedEnforcer
-	logger   logger.Logger
 }
 
 // New instantiates the auth service implementation.
-func New(e *casbin.SyncedEnforcer, logger logger.Logger) Service {
+func New(e *casbin.SyncedEnforcer) Service {
 	return &service{
 		enforcer: e,
-		logger:   logger,
 	}
 }
 
@@ -66,28 +62,5 @@ func (svc service) RemovePolicy(ctx context.Context, p Policy) (bool, error) {
 }
 
 func (svc service) Authorize(ctx context.Context, p Policy) (bool, error) {
-
-	// user, err := svc.users.RetrieveByEmail(ctx, userID)
-	// if err != nil {
-	// 	return false, nil
-	// }
-	// allow, err := svc.enforcer.Enforce(userID, obj, action)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// if allow {
-	// 	return true, nil
-	// }
-
-	// gp, _ := svc.groups.RetrieveAllForUser(ctx, user.ID, 0, 10, nil)
-	// for _, g := range gp.Groups {
-	// 	sub := g.Name
-	// 	allow, _ := svc.enforcer.Enforce(sub, obj, action)
-	// 	if allow == true {
-	// 		return true, nil
-	// 	}
-	// }
-	// return false, nil
-
 	return svc.enforcer.Enforce(p.Action, p.Object, p.Subject)
 }
