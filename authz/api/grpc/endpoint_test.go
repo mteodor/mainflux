@@ -43,6 +43,8 @@ func newService() authz.Service {
 
 	_, _ = e.AddPolicy("admin", "data1", "read")
 
+	_ = e.LoadPolicy()
+
 	return authz.New(e)
 }
 
@@ -58,7 +60,7 @@ func TestAuthorize(t *testing.T) {
 	authAddr := fmt.Sprintf("localhost:%d", port)
 	conn, err := grpc.Dial(authAddr, grpc.WithInsecure())
 	require.Nil(t, err, fmt.Sprintf("user id unexpected error: %s", err))
-	client := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
+	client := grpcapi.NewClient(conn, mocktracer.New(), time.Minute)
 
 	cases := []struct {
 		desc    string
@@ -69,7 +71,7 @@ func TestAuthorize(t *testing.T) {
 		request pb.AuthorizeReq
 	}{
 		{
-			desc:    "authorize with correct request",
+			desc:    "request that is authorized",
 			id:      email,
 			kind:    authn.UserKey,
 			err:     nil,
@@ -77,7 +79,7 @@ func TestAuthorize(t *testing.T) {
 			request: pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
 		},
 		{
-			desc:    "authorize with incorrect request",
+			desc:    "request that is not authorized",
 			id:      email,
 			kind:    authn.UserKey,
 			err:     nil,
