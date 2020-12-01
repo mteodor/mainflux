@@ -47,9 +47,12 @@ func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 	}, nil
 }
 
-func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (r interface{}, err error) {
 	res := grpcRes.(authorizeRes)
-	return &pb.AuthorizeRes{Authorized: res.authorized, Err: res.err}, encodeError(errors.New(res.err))
+	if res.err != "" {
+		err = errors.New(res.err)
+	}
+	return &pb.AuthorizeRes{Authorized: res.authorized, Err: res.err}, encodeError(err)
 }
 
 func encodeError(err error) error {

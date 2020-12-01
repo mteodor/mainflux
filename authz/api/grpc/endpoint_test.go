@@ -16,6 +16,7 @@ import (
 	"github.com/mainflux/mainflux/authz"
 	grpcapi "github.com/mainflux/mainflux/authz/api/grpc"
 	pb "github.com/mainflux/mainflux/authz/api/pb"
+	"github.com/mainflux/mainflux/authz/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,27 +26,44 @@ import (
 )
 
 const (
-	port   = 8081
-	secret = "secret"
-	email  = "test@example.com"
+	port       = 8081
+	secret     = "secret"
+	modelFile  = "model.conf"
+	policyFile = "policy.csv"
+	token      = "token"
+	wrong      = "wrong"
+	email      = "john.doe@email.com"
 )
 
 var svc authz.Service
 
 func newService() authz.Service {
+	// if _, err := os.Stat(modelFile); os.IsNotExist(err) {
+	// 	fmt.Println("error:" + err.Error())
+	// 	return nil
+	// }
+	// if _, err := os.Stat(policyFile); os.IsNotExist(err) {
+	// 	fmt.Println("error:" + err.Error())
+	// 	return nil
+	// }
+	auth := mocks.NewAuthService(map[string]string{token: email})
 	m := model.NewModel()
 	m.AddDef("r", "r", "sub, obj, act")
 	m.AddDef("p", "p", "sub, obj, act")
 	m.AddDef("g", "g", "_, _")
 	m.AddDef("e", "e", "some(where (p.eft == allow))")
-	m.AddDef("m", "m", "( g(r.sub, p.sub) && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act) ) || r.sub == 'admin@example.com'")
-	e, _ := casbin.NewSyncedEnforcer(m)
+	m.AddDef("m", "m", "g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act")
+
+	e, err := casbin.NewSyncedEnforcer(m)
+	if err != nil {
+		return nil
+	}
 
 	_, _ = e.AddPolicy("admin", "data1", "read")
+	_, _ = e.AddPolicy("bob", "data2", "write")
 
-	_ = e.LoadPolicy()
-
-	return authz.New(e)
+	e.EnableEnforce(true)
+	return authz.New(e, auth)
 }
 
 func startGRPCServer(svc authz.Service, port int) {
@@ -63,35 +81,39 @@ func TestAuthorize(t *testing.T) {
 	client := grpcapi.NewClient(conn, mocktracer.New(), time.Minute)
 
 	cases := []struct {
-		desc    string
-		id      string
-		kind    uint32
-		err     error
-		code    codes.Code
-		request pb.AuthorizeReq
+		desc       string
+		id         string
+		kind       uint32
+		err        error
+		code       codes.Code
+		authorized bool
+		request    pb.AuthorizeReq
 	}{
 		{
-			desc:    "request that is authorized",
-			id:      email,
-			kind:    authn.UserKey,
-			err:     nil,
-			code:    codes.OK,
-			request: pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
+			desc:       "request that is authorized",
+			id:         email,
+			kind:       authn.UserKey,
+			err:        nil,
+			code:       codes.OK,
+			authorized: true,
+			request:    pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
 		},
 		{
-			desc:    "request that is not authorized",
-			id:      email,
-			kind:    authn.UserKey,
-			err:     nil,
-			code:    codes.OK,
-			request: pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
+			desc:       "request that is not authorized",
+			id:         email,
+			kind:       authn.UserKey,
+			err:        nil,
+			code:       codes.OK,
+			authorized: false,
+			request:    pb.AuthorizeReq{Sub: "admin", Obj: "data2", Act: "read"},
 		},
 	}
 
 	for _, tc := range cases {
-		_, err := client.Authorize(context.Background(), &tc.request)
+		res, err := client.Authorize(context.Background(), &tc.request)
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+		assert.Equal(t, tc.authorized, res.Authorized, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.authorized, res.Authorized))
 	}
 }

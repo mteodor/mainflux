@@ -31,22 +31,22 @@ func MetricsMiddleware(svc authz.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (ms *metricsMiddleware) AddPolicy(ctx context.Context, p authz.Policy) (bool, error) {
+func (ms *metricsMiddleware) AddPolicy(ctx context.Context, token string, p authz.Policy) (bool, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "add_policy").Add(1)
 		ms.latency.With("method", "add_policy").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.AddPolicy(ctx, p)
+	return ms.svc.AddPolicy(ctx, token, p)
 }
 
-func (ms *metricsMiddleware) RemovePolicy(ctx context.Context, p authz.Policy) (bool, error) {
+func (ms *metricsMiddleware) RemovePolicy(ctx context.Context, token string, p authz.Policy) (bool, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_policy").Add(1)
 		ms.latency.With("method", "remove_policy").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RemovePolicy(ctx, p)
+	return ms.svc.RemovePolicy(ctx, token, p)
 }
 
 func (ms *metricsMiddleware) Authorize(ctx context.Context, p authz.Policy) (bool, error) {

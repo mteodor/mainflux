@@ -7,29 +7,38 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
-	authz "github.com/mainflux/mainflux/authz"
-	httpapi "github.com/mainflux/mainflux/authz/api/http"
-	"github.com/mainflux/mainflux/authz/jwt"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	"github.com/mainflux/mainflux/authz"
-	"github.com/mainflux/mainflux/pkg/uuid"
+	httpapi "github.com/mainflux/mainflux/authz/api/http"
+	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
-	secret       = "secret"
-	contentType  = "application/json"
-	invalidEmail = "userexample.com"
-	wrongID      = "123e4567-e89b-12d3-a456-000000000042"
-	id           = "123e4567-e89b-12d3-a456-000000000001"
-	email        = "user@example.com"
+	secret      = "secret"
+	contentType = "application/json"
+	email       = "user@example.com"
+	token       = "token"
+	wrongValue  = "wrong_value"
 )
+
+type testRequest struct {
+	client      *http.Client
+	method      string
+	url         string
+	contentType string
+	token       string
+	body        io.Reader
+}
 
 func (tr testRequest) make() (*http.Response, error) {
 	req, err := http.NewRequest(tr.method, tr.url, tr.body)
@@ -47,10 +56,175 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService() authz.Service {
-	uuidProvider := uuid.NewMock()
-	t := jwt.New(secret)
-	return authz.New(repo, uuidProvider, t)
+func newService(tokens map[string]string) authz.Service {
+	m := model.NewModel()
+	m.AddDef("r", "r", "sub, obj, act")
+	m.AddDef("p", "p", "sub, obj, act")
+	m.AddDef("g", "g", "_, _")
+	m.AddDef("e", "e", "some(where (p.eft == allow))")
+	m.AddDef("m", "m", "( g(r.sub, p.sub) && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act) ) || r.sub == 'admin@example.com'")
+	e, _ := casbin.NewSyncedEnforcer(m)
+
+	auth := mocks.NewAuthService(tokens)
+
+	return authz.New(e, auth)
+}
+
+func TestRemovePolicy(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	policy := authz.Policy{
+		Subject: "admin",
+		Object:  "users",
+		Action:  "create",
+	}
+
+	_, err := svc.AddPolicy(context.Background(), token, policy)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+
+	cases := []struct {
+		desc        string
+		data        string
+		contentType string
+		auth        string
+		status      int
+		response    string
+	}{
+		{
+			desc:        "delete policy",
+			data:        toJSON(policy),
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusCreated,
+			response:    "",
+		},
+		{
+			desc:        "delete policy with empty request",
+			data:        "",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			response:    "",
+		},
+		{
+			desc:        "delete policy with invalid request format",
+			data:        "}",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			response:    "",
+		},
+		{
+			desc:        "delete policy with empty auth token",
+			data:        toJSON(policy),
+			contentType: contentType,
+			auth:        "",
+			status:      http.StatusUnauthorized,
+			response:    "",
+		},
+		{
+			desc:        "delete policy without content type",
+			data:        toJSON(policy),
+			contentType: "",
+			auth:        token,
+			status:      http.StatusUnsupportedMediaType,
+			response:    "",
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodDelete,
+			url:         fmt.Sprintf("%s/policy", ts.URL),
+			contentType: tc.contentType,
+			token:       tc.auth,
+			body:        strings.NewReader(tc.data),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		location := res.Header.Get("Location")
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.response, location, fmt.Sprintf("%s: expected response %s got %s", tc.desc, tc.response, location))
+	}
+}
+
+func TestAddPolicy(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	policy := `{"subject":"admin@email.com","object":"users","action":"create"}`
+
+	cases := []struct {
+		desc        string
+		data        string
+		contentType string
+		auth        string
+		status      int
+		response    string
+	}{
+		{
+			desc:        "add policy",
+			data:        policy,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusCreated,
+			response:    "",
+		},
+		{
+			desc:        "add policy with empty request",
+			data:        "",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			response:    "",
+		},
+		{
+			desc:        "add policy with invalid request format",
+			data:        "}",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			response:    "",
+		},
+		{
+			desc:        "add policy with empty auth token",
+			data:        policy,
+			contentType: contentType,
+			auth:        "",
+			status:      http.StatusUnauthorized,
+			response:    "",
+		},
+		{
+			desc:        "add policy without content type",
+			data:        policy,
+			contentType: "",
+			auth:        token,
+			status:      http.StatusUnsupportedMediaType,
+			response:    "",
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodPost,
+			url:         fmt.Sprintf("%s/policy", ts.URL),
+			contentType: tc.contentType,
+			token:       tc.auth,
+			body:        strings.NewReader(tc.data),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		location := res.Header.Get("Location")
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.response, location, fmt.Sprintf("%s: expected response %s got %s", tc.desc, tc.response, location))
+	}
 }
 
 func newServer(svc authz.Service) *httptest.Server {
@@ -61,213 +235,4 @@ func newServer(svc authz.Service) *httptest.Server {
 func toJSON(data interface{}) string {
 	jsonData, _ := json.Marshal(data)
 	return string(jsonData)
-}
-
-func TestIssue(t *testing.T) {
-	svc := newService()
-	userKey, err := svc.Issue(context.Background(), email, authz.Key{Type: authz.UserKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
-
-	ts := newServer(svc)
-	defer ts.Close()
-	client := ts.Client()
-
-	uk := issueRequest{Type: authz.UserKey}
-	ak := issueRequest{Type: authz.APIKey, Duration: time.Hour}
-	rk := issueRequest{Type: authz.RecoveryKey}
-
-	cases := []struct {
-		desc   string
-		req    string
-		ct     string
-		token  string
-		status int
-	}{
-		{
-			desc:   "issue user key",
-			req:    toJSON(uk),
-			ct:     contentType,
-			token:  "",
-			status: http.StatusCreated,
-		},
-		{
-			desc:   "issue API key",
-			req:    toJSON(ak),
-			ct:     contentType,
-			token:  userKey.Secret,
-			status: http.StatusCreated,
-		},
-		{
-			desc:   "issue recovery key",
-			req:    toJSON(rk),
-			ct:     contentType,
-			token:  userKey.Secret,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc: "issue user key wrong content type",
-			req:  toJSON(uk),
-			ct:   "", token: userKey.Secret,
-			status: http.StatusUnsupportedMediaType,
-		},
-		{
-			desc:   "issue key wrong content type",
-			req:    toJSON(rk),
-			ct:     "",
-			token:  userKey.Secret,
-			status: http.StatusUnsupportedMediaType,
-		},
-		{
-			desc:   "issue key unauthorized",
-			req:    toJSON(ak),
-			ct:     contentType,
-			token:  "wrong",
-			status: http.StatusForbidden,
-		},
-		{
-			desc:   "issue recovery key with empty token",
-			req:    toJSON(rk),
-			ct:     contentType,
-			token:  "",
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "issue key with invalid request",
-			req:    "{",
-			ct:     contentType,
-			token:  "",
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "issue key with invalid JSON",
-			req:    "{invalid}",
-			ct:     contentType,
-			token:  "",
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "issue key with invalid JSON content",
-			req:    `{"Type":{"key":"value"}}`,
-			ct:     contentType,
-			token:  "",
-			status: http.StatusBadRequest,
-		},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client:      client,
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/keys", ts.URL),
-			contentType: tc.ct,
-			token:       tc.token,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-	}
-}
-
-func TestRetrieve(t *testing.T) {
-	svc := newService()
-	loginKey, err := svc.Issue(context.Background(), email, authz.Key{Type: authz.UserKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
-	key := authz.Key{Type: authz.APIKey, IssuedAt: time.Now()}
-
-	k, err := svc.Issue(context.Background(), loginKey.Secret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
-
-	ts := newServer(svc)
-	defer ts.Close()
-	client := ts.Client()
-
-	cases := []struct {
-		desc   string
-		id     string
-		token  string
-		status int
-	}{
-		{
-			desc:   "retrieve an existing key",
-			id:     k.ID,
-			token:  loginKey.Secret,
-			status: http.StatusOK,
-		},
-		{
-			desc:   "retrieve a non-existing key",
-			id:     "non-existing",
-			token:  loginKey.Secret,
-			status: http.StatusNotFound,
-		},
-		{
-			desc:   "retrieve a key unauthorized",
-			id:     k.ID,
-			token:  "wrong",
-			status: http.StatusForbidden,
-		},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client: client,
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/keys/%s", ts.URL, tc.id),
-			token:  tc.token,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-	}
-}
-
-func TestRevoke(t *testing.T) {
-	svc := newService()
-	userKey, err := svc.Issue(context.Background(), email, authz.Key{Type: authz.UserKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
-	key := authz.Key{Type: authz.APIKey, IssuedAt: time.Now()}
-
-	k, err := svc.Issue(context.Background(), userKey.Secret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
-
-	ts := newServer(svc)
-	defer ts.Close()
-	client := ts.Client()
-
-	cases := []struct {
-		desc   string
-		id     string
-		token  string
-		status int
-	}{
-		{
-			desc:   "revoke an existing key",
-			id:     k.ID,
-			token:  userKey.Secret,
-			status: http.StatusNoContent,
-		},
-		{
-			desc:   "revoke a non-existing key",
-			id:     "non-existing",
-			token:  userKey.Secret,
-			status: http.StatusNoContent,
-		},
-		{
-			desc:   "revoke a key unauthorized",
-			id:     k.ID,
-			token:  "wrong",
-			status: http.StatusForbidden},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client: client,
-			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/keys/%s", ts.URL, tc.id),
-			token:  tc.token,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-	}
 }

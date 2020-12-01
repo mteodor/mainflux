@@ -71,7 +71,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Contains(err, authz.ErrMalformedEntity):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, authz.ErrUnauthorizedAccess):
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, authz.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
 	case errors.Contains(err, io.EOF):
@@ -115,5 +115,5 @@ func decodeRemovePolicyReq(_ context.Context, r *http.Request) (interface{}, err
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(authz.ErrMalformedEntity, err)
 	}
-	return nil, nil
+	return req, nil
 }

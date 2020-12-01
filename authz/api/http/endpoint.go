@@ -21,7 +21,7 @@ func addPolicy(svc authz.Service) endpoint.Endpoint {
 			Subject: req.Subject,
 			Object:  req.Object,
 		}
-		added, err := svc.AddPolicy(ctx, policy)
+		added, err := svc.AddPolicy(ctx, req.token, policy)
 		if err != nil {
 			return addPolicyRes{created: false}, err
 		}
@@ -40,7 +40,7 @@ func removePolicy(svc authz.Service) endpoint.Endpoint {
 			Subject: req.Subject,
 			Object:  req.Object,
 		}
-		removed, err := svc.RemovePolicy(ctx, policy)
+		removed, err := svc.RemovePolicy(ctx, req.token, policy)
 		if err != nil {
 			return removePolicyRes{removed: false}, err
 		}

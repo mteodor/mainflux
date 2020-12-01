@@ -38,7 +38,7 @@ func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer, timeout time.Du
 
 }
 
-func (client grpcClient) Authorize(ctx context.Context, req *pb.AuthorizeReq, _ ...grpc.CallOption) (*pb.AuthorizeRes, error) {
+func (client grpcClient) Authorize(ctx context.Context, req *pb.AuthorizeReq, _ ...grpc.CallOption) (r *pb.AuthorizeRes, err error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -48,7 +48,10 @@ func (client grpcClient) Authorize(ctx context.Context, req *pb.AuthorizeReq, _ 
 	}
 
 	ar := res.(authorizeRes)
-	return &pb.AuthorizeRes{Authorized: ar.authorized, Err: ar.err}, errors.New(ar.err)
+	if ar.err != "" {
+		err = errors.New(ar.err)
+	}
+	return &pb.AuthorizeRes{Authorized: ar.authorized, Err: ar.err}, err
 }
 
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
