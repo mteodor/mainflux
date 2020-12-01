@@ -88,15 +88,16 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}
+
 		w.WriteHeader(ar.Code())
+
 		if ar.Empty() {
 			return nil
 		}
 	}
+
 	return json.NewEncoder(w).Encode(response)
 }
-
-
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
