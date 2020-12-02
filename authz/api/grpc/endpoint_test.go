@@ -26,26 +26,16 @@ import (
 )
 
 const (
-	port       = 8081
-	secret     = "secret"
-	modelFile  = "model.conf"
-	policyFile = "policy.csv"
-	token      = "token"
-	wrong      = "wrong"
-	email      = "john.doe@email.com"
+	port   = 8081
+	secret = "secret"
+	token  = "token"
+	wrong  = "wrong"
+	email  = "john.doe@email.com"
 )
 
 var svc authz.Service
 
 func newService() authz.Service {
-	// if _, err := os.Stat(modelFile); os.IsNotExist(err) {
-	// 	fmt.Println("error:" + err.Error())
-	// 	return nil
-	// }
-	// if _, err := os.Stat(policyFile); os.IsNotExist(err) {
-	// 	fmt.Println("error:" + err.Error())
-	// 	return nil
-	// }
 	auth := mocks.NewAuthService(map[string]string{token: email})
 	m := model.NewModel()
 	m.AddDef("r", "r", "sub, obj, act")
@@ -62,7 +52,6 @@ func newService() authz.Service {
 	_, _ = e.AddPolicy("admin", "data1", "read")
 	_, _ = e.AddPolicy("bob", "data2", "write")
 
-	e.EnableEnforce(true)
 	return authz.New(e, auth)
 }
 
@@ -74,7 +63,6 @@ func startGRPCServer(svc authz.Service, port int) {
 }
 
 func TestAuthorize(t *testing.T) {
-
 	authAddr := fmt.Sprintf("localhost:%d", port)
 	conn, err := grpc.Dial(authAddr, grpc.WithInsecure())
 	require.Nil(t, err, fmt.Sprintf("user id unexpected error: %s", err))

@@ -83,6 +83,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+
 	errorVal, ok := err.(errors.Error)
 	if ok {
 		if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
@@ -96,12 +97,12 @@ func decodeAddPolicyReq(_ context.Context, r *http.Request) (interface{}, error)
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
-	req := addPolicyReq{
-		token: r.Header.Get("Authorization"),
-	}
+
+	req := addPolicyReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(authz.ErrMalformedEntity, err)
 	}
+
 	return req, nil
 }
 
@@ -109,11 +110,11 @@ func decodeRemovePolicyReq(_ context.Context, r *http.Request) (interface{}, err
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
-	req := removePolicyReq{
-		token: r.Header.Get("Authorization"),
-	}
+
+	req := removePolicyReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(authz.ErrMalformedEntity, err)
 	}
+
 	return req, nil
 }

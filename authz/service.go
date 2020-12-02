@@ -10,16 +10,12 @@ import (
 )
 
 var (
-
 	// ErrUnauthorizedAccess represents unauthorized access.
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
-
 	// ErrMalformedEntity
 	ErrMalformedEntity = errors.New("malformed request")
-
 	// ErrNotFound
 	ErrNotFound = errors.New("entity not found")
-
 	// ErrInvalidReq
 	ErrInvalidReq = errors.New("invalid request")
 )
@@ -33,10 +29,8 @@ type Policy struct {
 type Service interface {
 	// AddPolicy creates new policy
 	AddPolicy(context.Context, string, Policy) (bool, error)
-
 	// RemovePolicy removes existing policy
 	RemovePolicy(context.Context, string, Policy) (bool, error)
-
 	// Authorize - checks if request is authorized
 	// against saved policies in database.
 	Authorize(context.Context, Policy) (bool, error)
@@ -74,6 +68,5 @@ func (svc service) RemovePolicy(ctx context.Context, token string, p Policy) (bo
 }
 
 func (svc service) Authorize(ctx context.Context, p Policy) (bool, error) {
-
 	return svc.enforcer.Enforce(p.Subject, p.Object, p.Action)
 }

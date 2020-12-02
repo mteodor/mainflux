@@ -27,6 +27,7 @@ func authorizeEndpoint(svc authz.Service) endpoint.Endpoint {
 		if err != nil {
 			return authorizeRes{authorized: authorized, err: err.Error()}, err
 		}
+
 		return authorizeRes{authorized: authorized, err: ""}, nil
 	}
 }

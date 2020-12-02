@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -13,8 +12,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-const svcName = "authz.AuthZService"
-
 var _ pb.AuthZServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
@@ -24,6 +21,7 @@ type grpcClient struct {
 
 // NewClient returns new AuthZServiceClient instance.
 func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer, timeout time.Duration) pb.AuthZServiceClient {
+	const svcName = "authz.AuthZService"
 	return &grpcClient{
 		authorize: kitgrpc.NewClient(
 			conn,

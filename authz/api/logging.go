@@ -54,7 +54,7 @@ func (lm *loggingMiddleware) RemovePolicy(ctx context.Context, token string, p a
 
 func (lm *loggingMiddleware) Authorize(ctx context.Context, p authz.Policy) (b bool, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method authorize for for token %s and policy %v took %s to complete", p, time.Since(begin))
+		message := fmt.Sprintf("Method authorize for %v took %s to complete", p, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

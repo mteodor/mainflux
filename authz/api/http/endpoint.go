@@ -16,15 +16,18 @@ func addPolicy(svc authz.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
+
 		policy := authz.Policy{
 			Action:  req.Action,
 			Subject: req.Subject,
 			Object:  req.Object,
 		}
+
 		added, err := svc.AddPolicy(ctx, req.token, policy)
 		if err != nil {
 			return addPolicyRes{created: false}, err
 		}
+
 		return addPolicyRes{created: added}, nil
 	}
 }
@@ -35,15 +38,18 @@ func removePolicy(svc authz.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
+
 		policy := authz.Policy{
 			Action:  req.Action,
 			Subject: req.Subject,
 			Object:  req.Object,
 		}
+
 		removed, err := svc.RemovePolicy(ctx, req.token, policy)
 		if err != nil {
 			return removePolicyRes{removed: false}, err
 		}
+
 		return removePolicyRes{removed: removed}, nil
 	}
 }

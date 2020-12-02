@@ -113,11 +113,12 @@ services:
       MF_AUTHZ_GRPC_PORT: ${MF_AUTHZ_GRPC_PORT}
       MF_AUTHZ_SECRET: ${MF_AUTHZ_SECRET}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_AUTHZ_MODEL_CONF: ${MF_AUTHZ_MODEL_CONF}
     ports:
       - ${MF_AUTHZ_HTTP_PORT}:${MF_AUTHZ_HTTP_PORT}
       - ${MF_AUTHZ_GRPC_PORT}:${MF_AUTHZ_GRPC_PORT}
     volumes:
-      - ./policy/model.conf:/model.conf
+      - ./policy/model.conf:{MF_AUTHZ_MODEL_CONF}
     networks:
       - mainflux-base-net
 

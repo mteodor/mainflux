@@ -54,6 +54,7 @@ const (
 	defJaegerURL       = ""
 	defAuthnURL        = "localhost:8181"
 	defAuthnTimeout    = "1s"
+	defModelConf       = "model.conf"
 
 	envLogLevel        = "MF_AUTHZ_LOG_LEVEL"
 	envDBHost          = "MF_AUTHZ_DB_HOST"
@@ -61,6 +62,7 @@ const (
 	envDBUser          = "MF_AUTHZ_DB_USER"
 	envDBPass          = "MF_AUTHZ_DB_PASS"
 	envDB              = "MF_AUTHZ_DB"
+	envModelConf       = "MF_AUTHZ_MODEL_CONF"
 	envDBSSLMode       = "MF_AUTHZ_DB_SSL_MODE"
 	envDBSSLCert       = "MF_AUTHZ_DB_SSL_CERT"
 	envDBSSLKey        = "MF_AUTHZ_DB_SSL_KEY"
@@ -90,6 +92,7 @@ type config struct {
 	resetURL        string
 	clientTLS       bool
 	caCerts         string
+	modelConf       string
 	singleUserToken string
 	singleUserEmail string
 	authnURL        string
@@ -123,7 +126,7 @@ func main() {
 		defer close()
 	}
 
-	enf, err := casbin.NewSyncedEnforcer("model.conf", adapter)
+	enf, err := casbin.NewSyncedEnforcer(cfg.modelConf, adapter)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -148,7 +151,6 @@ func main() {
 }
 
 func loadConfig() config {
-
 	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
@@ -175,6 +177,7 @@ func loadConfig() config {
 		serverKey:    mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:    mainflux.Env(envJaegerURL, defJaegerURL),
 		authnURL:     mainflux.Env(envAuthnURL, defAuthnURL),
+		modelConf:    mainflux.Env(envModelConf, defModelConf),
 		authnTimeout: authnTimeout,
 	}
 
@@ -269,7 +272,6 @@ func startHTTPServer(tracer opentracing.Tracer, svc authz.Service, port string, 
 	}
 	logger.Info(fmt.Sprintf("Authorization service started using http, exposed port %s", port))
 	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc, tracer))
-
 }
 
 func startGRPCServer(tracer opentracing.Tracer, svc authz.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {

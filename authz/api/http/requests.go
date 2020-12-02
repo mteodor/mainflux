@@ -22,6 +22,7 @@ func (req addPolicyReq) validate() error {
 	if req.Subject == "" || req.Object == "" || req.Action == "" {
 		return authz.ErrMalformedEntity
 	}
+
 	return nil
 }
 
@@ -40,5 +41,6 @@ func (req removePolicyReq) validate() error {
 	if req.Subject == "" || req.Object == "" || req.Action == "" {
 		return authz.ErrMalformedEntity
 	}
+
 	return nil
 }
