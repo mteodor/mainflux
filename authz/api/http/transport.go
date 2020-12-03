@@ -33,14 +33,14 @@ func MakeHandler(svc authz.Service, tracer opentracing.Tracer) http.Handler {
 	mux := bone.New()
 
 	mux.Post("/policy", kithttp.NewServer(
-		kitot.TraceServer(tracer, "issue")(addPolicy(svc)),
+		kitot.TraceServer(tracer, "add_policy")(addPolicy(svc)),
 		decodeAddPolicyReq,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Delete("/policy", kithttp.NewServer(
-		kitot.TraceServer(tracer, "issue")(removePolicy(svc)),
+		kitot.TraceServer(tracer, "remove_policy")(removePolicy(svc)),
 		decodeRemovePolicyReq,
 		encodeResponse,
 		opts...,
@@ -84,8 +84,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	errorVal, ok := err.(errors.Error)
-	if ok {
+	if errorVal, ok := err.(errors.Error); ok {
 		if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
 			w.Header().Set("Content-Type", contentType)
 			w.WriteHeader(http.StatusInternalServerError)

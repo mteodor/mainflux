@@ -125,7 +125,7 @@ func TestRemovePolicy(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:        "delete policy without content type",
+			desc:        "delete policy without empty content type",
 			data:        toJSON(policy),
 			contentType: "",
 			auth:        token,

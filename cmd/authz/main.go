@@ -108,14 +108,11 @@ func main() {
 	}
 
 	dbcfg := cfg.dbConfig
-	conn := fmt.Sprintf(`postgresql://%s:%s@%s:%s/%s?sslmode=disable`, dbcfg.User, dbcfg.Pass, dbcfg.Host, dbcfg.Port, dbcfg.Name) // Your driver and data source.
+	// Your driver and data source.
+	conn := fmt.Sprintf(`postgresql://%s:%s@%s:%s/%s?sslmode=disable`, dbcfg.User, dbcfg.Pass, dbcfg.Host, dbcfg.Port, dbcfg.Name)
 	adapter, err := pgadapter.NewAdapter(conn)
 	if err != nil {
 		log.Fatalf(err.Error())
-	}
-
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to configure policy enforcer: %s", err.Error()))
 	}
 
 	authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)

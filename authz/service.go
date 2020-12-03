@@ -12,11 +12,14 @@ import (
 var (
 	// ErrUnauthorizedAccess represents unauthorized access.
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
+
 	// ErrMalformedEntity malformed entity
 	ErrMalformedEntity = errors.New("malformed request")
+
 	// ErrNotFound indicates entity not found
 	ErrNotFound = errors.New("entity not found")
-	// ErrInvalidReq
+
+	// ErrInvalidReq  invalid request
 	ErrInvalidReq = errors.New("invalid request")
 )
 
@@ -52,16 +55,14 @@ func New(e *casbin.SyncedEnforcer, auth mainflux.AuthNServiceClient) Service {
 }
 
 func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (bool, error) {
-	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return false, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.enforcer.AddPolicy(p.Subject, p.Object, p.Action)
 }
 
 func (svc service) RemovePolicy(ctx context.Context, token string, p Policy) (bool, error) {
-	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
+	if _, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return false, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.enforcer.RemovePolicy(p.Subject, p.Object, p.Action)

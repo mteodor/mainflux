@@ -78,7 +78,7 @@ func TestAuthorize(t *testing.T) {
 		request    pb.AuthorizeReq
 	}{
 		{
-			desc:       "request that is authorized",
+			desc:       "access policy evaluates as authorized",
 			id:         email,
 			kind:       authn.UserKey,
 			err:        nil,
@@ -87,7 +87,7 @@ func TestAuthorize(t *testing.T) {
 			request:    pb.AuthorizeReq{Sub: "admin", Obj: "data1", Act: "read"},
 		},
 		{
-			desc:       "request that is not authorized",
+			desc:       "access policy evaluates as not authorized",
 			id:         email,
 			kind:       authn.UserKey,
 			err:        nil,
