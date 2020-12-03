@@ -12,9 +12,9 @@ import (
 var (
 	// ErrUnauthorizedAccess represents unauthorized access.
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
-	// ErrMalformedEntity
+	// ErrMalformedEntity malformed entity
 	ErrMalformedEntity = errors.New("malformed request")
-	// ErrNotFound
+	// ErrNotFound indicates entity not found
 	ErrNotFound = errors.New("entity not found")
 	// ErrInvalidReq
 	ErrInvalidReq = errors.New("invalid request")
