@@ -6,7 +6,7 @@ import (
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/mainflux/mainflux/authz"
-	pb "github.com/mainflux/mainflux/authz/api/pb"
+	"github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/codes"

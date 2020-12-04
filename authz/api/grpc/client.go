@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
-	pb "github.com/mainflux/mainflux/authz/api/pb"
+	 "github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"

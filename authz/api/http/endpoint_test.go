@@ -24,11 +24,9 @@ import (
 )
 
 const (
-	secret      = "secret"
 	contentType = "application/json"
 	email       = "user@example.com"
 	token       = "token"
-	wrongValue  = "wrong_value"
 )
 
 type testRequest struct {

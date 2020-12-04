@@ -134,8 +134,6 @@ services:
       - mainflux-base-net
     volumes:
       - mainflux-authz-db-volume:/var/lib/postgresql/data
-    ports:
-      - 6001:5432
 
   users-db:
     image: postgres:10.8-alpine

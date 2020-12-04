@@ -32,14 +32,14 @@ func MakeHandler(svc authz.Service, tracer opentracing.Tracer) http.Handler {
 
 	mux := bone.New()
 
-	mux.Post("/policy", kithttp.NewServer(
+	mux.Post("/policies", kithttp.NewServer(
 		kitot.TraceServer(tracer, "add_policy")(addPolicy(svc)),
 		decodeAddPolicyReq,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Delete("/policy", kithttp.NewServer(
+	mux.Delete("/policies", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_policy")(removePolicy(svc)),
 		decodeRemovePolicyReq,
 		encodeResponse,

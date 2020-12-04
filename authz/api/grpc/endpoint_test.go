@@ -15,7 +15,7 @@ import (
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/authz"
 	grpcapi "github.com/mainflux/mainflux/authz/api/grpc"
-	pb "github.com/mainflux/mainflux/authz/api/pb"
+	"github.com/mainflux/mainflux/authz/api/pb"
 	"github.com/mainflux/mainflux/authz/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -26,11 +26,9 @@ import (
 )
 
 const (
-	port   = 8081
-	secret = "secret"
-	token  = "token"
-	wrong  = "wrong"
-	email  = "john.doe@email.com"
+	port  = 8081
+	token = "token"
+	email = "john.doe@email.com"
 )
 
 var svc authz.Service

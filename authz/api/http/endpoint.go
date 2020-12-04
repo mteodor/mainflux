@@ -45,11 +45,10 @@ func removePolicy(svc authz.Service) endpoint.Endpoint {
 			Object:  req.Object,
 		}
 
-		removed, err := svc.RemovePolicy(ctx, req.token, policy)
-		if err != nil {
+		if _, err := svc.RemovePolicy(ctx, req.token, policy); err != nil {
 			return removePolicyRes{removed: false}, err
 		}
 
-		return removePolicyRes{removed: removed}, nil
+		return removePolicyRes{removed: true}, nil
 	}
 }

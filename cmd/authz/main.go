@@ -108,7 +108,6 @@ func main() {
 	}
 
 	dbcfg := cfg.dbConfig
-	// Your driver and data source.
 	conn := fmt.Sprintf(`postgresql://%s:%s@%s:%s/%s?sslmode=disable`, dbcfg.User, dbcfg.Pass, dbcfg.Host, dbcfg.Port, dbcfg.Name)
 	adapter, err := pgadapter.NewAdapter(conn)
 	if err != nil {
