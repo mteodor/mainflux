@@ -136,7 +136,7 @@ func TestRemovePolicy(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodDelete,
-			url:         fmt.Sprintf("%s/policy", ts.URL),
+			url:         fmt.Sprintf("%s/policies", ts.URL),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.data),
@@ -211,7 +211,7 @@ func TestAddPolicy(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/policy", ts.URL),
+			url:         fmt.Sprintf("%s/policies", ts.URL),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.data),
