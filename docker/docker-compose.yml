@@ -118,7 +118,7 @@ services:
       - ${MF_AUTHZ_HTTP_PORT}:${MF_AUTHZ_HTTP_PORT}
       - ${MF_AUTHZ_GRPC_PORT}:${MF_AUTHZ_GRPC_PORT}
     volumes:
-      - ./policy/model.conf:${MF_AUTHZ_MODEL_CONF}
+      - ./docker/policy/model.conf:${MF_AUTHZ_MODEL_CONF}
     networks:
       - mainflux-base-net
 
