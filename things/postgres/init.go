@@ -124,16 +124,16 @@ func migrateDB(db *sqlx.DB) error {
 			{
 				Id: "things_5",
 				Up: []string{
-					`ALTER TABLE IF EXISTS thing_groups DROP CONSTRAINT thing_groups_parent_id_fkey`
+					`ALTER TABLE IF EXISTS thing_groups DROP CONSTRAINT thing_groups_parent_id_fkey`,
 					`ALTER TABLE IF EXISTS thing_group_relations DROP CONSTRAINT thing_group_relations_group_id_fkey`,
 					`ALTER TABLE IF EXISTS thing_groups ALTER COLUMN parent_id TYPE VARCHAR(254)`,
 					`ALTER TABLE IF EXISTS thing_groups ALTER COLUMN id TYPE VARCHAR(254)`,
 					`ALTER TABLE IF EXISTS thing_group_relations ALTER COLUMN group_id TYPE VARCHAR(254)`,
-					`ALTER TABLE IF EXISTS thing_groups ADD CONSTRAINT thing_groups_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES thing_groups(id);`,
-					`ALTER TABLE IF EXISTS thing_group_relations ADD CONSTRAINT thing_group_relations_group_id_fkey FOREIGN KEY (group_id) REFERENCES thing_groups(id);`,
+					`ALTER TABLE IF EXISTS thing_groups ADD CONSTRAINT thing_groups_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES thing_groups(id)`,
+					`ALTER TABLE IF EXISTS thing_group_relations ADD CONSTRAINT thing_group_relations_group_id_fkey FOREIGN KEY (group_id) REFERENCES thing_groups(id)`,
+				},
 			},
 		},
-		
 	}
 
 	_, err := migrate.Exec(db.DB, "postgres", migrations, migrate.Up)
