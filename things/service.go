@@ -11,6 +11,7 @@ import (
 
 	"github.com/mainflux/mainflux"
 	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 const things = "things"
@@ -406,12 +407,12 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	uid, err := uuidProvider.New().ID()
+	ulid, err := newULID()
 	if err != nil {
 		return "", errors.Wrap(ErrCreateGroup, err)
 	}
 
-	g.ID = uid
+	g.ID = ulid
 	g.OwnerID = user.GetId()
 	if _, err := ts.groups.Save(ctx, g); err != nil {
 		return "", err
@@ -504,4 +505,10 @@ func (ts *thingsService) ListMemberships(ctx context.Context, token string, memb
 		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Memberships(ctx, memberID, offset, limit, gm)
+}
+
+func newULID() (ulid.ULID, error) {
+	t := time.Unix(1000000, 0)
+	entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
+	return ulid.New(ulid.Timestamp(t), entropy)
 }

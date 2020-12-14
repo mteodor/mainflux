@@ -448,8 +448,8 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 }
 
 type dbGroup struct {
-	ID          uuid.NullUUID `db:"id"`
-	OwnerID     uuid.NullUUID `db:"owner_id"`
+	ID          string        `db:"id"`
+	OwnerID     string        `db:"owner_id"`
 	ParentID    uuid.NullUUID `db:"parent_id"`
 	Name        string        `db:"name"`
 	Description string        `db:"description"`
@@ -461,9 +461,9 @@ type dbGroup struct {
 }
 
 type dbGroupPage struct {
-	ID       uuid.NullUUID `db:"id"`
+	ID       string        `db:"id"`
+	ParentID string        `db:"parent_id"`
 	OwnerID  uuid.NullUUID `db:"owner_id"`
-	ParentID uuid.NullUUID `db:"parent_id"`
 	Metadata dbMetadata    `db:"metadata"`
 	Path     string        `db:"path"`
 	Level    uint64        `db:"level"`
@@ -490,15 +490,7 @@ func toString(id uuid.NullUUID) (string, error) {
 }
 
 func toDBGroup(g groups.Group) (dbGroup, error) {
-	parentID, err := toUUID(g.ParentID)
-	if err != nil {
-		return dbGroup{}, err
-	}
 	ownerID, err := toUUID(g.OwnerID)
-	if err != nil {
-		return dbGroup{}, err
-	}
-	groupID, err := toUUID(g.ID)
 	if err != nil {
 		return dbGroup{}, err
 	}
@@ -506,9 +498,9 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 	meta := dbMetadata(g.Metadata)
 
 	return dbGroup{
-		ID:          groupID,
+		ID:          g.ID,
 		Name:        g.Name,
-		ParentID:    parentID,
+		ParentID:    g.ParentID,
 		OwnerID:     ownerID,
 		Description: g.Description,
 		Metadata:    meta,
@@ -524,45 +516,29 @@ func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata gr
 		return dbGroupPage{}, err
 	}
 
-	gid, err := toUUID(id)
-	if err != nil {
-		return dbGroupPage{}, err
-	}
-
-	parent, err := toUUID(parentID)
-	if err != nil {
-		return dbGroupPage{}, err
-	}
 	if err != nil {
 		return dbGroupPage{}, err
 	}
 	return dbGroupPage{
 		Metadata: dbMetadata(metadata),
-		ID:       gid,
+		ID:       id,
 		OwnerID:  owner,
 		Level:    level,
 		Path:     path,
-		ParentID: parent,
+		ParentID: parentID,
 	}, nil
 }
 
 func toGroup(dbu dbGroup) (groups.Group, error) {
-	groupID, err := toString(dbu.ID)
-	if err != nil {
-		return groups.Group{}, err
-	}
-	parentID, err := toString(dbu.ParentID)
-	if err != nil {
-		return groups.Group{}, err
-	}
+
 	ownerID, err := toString(dbu.OwnerID)
 	if err != nil {
 		return groups.Group{}, err
 	}
 	return groups.Group{
-		ID:          groupID,
+		ID:          dbu.ID,
 		Name:        dbu.Name,
-		ParentID:    parentID,
+		ParentID:    dbu.ParentID,
 		OwnerID:     ownerID,
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),
@@ -574,7 +550,7 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 }
 
 type dbGroupRelation struct {
-	Group uuid.UUID `db:"group_id"`
+	Group string    `db:"group_id"`
 	Thing uuid.UUID `db:"thing_id"`
 }
 
