@@ -5,12 +5,15 @@ package things
 
 import (
 	"context"
+	"time"
 
 	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 
+	cryptorand "crypto/rand"
+	mathrand "math/rand"
+
 	"github.com/mainflux/mainflux"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -412,7 +415,7 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups
 		return "", errors.Wrap(ErrCreateGroup, err)
 	}
 
-	g.ID = ulid
+	g.ID = ulid.String()
 	g.OwnerID = user.GetId()
 	if _, err := ts.groups.Save(ctx, g); err != nil {
 		return "", err
@@ -508,7 +511,9 @@ func (ts *thingsService) ListMemberships(ctx context.Context, token string, memb
 }
 
 func newULID() (ulid.ULID, error) {
-	t := time.Unix(1000000, 0)
-	entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
-	return ulid.New(ulid.Timestamp(t), entropy)
+	entropy := cryptorand.Reader
+	seed := time.Now().UnixNano()
+	source := mathrand.NewSource(seed)
+	entropy = mathrand.New(source)
+	return ulid.New(ulid.Timestamp(time.Now()), entropy)
 }

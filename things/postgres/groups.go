@@ -119,13 +119,8 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 }
 
 func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (groups.Group, error) {
-	groupID, err := toUUID(id)
-	if err != nil || !groupID.Valid {
-		return groups.Group{}, err
-	}
-
 	dbu := dbGroup{
-		ID: groupID,
+		ID: id,
 	}
 
 	q := `SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups WHERE id = $1`
@@ -449,8 +444,8 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 
 type dbGroup struct {
 	ID          string        `db:"id"`
-	OwnerID     string        `db:"owner_id"`
-	ParentID    uuid.NullUUID `db:"parent_id"`
+	ParentID    string        `db:"parent_id"`
+	OwnerID     uuid.NullUUID `db:"owner_id"`
 	Name        string        `db:"name"`
 	Description string        `db:"description"`
 	Metadata    dbMetadata    `db:"metadata"`
@@ -555,16 +550,12 @@ type dbGroupRelation struct {
 }
 
 func toDBGroupRelation(thingID, groupID string) (dbGroupRelation, error) {
-	grID, err := uuid.FromString(groupID)
-	if err != nil {
-		return dbGroupRelation{}, err
-	}
 	thID, err := uuid.FromString(thingID)
 	if err != nil {
 		return dbGroupRelation{}, err
 	}
 	return dbGroupRelation{
-		Group: grID,
+		Group: groupID,
 		Thing: thID,
 	}, nil
 }
