@@ -444,7 +444,7 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 
 type dbGroup struct {
 	ID          string        `db:"id"`
-	ParentID    string        `db:"parent_id"`
+	ParentID    []byte        `db:"parent_id"`
 	OwnerID     uuid.NullUUID `db:"owner_id"`
 	Name        string        `db:"name"`
 	Description string        `db:"description"`
@@ -495,7 +495,7 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 	return dbGroup{
 		ID:          g.ID,
 		Name:        g.Name,
-		ParentID:    g.ParentID,
+		ParentID:    []byte(g.ParentID),
 		OwnerID:     ownerID,
 		Description: g.Description,
 		Metadata:    meta,
@@ -514,6 +514,7 @@ func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata gr
 	if err != nil {
 		return dbGroupPage{}, err
 	}
+
 	return dbGroupPage{
 		Metadata: dbMetadata(metadata),
 		ID:       id,
@@ -525,15 +526,15 @@ func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata gr
 }
 
 func toGroup(dbu dbGroup) (groups.Group, error) {
-
 	ownerID, err := toString(dbu.OwnerID)
 	if err != nil {
 		return groups.Group{}, err
 	}
+
 	return groups.Group{
 		ID:          dbu.ID,
 		Name:        dbu.Name,
-		ParentID:    dbu.ParentID,
+		ParentID:    string(dbu.ParentID),
 		OwnerID:     ownerID,
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),

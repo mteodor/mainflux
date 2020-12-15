@@ -5,16 +5,12 @@ package things
 
 import (
 	"context"
-	"time"
 
 	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 
-	cryptorand "crypto/rand"
-	mathrand "math/rand"
-
 	"github.com/mainflux/mainflux"
-	"github.com/oklog/ulid/v2"
+	mfxulid "github.com/mainflux/mainflux/pkg/ulid"
 )
 
 const things = "things"
@@ -47,6 +43,9 @@ var (
 
 	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
+
+	// ErrGenerateGroupID indicates error in creating group.
+	ErrGenerateGroupID = errors.New("failed to generate group id")
 
 	// ErrFailedToRetrieveThings failed to retrieve things.
 	ErrFailedToRetrieveThings = errors.New("failed to retrieve group members")
@@ -149,6 +148,7 @@ type thingsService struct {
 	channelCache ChannelCache
 	thingCache   ThingCache
 	uuidProvider mainflux.UUIDProvider
+	ulidProvider mainflux.UUIDProvider
 }
 
 // New instantiates the things service implementation.
@@ -161,6 +161,7 @@ func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels Chan
 		channelCache: ccache,
 		thingCache:   tcache,
 		uuidProvider: up,
+		ulidProvider: mfxulid.New(),
 	}
 }
 
@@ -410,12 +411,12 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	ulid, err := newULID()
+	ulid, err := ts.ulidProvider.ID()
 	if err != nil {
-		return "", errors.Wrap(ErrCreateGroup, err)
+		return "", errors.Wrap(ErrGenerateGroupID, err)
 	}
 
-	g.ID = ulid.String()
+	g.ID = ulid
 	g.OwnerID = user.GetId()
 	if _, err := ts.groups.Save(ctx, g); err != nil {
 		return "", err
@@ -508,12 +509,4 @@ func (ts *thingsService) ListMemberships(ctx context.Context, token string, memb
 		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.Memberships(ctx, memberID, offset, limit, gm)
-}
-
-func newULID() (ulid.ULID, error) {
-	entropy := cryptorand.Reader
-	seed := time.Now().UnixNano()
-	source := mathrand.NewSource(seed)
-	entropy = mathrand.New(source)
-	return ulid.New(ulid.Timestamp(time.Now()), entropy)
 }
