@@ -98,6 +98,13 @@ func migrateDB(db *sqlx.DB) error {
 					`ALTER TABLE IF EXISTS users ADD FOREIGN KEY (owner_id) REFERENCES groups(id)`,
 				},
 			},
+			{
+				Id: "users_5",
+				Up: []string{
+					`ALTER TABLE IF EXISTS users DROP CONSTRAINT IF EXISTS users_owner_id_fkey`,
+					`ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS owner_id`,
+				},
+			},
 		},
 	}
 
