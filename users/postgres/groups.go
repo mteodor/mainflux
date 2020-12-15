@@ -316,18 +316,18 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 }
 
 type dbGroup struct {
-	ID       string        `db:"id"`
-	ParentID  `db:"parent_id"`
-	Name     string        `db:"name"`
-	OwnerID  uuid.NullUUID `db:"owner_id"`
-	Description string     `db:"description"`
-	Metadata    dbMetadata `db:"metadata"`
+	ID          string        `db:"id"`
+	Name        string        `db:"name"`
+	OwnerID     uuid.NullUUID `db:"owner_id"`
+	ParentID    uuid.NullUUID `db:"parent_id"`
+	Description string        `db:"description"`
+	Metadata    dbMetadata    `db:"metadata"`
 }
 
 type dbGroupPage struct {
-	ID       ulid.ULID     `db:"id"`
-	ParentID ulid.ULID     `db:"parent_id"`
+	ID       uuid.NullUUID `db:"id"`
 	OwnerID  uuid.NullUUID `db:"owner_id"`
+	ParentID uuid.NullUUID `db:"parent_id"`
 	Metadata dbMetadata    `db:"metadata"`
 	Limit    uint64
 	Offset   uint64
