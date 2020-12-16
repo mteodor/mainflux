@@ -10,7 +10,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 
 	"github.com/mainflux/mainflux"
-	mfxulid "github.com/mainflux/mainflux/pkg/ulid"
+	"github.com/mainflux/mainflux/pkg/ulid"
 )
 
 const things = "things"
@@ -161,7 +161,7 @@ func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels Chan
 		channelCache: ccache,
 		thingCache:   tcache,
 		uuidProvider: up,
-		ulidProvider: mfxulid.New(),
+		ulidProvider: ulid.New(),
 	}
 }
 
