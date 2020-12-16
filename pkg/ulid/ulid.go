@@ -17,14 +17,14 @@ import (
 // ErrGeneratingID indicates error in generating ULID
 var ErrGeneratingID = errors.New("generating id failed")
 
-var _ mainflux.UUIDProvider = (*ulidProvider)(nil)
+var _ mainflux.IDProvider = (*ulidProvider)(nil)
 
 type ulidProvider struct {
 	entropy *mathrand.Rand
 }
 
 // New instantiates a ULID provider.
-func New() mainflux.UUIDProvider {
+func New() mainflux.IDProvider {
 	seed := time.Now().UnixNano()
 	source := mathrand.NewSource(seed)
 	return &ulidProvider{

@@ -551,8 +551,8 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 }
 
 type dbGroupRelation struct {
-	Group string    `db:"group_id"`
-	Thing uuid.UUID `db:"thing_id"`
+	GroupID string    `db:"group_id"`
+	ThingID uuid.UUID `db:"thing_id"`
 }
 
 func toDBGroupRelation(thingID, groupID string) (dbGroupRelation, error) {
@@ -561,8 +561,8 @@ func toDBGroupRelation(thingID, groupID string) (dbGroupRelation, error) {
 		return dbGroupRelation{}, err
 	}
 	return dbGroupRelation{
-		Group: groupID,
-		Thing: thID,
+		GroupID: groupID,
+		ThingID: thID,
 	}, nil
 }
 

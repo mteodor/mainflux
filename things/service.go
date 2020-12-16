@@ -147,12 +147,12 @@ type thingsService struct {
 	groups       groups.Repository
 	channelCache ChannelCache
 	thingCache   ThingCache
-	uuidProvider mainflux.UUIDProvider
-	ulidProvider mainflux.UUIDProvider
+	uuidProvider mainflux.IDProvider
+	ulidProvider mainflux.IDProvider
 }
 
 // New instantiates the things service implementation.
-func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, up mainflux.UUIDProvider) Service {
+func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, up mainflux.IDProvider) Service {
 	return &thingsService{
 		auth:         auth,
 		things:       things,
