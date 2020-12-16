@@ -443,16 +443,16 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 }
 
 type dbGroup struct {
-	ID          string        `db:"id"`
-	ParentID    []byte        `db:"parent_id"`
-	OwnerID     uuid.NullUUID `db:"owner_id"`
-	Name        string        `db:"name"`
-	Description string        `db:"description"`
-	Metadata    dbMetadata    `db:"metadata"`
-	Level       int           `db:"level"`
-	Path        string        `db:"path"`
-	CreatedAt   time.Time     `db:"created_at"`
-	UpdatedAt   time.Time     `db:"updated_at"`
+	ID          string         `db:"id"`
+	ParentID    sql.NullString `db:"parent_id"`
+	OwnerID     uuid.NullUUID  `db:"owner_id"`
+	Name        string         `db:"name"`
+	Description string         `db:"description"`
+	Metadata    dbMetadata     `db:"metadata"`
+	Level       int            `db:"level"`
+	Path        string         `db:"path"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at"`
 }
 
 type dbGroupPage struct {
@@ -490,12 +490,17 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 		return dbGroup{}, err
 	}
 
+	var parentID sql.NullString
+	if g.ParentID != "" {
+		parentID = sql.NullString{String: g.ParentID, Valid: true}
+	}
+
 	meta := dbMetadata(g.Metadata)
 
 	return dbGroup{
 		ID:          g.ID,
 		Name:        g.Name,
-		ParentID:    []byte(g.ParentID),
+		ParentID:    parentID,
 		OwnerID:     ownerID,
 		Description: g.Description,
 		Metadata:    meta,
@@ -534,7 +539,7 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 	return groups.Group{
 		ID:          dbu.ID,
 		Name:        dbu.Name,
-		ParentID:    string(dbu.ParentID),
+		ParentID:    dbu.ParentID.String,
 		OwnerID:     ownerID,
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),
