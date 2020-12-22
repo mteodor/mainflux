@@ -13,9 +13,12 @@ service ThingsService {
     rpc Identify(Token) returns (ThingID) {}
 }
 
-service AuthNService {
+service AuthService {
     rpc Issue(IssueReq) returns (Token) {}
     rpc Identify(Token) returns (UserIdentity) {}
+    rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
+    rpc Assign(Assignment) returns(google.protobuf.Empty) {}
+    rpc Members(MembersReq) returns (MembersRes) {}
 }
 
 message AccessByKeyReq {
@@ -48,4 +51,37 @@ message IssueReq {
     string id    = 1;
     string email = 2;
     uint32 type  = 3;
+}
+
+message AuthorizeReq {
+    string sub = 1;
+    string obj = 2;
+    string act = 3;
+}
+
+message AuthorizeRes {
+    bool authorized = 1;
+    string err      = 2;
+}
+
+message Assignment {
+    string token    = 1;
+    string groupID  = 2;
+    string memberID = 3;
+}
+
+message MembersReq {
+    string token    = 1;
+    string groupID  = 2;
+    uint64 offset   = 3;
+    uint64 limit    = 4;
+    string type     = 5;
+}
+
+message MembersRes {
+    uint64 total            = 1;
+	uint64 offset           = 2;
+	uint64 limit            = 3;
+	string type             = 4;
+    repeated string members = 5;
 }

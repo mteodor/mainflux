@@ -90,7 +90,7 @@ var crudOp = map[string]string{
 
 type twinsService struct {
 	publisher    messaging.Publisher
-	auth         mainflux.AuthNServiceClient
+	auth         mainflux.AuthServiceClient
 	twins        TwinRepository
 	states       StateRepository
 	uuidProvider mainflux.IDProvider

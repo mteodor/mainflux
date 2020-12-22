@@ -141,7 +141,7 @@ type PageMetadata struct {
 var _ Service = (*thingsService)(nil)
 
 type thingsService struct {
-	auth         mainflux.AuthNServiceClient
+	auth         mainflux.AuthServiceClient
 	things       ThingRepository
 	channels     ChannelRepository
 	groups       groups.Repository

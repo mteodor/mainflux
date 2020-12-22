@@ -156,7 +156,7 @@ func dec(in []byte) ([]byte, error) {
 	return in, nil
 }
 
-func newService(authn mainflux.AuthNServiceClient, url string) bootstrap.Service {
+func newService(authn mainflux.AuthServiceClient, url string) bootstrap.Service {
 	things := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		BaseURL: url,
@@ -179,7 +179,7 @@ func generateChannels() map[string]things.Channel {
 	return channels
 }
 
-func newThingsService(authn mainflux.AuthNServiceClient) things.Service {
+func newThingsService(authn mainflux.AuthServiceClient) things.Service {
 	return mocks.NewThingsService(map[string]things.Thing{}, generateChannels(), authn)
 }
 

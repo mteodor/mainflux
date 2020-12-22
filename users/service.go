@@ -8,7 +8,8 @@ import (
 	"regexp"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/auth"
+	authn "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 )
@@ -163,11 +164,11 @@ type usersService struct {
 	groups GroupRepository
 	hasher Hasher
 	email  Emailer
-	auth   mainflux.AuthNServiceClient
+	auth   mainflux.AuthServiceClient
 }
 
 // New instantiates the users service implementation
-func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainflux.AuthNServiceClient, m Emailer) Service {
+func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainflux.AuthServiceClient, m Emailer) Service {
 	return &usersService{
 		users:  users,
 		groups: groups,
@@ -273,7 +274,7 @@ func (svc usersService) GenerateResetToken(ctx context.Context, email, host stri
 	if err != nil || user.Email == "" {
 		return ErrUserNotFound
 	}
-	t, err := svc.issue(ctx, user.ID, user.Email, authn.RecoveryKey)
+	t, err := svc.issue(ctx, user.ID, user.Email, auth.RecoveryKey)
 	if err != nil {
 		return errors.Wrap(ErrRecoveryToken, err)
 	}

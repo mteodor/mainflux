@@ -14,13 +14,13 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/authn"
-	api "github.com/mainflux/mainflux/authn/api"
-	grpcapi "github.com/mainflux/mainflux/authn/api/grpc"
-	httpapi "github.com/mainflux/mainflux/authn/api/http"
-	"github.com/mainflux/mainflux/authn/jwt"
-	"github.com/mainflux/mainflux/authn/postgres"
-	"github.com/mainflux/mainflux/authn/tracing"
+	authn "github.com/mainflux/mainflux/auth"
+	api "github.com/mainflux/mainflux/auth/api"
+	grpcapi "github.com/mainflux/mainflux/auth/api/grpc"
+	httpapi "github.com/mainflux/mainflux/auth/api/http"
+	"github.com/mainflux/mainflux/auth/jwt"
+	"github.com/mainflux/mainflux/auth/postgres"
+	"github.com/mainflux/mainflux/auth/tracing"
 	"github.com/mainflux/mainflux/logger"
 	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
@@ -48,21 +48,21 @@ const (
 	defServerKey     = ""
 	defJaegerURL     = ""
 
-	envLogLevel      = "MF_AUTHN_LOG_LEVEL"
-	envDBHost        = "MF_AUTHN_DB_HOST"
-	envDBPort        = "MF_AUTHN_DB_PORT"
-	envDBUser        = "MF_AUTHN_DB_USER"
-	envDBPass        = "MF_AUTHN_DB_PASS"
-	envDB            = "MF_AUTHN_DB"
-	envDBSSLMode     = "MF_AUTHN_DB_SSL_MODE"
-	envDBSSLCert     = "MF_AUTHN_DB_SSL_CERT"
-	envDBSSLKey      = "MF_AUTHN_DB_SSL_KEY"
-	envDBSSLRootCert = "MF_AUTHN_DB_SSL_ROOT_CERT"
-	envHTTPPort      = "MF_AUTHN_HTTP_PORT"
-	envGRPCPort      = "MF_AUTHN_GRPC_PORT"
-	envSecret        = "MF_AUTHN_SECRET"
-	envServerCert    = "MF_AUTHN_SERVER_CERT"
-	envServerKey     = "MF_AUTHN_SERVER_KEY"
+	envLogLevel      = "MF_AUTH_LOG_LEVEL"
+	envDBHost        = "MF_AUTH_DB_HOST"
+	envDBPort        = "MF_AUTH_DB_PORT"
+	envDBUser        = "MF_AUTH_DB_USER"
+	envDBPass        = "MF_AUTH_DB_PASS"
+	envDB            = "MF_AUTH_DB"
+	envDBSSLMode     = "MF_AUTH_DB_SSL_MODE"
+	envDBSSLCert     = "MF_AUTH_DB_SSL_CERT"
+	envDBSSLKey      = "MF_AUTH_DB_SSL_KEY"
+	envDBSSLRootCert = "MF_AUTH_DB_SSL_ROOT_CERT"
+	envHTTPPort      = "MF_AUTH_HTTP_PORT"
+	envGRPCPort      = "MF_AUTH_GRPC_PORT"
+	envSecret        = "MF_AUTH_SECRET"
+	envServerCert    = "MF_AUTH_SERVER_CERT"
+	envServerKey     = "MF_AUTH_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
 )
 
@@ -235,7 +235,7 @@ func startGRPCServer(tracer opentracing.Tracer, svc authn.Service, port string, 
 		server = grpc.NewServer()
 	}
 
-	mainflux.RegisterAuthNServiceServer(server, grpcapi.NewServer(tracer, svc))
+	mainflux.RegisterAuthServiceServer(server, grpcapi.NewServer(tracer, svc))
 	logger.Info(fmt.Sprintf("Authentication gRPC service started, exposed port %s", port))
 	errs <- server.Serve(listener)
 }

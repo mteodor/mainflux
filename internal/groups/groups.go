@@ -6,6 +6,7 @@ import (
 )
 
 type Member interface{}
+
 type Metadata map[string]interface{}
 
 type Group struct {
@@ -23,7 +24,7 @@ type Group struct {
 	Path      string
 	Children  []*Group
 	CreatedAt time.Time
-	UpdatedAt  time.Time
+	UpdatedAt time.Time
 }
 
 type PageMetadata struct {
