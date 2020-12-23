@@ -8,7 +8,7 @@ networks:
     driver: bridge
 
 volumes:
-  mainflux-authn-db-volume:
+  mainflux-auth-db-volume:
   mainflux-authz-db-volume:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
@@ -56,9 +56,9 @@ services:
     networks:
       - mainflux-base-net
 
-  authn-db:
+  auth-db:
     image: postgres:10.8-alpine
-    container_name: mainflux-authn-db
+    container_name: mainflux-auth-db
     restart: on-failure
     environment:
       POSTGRES_USER: ${MF_AUTH_DB_USER}
@@ -67,19 +67,19 @@ services:
     networks:
       - mainflux-base-net
     volumes:
-      - mainflux-authn-db-volume:/var/lib/postgresql/data
+      - mainflux-auth-db-volume:/var/lib/postgresql/data
 
-  authn:
+  auth:
     image: mainflux/auth:latest
-    container_name: mainflux-authn
+    container_name: mainflux-auth
     depends_on:
-      - authn-db
+      - auth-db
     expose:
       - ${MF_AUTH_GRPC_PORT}
     restart: on-failure
     environment:
       MF_AUTH_LOG_LEVEL: ${MF_AUTH_LOG_LEVEL}
-      MF_AUTH_DB_HOST: authn-db
+      MF_AUTH_DB_HOST: auth-db
       MF_AUTH_DB_PORT: ${MF_AUTH_DB_PORT}
       MF_AUTH_DB_USER: ${MF_AUTH_DB_USER}
       MF_AUTH_DB_PASS: ${MF_AUTH_DB_PASS}
@@ -114,7 +114,7 @@ services:
       - ./users/emailer/templates/${MF_EMAIL_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
     depends_on:
       - users-db
-      - authn
+      - auth
     restart: on-failure
     environment:
       MF_USERS_LOG_LEVEL: ${MF_USERS_LOG_LEVEL}
@@ -170,7 +170,7 @@ services:
     container_name: mainflux-things
     depends_on:
       - things-db
-      - authn
+      - auth
     restart: on-failure
     environment:
       MF_THINGS_LOG_LEVEL: ${MF_THINGS_LOG_LEVEL}
