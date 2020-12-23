@@ -49,34 +49,17 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE TABLE IF NOT EXISTS keys (
 						id          UUID NOT NULL,
 						type        SMALLINT,
-						issuer      VARCHAR(254) NOT NULL,
+						subject     VARCHAR(254) NOT NULL,
+						issuer_id   UUID NOT NULL,
 						issued_at   TIMESTAMP NOT NULL,
 						expires_at  TIMESTAMP,
-						PRIMARY KEY (id, issuer)
-                    )`,
-				},
-				Down: []string{"DROP TABLE IF EXISTS keys"},
-			},
-			{
-				Id: "authn_2",
-				Up: []string{
-					`ALTER TABLE IF EXISTS keys RENAME COLUMN issuer TO subject`,
-					`ALTER TABLE IF EXISTS keys ADD COLUMN IF NOT EXISTS issuer_id UUID NOT NULL`,
-					`ALTER TABLE IF EXISTS keys DROP CONSTRAINT keys_pkey`,
-					`ALTER TABLE IF EXISTS keys ADD PRIMARY KEY (id, issuer_id)`,
-				},
-				Down: []string{
-					`ALTER TABLE keys RENAME COLUMN subject TO issuer`,
-					`ALTER TABLE IF EXISTS keys DROP CONSTRAINT keys_pkey`,
-					`ALTER TABLE IF EXISTS keys ADD PRIMARY KEY (id, issuer)`,
-					`ALTER TABLE IF EXISTS keys DROP COLUMN issuer_id`,
-				},
-			},
-			// Should the migrations name be changed also?
-			{
-				Id: "authn_3",
-				Up: []string{
+						PRIMARY KEY (id, issuer_id)
+					)`,
 					`CREATE extension LTREE`,
+					`CREATE TABLE IF NOT EXISTS group_type (
+						id INTEGER UNIQUE NOT NULL,
+						type VARCHAR(254)
+					)`,
 					`CREATE TABLE IF NOT EXISTS groups ( 
 						id          VARCHAR(254) UNIQUE NOT NULL,
 						parent_id   VARCHAR(254), 
@@ -85,20 +68,31 @@ func migrateDB(db *sqlx.DB) error {
 						description VARCHAR(1024),
 						metadata    JSONB,
 						path        LTREE, 
+						type        INTEGER,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
 						PRIMARY KEY (owner_id, path),
-						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE
+						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE,
+						FOREIGN KEY (type) REFERENCES group_type (id)
 				   )`,
 					`CREATE TABLE IF NOT EXISTS group_relations (
-						member_id VARCHAR(254), NOT NULL,
-						group_id VARCHAR(254), NOT NULL,
+						member_id VARCHAR(254) NOT NULL,
+						group_id VARCHAR(254) NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
 						FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
 						PRIMARY KEY (member_id, group_id)
 				   )`,
 					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,
+					`INSERT INTO group_type (id, type) VALUES (1, 'things')`,
+					`INSERT INTO group_type (id, type) VALUES (2, 'users')`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS keys`,
+					`DROP EXTENSION IF EXISTS LTREE`,
+					`DROP TABLE IF EXISTS groups`,
+					`DROP TABLE IF EXISTS group_type`,
+					`DROP TABLE IF EXISTS group_relations`,
 				},
 			},
 		},

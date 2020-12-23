@@ -13,7 +13,6 @@ import (
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/authz/api/pb"
 	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 )
@@ -58,7 +57,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			"Authorize",
 			encodeAuthorizeRequest,
 			decodeAuthorizeResponse,
-			pb.AuthorizeRes{},
+			mainflux.AuthorizeRes{},
 		).Endpoint()),
 		assign: kitot.TraceClient(tracer, "assign")(kitgrpc.NewClient(
 			conn,
@@ -66,7 +65,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			"Assign",
 			encodeAssignRequest,
 			decodeAssignResponse,
-			pb.AuthorizeRes{},
+			mainflux.AuthorizeRes{},
 		).Endpoint()),
 		members: kitot.TraceClient(tracer, "member")(kitgrpc.NewClient(
 			conn,
@@ -74,7 +73,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			"Members",
 			encodeMembersRequest,
 			decodeMembersResponse,
-			pb.AuthorizeRes{},
+			mainflux.AuthorizeRes{},
 		).Endpoint()),
 
 		timeout: timeout,
@@ -144,13 +143,13 @@ func (client grpcClient) Authorize(ctx context.Context, req *mainflux.AuthorizeR
 }
 
 func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*pb.AuthorizeRes)
+	res := grpcRes.(*mainflux.AuthorizeRes)
 	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
 }
 
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(AuthZReq)
-	return &pb.AuthorizeReq{
+	return &mainflux.AuthorizeReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
 		Act: req.Act,
@@ -179,13 +178,13 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 }
 
 func encodeMembersRequest(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*pb.AuthorizeRes)
+	res := grpcRes.(*mainflux.AuthorizeRes)
 	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
 }
 
 func decodeMembersResponse(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(AuthZReq)
-	return &pb.AuthorizeReq{
+	return &mainflux.AuthorizeReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
 		Act: req.Act,
@@ -209,13 +208,13 @@ func (client grpcClient) Assign(ctx context.Context, req *mainflux.Assignment, _
 }
 
 func encodeAssignRequest(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*pb.AuthorizeRes)
+	res := grpcRes.(*mainflux.AuthorizeRes)
 	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
 }
 
 func decodeAssignResponse(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(AuthZReq)
-	return &pb.AuthorizeReq{
+	return &mainflux.AuthorizeReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
 		Act: req.Act,

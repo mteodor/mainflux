@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/email"ma
+	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/bcrypt"
 	"github.com/mainflux/mainflux/users/emailer"

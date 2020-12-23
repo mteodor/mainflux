@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -57,6 +58,8 @@ type Service interface {
 	// is returned. If token is invalid, or invocation failed for some
 	// other reason, non-nil error value is returned in response.
 	Identify(ctx context.Context, token string) (Identity, error)
+
+	groups.Service
 }
 
 var _ Service = (*service)(nil)

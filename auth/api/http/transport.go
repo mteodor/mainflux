@@ -15,6 +15,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
+	groupsAPI "github.com/mainflux/mainflux/internal/groups/api"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -42,6 +43,83 @@ func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 	mux.Get("/keys/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "retrieve")(retrieveEndpoint(svc)),
 		decodeKeyReq,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/things/:memberID/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_memberships")(groupsAPI.ListMembership(svc)),
+		groupsAPI.DecodeListMemberGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Post("/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "add_group")(groupsAPI.CreateGroupEndpoint(svc)),
+		groupsAPI.DecodeGroupCreate,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_groups")(groupsAPI.ListGroupsEndpoint(svc)),
+		groupsAPI.DecodeListGroupsRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Delete("/groups/:groupID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "delete_group")(groupsAPI.DeleteGroupEndpoint(svc)),
+		groupsAPI.DecodeGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/groups/:groupID/things/:memberID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "assign")(groupsAPI.AssignEndpoint(svc)),
+		groupsAPI.DecodeMemberGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Delete("/groups/:groupID/things/:memberID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "unassign")(groupsAPI.UnassignEndpoint(svc)),
+		groupsAPI.DecodeMemberGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID/things", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_things")(groupsAPI.ListMembersEndpoint(svc)),
+		groupsAPI.DecodeListMemberGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/groups/:groupID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "update_group")(groupsAPI.UpdateGroupEndpoint(svc)),
+		groupsAPI.DecodeGroupUpdate,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID/children", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_children_groups")(groupsAPI.ListGroupChildrenEndpoint(svc)),
+		groupsAPI.DecodeListGroupsRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID/parents", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_parent_groups")(groupsAPI.ListGroupParentsEndpoint(svc)),
+		groupsAPI.DecodeListGroupsRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "view_group")(groupsAPI.ViewGroupEndpoint(svc)),
+		groupsAPI.DecodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))

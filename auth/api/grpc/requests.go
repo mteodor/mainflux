@@ -5,7 +5,6 @@ package grpc
 
 import (
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/authz"
 )
 
 type identityReq struct {
@@ -88,15 +87,15 @@ type AuthZReq struct {
 
 func (req AuthZReq) validate() error {
 	if req.Sub == "" {
-		return authz.ErrInvalidReq
+		return auth.ErrMalformedEntity
 	}
 
 	if req.Obj == "" {
-		return authz.ErrInvalidReq
+		return auth.ErrMalformedEntity
 	}
 
 	if req.Act == "" {
-		return authz.ErrInvalidReq
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
@@ -109,11 +108,11 @@ type AssignmentReq struct {
 
 func (req AssignmentReq) validate() error {
 	if req.GroupID == "" {
-		return authz.ErrInvalidReq
+		return auth.ErrMalformedEntity
 	}
 
 	if req.MemberID == "" {
-		return authz.ErrInvalidReq
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
