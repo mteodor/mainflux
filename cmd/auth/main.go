@@ -177,11 +177,14 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 
 func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger) auth.Service {
 	database := postgres.NewDatabase(db)
-	repo := tracing.New(postgres.New(database), tracer)
+	keysRepo := tracing.New(postgres.New(database), tracer)
+
+	groupsRepo := postgres.NewGroupRepo(database)
+	groupsRepo = tracing.GroupRepositoryMiddleware(tracer, groupsRepo)
 
 	up := uuidProvider.New()
 	t := jwt.New(secret)
-	svc := auth.New(repo, up, t)
+	svc := auth.New(keysRepo, groupsRepo, up, t)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

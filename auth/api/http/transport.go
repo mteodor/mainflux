@@ -47,7 +47,7 @@ func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Get("/things/:memberID/groups", kithttp.NewServer(
+	mux.Get("/members/:memberID/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_memberships")(groupsAPI.ListMembership(svc)),
 		groupsAPI.DecodeListMemberGroupRequest,
 		encodeResponse,
@@ -75,22 +75,22 @@ func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Put("/groups/:groupID/things/:memberID", kithttp.NewServer(
+	mux.Put("/groups/:groupID/members/:memberID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "assign")(groupsAPI.AssignEndpoint(svc)),
 		groupsAPI.DecodeMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Delete("/groups/:groupID/things/:memberID", kithttp.NewServer(
+	mux.Delete("/groups/:groupID/members/:memberID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "unassign")(groupsAPI.UnassignEndpoint(svc)),
 		groupsAPI.DecodeMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Get("/groups/:groupID/things", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_things")(groupsAPI.ListMembersEndpoint(svc)),
+	mux.Get("/groups/:groupID/members", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_members")(groupsAPI.ListMembersEndpoint(svc)),
 		groupsAPI.DecodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,

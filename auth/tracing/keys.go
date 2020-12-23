@@ -36,6 +36,7 @@ func New(repo auth.KeyRepository, tracer opentracing.Tracer) auth.KeyRepository 
 	}
 }
 
+
 func (krm keyRepositoryMiddleware) Save(ctx context.Context, key auth.Key) (string, error) {
 	span := createSpan(ctx, krm.tracer, saveOp)
 	defer span.Finish()
