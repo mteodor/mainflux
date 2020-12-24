@@ -25,6 +25,7 @@ var (
 	errDeleteGroupDB          = errors.New("delete group failed")
 	errSelectDb               = errors.New("select group from db error")
 	errConvertingStringToUUID = errors.New("error converting string")
+	errInvalidGroupType       = errors.New("invalid group type")
 	errUpdateDB               = errors.New("failed to update db")
 	errRetrieveDB             = errors.New("failed retrieving from db")
 
@@ -35,27 +36,50 @@ var (
 var _ groups.Repository = (*groupRepository)(nil)
 
 type groupRepository struct {
-	db Database
+	db    Database
+	types map[string]dbGroupType
 }
 
 // NewGroupRepo instantiates a PostgreSQL implementation of group
 // repository.
 func NewGroupRepo(db Database) groups.Repository {
+	q := `SELECT * FROM group_type`
+	rows, err := db.QueryxContext(context.Background(), q)
+	if err != nil {
+		pqErr, _ := err.(*pq.Error)
+		// If there is a problem with group type setup exit.
+		panic(pqErr)
+	}
+
+	types := map[string]dbGroupType{}
+	for rows.Next() {
+		dbgrt := dbGroupType{}
+		if err := rows.StructScan(&dbgrt); err != nil {
+			panic(errors.Wrap(errSelectDb, err))
+		}
+		if _, ok := types[dbgrt.Type]; ok {
+			panic(fmt.Sprintf("duplicated group type: %s", dbgrt.Type))
+		}
+		types[dbgrt.Type] = dbgrt
+	}
+
 	return &groupRepository{
-		db: db,
+		db:    db,
+		types: types,
 	}
 }
 
 func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	var id string
-	q := `INSERT INTO groups (name, description, id, owner_id, metadata, path, created_at, updated_at) 
-		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, now(), now()) RETURNING id`
+	q := `INSERT INTO groups (name, description, id, owner_id, metadata, path, type, created_at, updated_at) 
+		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, :type, now(), now()) RETURNING id`
 	if g.ParentID != "" {
+		// For children groups type is inherited from the parent, this is done in trigger inherit_type_tr - init.go
 		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, path) 
 			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name) FROM groups tg WHERE id = :parent_id RETURNING id`
 	}
 
-	dbu, err := toDBGroup(g)
+	dbu, err := gr.toDBGroup(g)
 	if err != nil {
 		return groups.Group{}, err
 	}
@@ -87,7 +111,7 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
 	q := `UPDATE groups SET description = :description, metadata = :metadata, updated_at = now()  WHERE id = :id`
 
-	dbu, err := toDBGroup(g)
+	dbu, err := gr.toDBGroup(g)
 	if err != nil {
 		return groups.Group{}, errors.Wrap(errUpdateDB, err)
 	}
@@ -104,7 +128,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 	group := groups.Group{
 		ID: groupID,
 	}
-	dbg, err := toDBGroup(group)
+	dbg, err := gr.toDBGroup(group)
 	if err != nil {
 		return errors.Wrap(errUpdateDB, err)
 	}
@@ -451,6 +475,10 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 type dbMember struct {
 	ID string `db:"member_id"`
 }
+type dbGroupType struct {
+	ID   int    `db:"id"`
+	Type string `db:"type"`
+}
 
 type dbGroup struct {
 	ID          string         `db:"id"`
@@ -495,7 +523,7 @@ func toString(id uuid.NullUUID) (string, error) {
 	return "", errConvertingStringToUUID
 }
 
-func toDBGroup(g groups.Group) (dbGroup, error) {
+func (gr groupRepository) toDBGroup(g groups.Group) (dbGroup, error) {
 
 	ownerID, err := toUUID(g.OwnerID)
 	if err != nil {
@@ -508,6 +536,10 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 	}
 
 	meta := dbMetadata(g.Metadata)
+	gType, ok := gr.types[g.Type]
+	if !ok {
+		return dbGroup{}, errInvalidGroupType
+	}
 
 	return dbGroup{
 		ID:          g.ID,
@@ -516,6 +548,7 @@ func toDBGroup(g groups.Group) (dbGroup, error) {
 		OwnerID:     ownerID,
 		Description: g.Description,
 		Metadata:    meta,
+		Type:        gType.ID,
 		Path:        g.Path,
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,

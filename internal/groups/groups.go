@@ -22,6 +22,7 @@ type Group struct {
 	// Path is a path in a tree, consisted of group names
 	// parentName.childrenName1.childrenName2 .
 	Path      string
+	Type      string
 	Children  []*Group
 	CreatedAt time.Time
 	UpdatedAt time.Time
