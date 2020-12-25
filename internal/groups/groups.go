@@ -102,7 +102,7 @@ type Repository interface {
 	// RetrieveAllChildren retrieves all children from group with given groupID up to the hierarchy level.
 	RetrieveAllChildren(ctx context.Context, groupID string, level uint64, m Metadata) (GroupPage, error)
 
-	// Retrieves list of groups that member belongs to
+	//  Retrieves list of groups that member belongs to
 	Memberships(ctx context.Context, memberID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.

@@ -22,11 +22,7 @@ type Database interface {
 	NamedExecContext(context.Context, string, interface{}) (sql.Result, error)
 	QueryRowxContext(context.Context, string, ...interface{}) *sqlx.Row
 	QueryxContext(context.Context, string, ...interface{}) (*sqlx.Rows, error)
-	// NamedExecContext(context.Context, string, interface{}) (sql.Result, error)
-	// QueryRowxContext(context.Context, string, ...interface{}) *sqlx.Row
 	NamedQueryContext(context.Context, string, interface{}) (*sqlx.Rows, error)
-	// GetContext(context.Context, interface{}, string, ...interface{}) error
-	// BeginTxx(context.Context, *sql.TxOptions) (*sqlx.Tx, error)
 }
 
 // NewDatabase creates a ThingDatabase instance

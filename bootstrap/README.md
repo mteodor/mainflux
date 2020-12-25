@@ -73,7 +73,7 @@ provides a compose file template that can be used to deploy the service containe
 locally:
 
 ```yaml
-version: "2"
+version: "3.7"
   bootstrap:
     image: mainflux/bootstrap:latest
     container_name: mainflux-bootstrap

@@ -75,7 +75,7 @@ func (s *grpcServer) Identify(ctx context.Context, token *mainflux.Token) (*main
 }
 
 func (s *grpcServer) Authorize(ctx context.Context, token *mainflux.AuthorizeReq) (*mainflux.AuthorizeRes, error) {
-	_, res, err := s.identify.ServeGRPC(ctx, token)
+	_, res, err := s.authorize.ServeGRPC(ctx, token)
 	if err != nil {
 		return nil, encodeError(err)
 	}
@@ -83,7 +83,7 @@ func (s *grpcServer) Authorize(ctx context.Context, token *mainflux.AuthorizeReq
 }
 
 func (s *grpcServer) Assign(ctx context.Context, token *mainflux.Assignment) (*empty.Empty, error) {
-	_, res, err := s.identify.ServeGRPC(ctx, token)
+	_, res, err := s.assign.ServeGRPC(ctx, token)
 	if err != nil {
 		return nil, encodeError(err)
 	}
@@ -91,7 +91,7 @@ func (s *grpcServer) Assign(ctx context.Context, token *mainflux.Assignment) (*e
 }
 
 func (s *grpcServer) Members(ctx context.Context, token *mainflux.MembersReq) (*mainflux.MembersRes, error) {
-	_, res, err := s.identify.ServeGRPC(ctx, token)
+	_, res, err := s.members.ServeGRPC(ctx, token)
 	if err != nil {
 		return nil, encodeError(err)
 	}
@@ -120,7 +120,7 @@ func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.AuthorizeReq)
-	return AuthZReq{Act: req.Act, Obj: req.Obj, Sub: req.Sub}, nil
+	return authReq{Act: req.Act, Obj: req.Obj, Sub: req.Sub}, nil
 }
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

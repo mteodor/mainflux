@@ -25,9 +25,10 @@ const (
 
 func newService() auth.Service {
 	repo := mocks.NewKeyRepository()
+	groupRepo := mocks.NewGroupRepository()
 	uuidProvider := uuid.NewMock()
 	t := jwt.New(secret)
-	return auth.New(repo, uuidProvider, t)
+	return auth.New(repo, groupRepo, uuidProvider, t)
 }
 
 func TestIssue(t *testing.T) {

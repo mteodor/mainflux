@@ -44,7 +44,7 @@ func migrateDB(db *sqlx.DB) error {
 	migrations := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
-				Id: "authn",
+				Id: "auth_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS keys (
 						id          VARCHAR(254) NOT NULL,
@@ -58,7 +58,7 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE extension LTREE`,
 					`CREATE TABLE IF NOT EXISTS group_type (
 						id INTEGER UNIQUE NOT NULL,
-						type VARCHAR(254) UNIQUE NOT NULL,
+						name VARCHAR(254) UNIQUE NOT NULL,
 						PRIMARY KEY (id)
 					)`,
 					`CREATE TABLE IF NOT EXISTS groups ( 
@@ -85,8 +85,8 @@ func migrateDB(db *sqlx.DB) error {
 						PRIMARY KEY (member_id, group_id)
 				   )`,
 					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,
-					`INSERT INTO group_type (id, type) VALUES (1, 'things')`,
-					`INSERT INTO group_type (id, type) VALUES (2, 'users')`,
+					`INSERT INTO group_type (id, name) VALUES (1, 'things')`,
+					`INSERT INTO group_type (id, name) VALUES (2, 'users')`,
 					`CREATE OR REPLACE FUNCTION inherit_type()
 					 RETURNS trigger 
 					 LANGUAGE PLPGSQL
@@ -112,6 +112,8 @@ func migrateDB(db *sqlx.DB) error {
 					`DROP TABLE IF EXISTS groups`,
 					`DROP TABLE IF EXISTS group_type`,
 					`DROP TABLE IF EXISTS group_relations`,
+					`DROP FUNCTION IF EXISTS inherit_type`,
+					`DROP TRIGGER IF EXISTS inherit_type_tr ON groups`,
 				},
 			},
 		},

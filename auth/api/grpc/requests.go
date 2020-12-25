@@ -75,17 +75,17 @@ func (req membersReq) validate() error {
 	return nil
 }
 
-// AuthZReq represents authorization request. It contains:
+// authReq represents authorization request. It contains:
 // 1. subject - an action invoker
 // 2. object - an entity over which action will be executed
 // 3. action - type of action that will be executed (read/write)
-type AuthZReq struct {
+type authReq struct {
 	Sub string
 	Obj string
 	Act string
 }
 
-func (req AuthZReq) validate() error {
+func (req authReq) validate() error {
 	if req.Sub == "" {
 		return auth.ErrMalformedEntity
 	}
@@ -95,23 +95,6 @@ func (req AuthZReq) validate() error {
 	}
 
 	if req.Act == "" {
-		return auth.ErrMalformedEntity
-	}
-
-	return nil
-}
-
-type AssignmentReq struct {
-	GroupID  string
-	MemberID string
-}
-
-func (req AssignmentReq) validate() error {
-	if req.GroupID == "" {
-		return auth.ErrMalformedEntity
-	}
-
-	if req.MemberID == "" {
 		return auth.ErrMalformedEntity
 	}
 

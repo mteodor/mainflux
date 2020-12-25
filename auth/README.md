@@ -1,6 +1,6 @@
-# Authentication service
+# Auth - Authentication and Authorization service
 
-Authentication service provides an API for managing authentication keys. User service is using AuthN service gRPC API to obtain login token or password reset token. Authentication key consists of the following fields:
+Auth service provides authentication features as an API for managing authentication keys. User service is using AuthN service gRPC API to obtain login token or password reset token. Authentication key consists of the following fields:
 - ID - key ID
 - Type - one of the three types described below
 - IssuerID - an ID of the Mainflux User who issued the key
@@ -40,22 +40,22 @@ default values.
 
 | Variable                  | Description                                                              | Default       |
 |---------------------------|--------------------------------------------------------------------------|---------------|
-| MF_AUTH_LOG_LEVEL        | Service level (debug, info, warn, error)                                | error          |
-| MF_AUTH_DB_HOST          | Database host address                                                   | localhost      |
-| MF_AUTH_DB_PORT          | Database host port                                                      | 5432           |
-| MF_AUTH_DB_USER          | Database user                                                           | mainflux       |
-| MF_AUTH_DB_PASSWORD      | Database password                                                       | mainflux       |
-| MF_AUTH_DB               | Name of the database used by the service                                | auth           |
-| MF_AUTH_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable        |
-| MF_AUTH_DB_SSL_CERT      | Path to the PEM encoded certificate file                                |                |
-| MF_AUTH_DB_SSL_KEY       | Path to the PEM encoded key file                                        |                |
-| MF_AUTH_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                           |                |
-| MF_AUTH_HTTP_PORT        | Authn service HTTP port                                                 | 8180           |
-| MF_AUTH_GRPC_PORT        | Authn service gRPC port                                                 | 8181           |
-| MF_AUTH_SERVER_CERT      | Path to server certificate in pem format                                |                |
-| MF_AUTH_SERVER_KEY       | Path to server key in pem format                                        |                |
-| MF_AUTH_SECRET           | String used for signing tokens                                          | auth           |
-| MF_JAEGER_URL             | Jaeger server URL                                                       | localhost:6831 |
+| MF_AUTH_LOG_LEVEL         | Service level (debug, info, warn, error)                                 | error         |
+| MF_AUTH_DB_HOST           | Database host address                                                    | localhost     |
+| MF_AUTH_DB_PORT           | Database host port                                                       | 5432          |
+| MF_AUTH_DB_USER           | Database user                                                            | mainflux      |
+| MF_AUTH_DB_PASSWORD       | Database password                                                        | mainflux      |
+| MF_AUTH_DB                | Name of the database used by the service                                 | auth          |
+| MF_AUTH_DB_SSL_MODE       | Database connection SSL mode (disable, require, verify-ca, verify-full)  | disable       |
+| MF_AUTH_DB_SSL_CERT       | Path to the PEM encoded certificate file                                 |               |
+| MF_AUTH_DB_SSL_KEY        | Path to the PEM encoded key file                                         |               |
+| MF_AUTH_DB_SSL_ROOT_CERT  | Path to the PEM encoded root certificate file                            |               |
+| MF_AUTH_HTTP_PORT         | Authn service HTTP port                                                  | 8180          |
+| MF_AUTH_GRPC_PORT         | Authn service gRPC port                                                  | 8181          |
+| MF_AUTH_SERVER_CERT       | Path to server certificate in pem format                                 |               |
+| MF_AUTH_SERVER_KEY        | Path to server key in pem format                                         |               |
+| MF_AUTH_SECRET            | String used for signing tokens                                           | auth          |
+| MF_JAEGER_URL             | Jaeger server URL                                                        | localhost:6831|
 
 ## Deployment
 
@@ -64,9 +64,9 @@ provides a compose file template that can be used to deploy the service containe
 locally:
 
 ```yaml
-version: "2"
+version: "3.7"
 services:
-  authn:
+  auth:
     image: mainflux/auth:[version]
     container_name: [instance name]
     ports:
@@ -99,13 +99,13 @@ go get github.com/mainflux/mainflux
 cd $GOPATH/src/github.com/mainflux/mainflux
 
 # compile the service
-make authn
+make auth
 
 # copy binary to bin
 make install
 
 # set the environment variables and run the service
-MF_AUTH_LOG_LEVEL=[Service log level] MF_AUTH_DB_HOST=[Database host address] MF_AUTH_DB_PORT=[Database host port] MF_AUTH_DB_USER=[Database user] MF_AUTH_DB_PASS=[Database password] MF_AUTH_DB=[Name of the database used by the service] MF_AUTH_DB_SSL_MODE=[SSL mode to connect to the database with] MF_AUTH_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_AUTH_DB_SSL_KEY=[Path to the PEM encoded key file] MF_AUTH_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_AUTH_HTTP_PORT=[Service HTTP port] MF_AUTH_GRPC_PORT=[Service gRPC port] MF_AUTH_SECRET=[String used for signing tokens] MF_AUTH_SERVER_CERT=[Path to server certificate] MF_AUTH_SERVER_KEY=[Path to server key] MF_JAEGER_URL=[Jaeger server URL] $GOBIN/mainflux-authn
+MF_AUTH_LOG_LEVEL=[Service log level] MF_AUTH_DB_HOST=[Database host address] MF_AUTH_DB_PORT=[Database host port] MF_AUTH_DB_USER=[Database user] MF_AUTH_DB_PASS=[Database password] MF_AUTH_DB=[Name of the database used by the service] MF_AUTH_DB_SSL_MODE=[SSL mode to connect to the database with] MF_AUTH_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_AUTH_DB_SSL_KEY=[Path to the PEM encoded key file] MF_AUTH_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_AUTH_HTTP_PORT=[Service HTTP port] MF_AUTH_GRPC_PORT=[Service gRPC port] MF_AUTH_SECRET=[String used for signing tokens] MF_AUTH_SERVER_CERT=[Path to server certificate] MF_AUTH_SERVER_KEY=[Path to server key] MF_JAEGER_URL=[Jaeger server URL] $GOBIN/mainflux-auth
 ```
 
 If `MF_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work.

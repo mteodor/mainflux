@@ -12,7 +12,7 @@ paths:
         Generates a new API key. Thew new API key will
         be uniquely identified by its ID.
       tags:
-        - authn
+        - auth
       requestBody:
         $ref: "#/components/requestBodies/KeyRequest"
       responses:
@@ -32,7 +32,7 @@ paths:
       description: |
         Gets API key details for the given key.
       tags:
-        - authn
+        - auth
       parameters:
         - $ref: "#/components/parameters/ID"
       security:
@@ -51,7 +51,7 @@ paths:
       description: |
         Revoke API key identified by the given ID.
       tags:
-        - authn
+        - auth
       parameters:
         - $ref: "#/components/parameters/ID"
       security:

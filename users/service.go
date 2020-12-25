@@ -9,7 +9,6 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
-	authn "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 )
@@ -207,7 +206,7 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.issue(ctx, dbUser.ID, dbUser.Email, authn.UserKey)
+	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.UserKey)
 }
 
 func (svc usersService) ViewUser(ctx context.Context, token, id string) (User, error) {

@@ -6,6 +6,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/users"
 	"google.golang.org/grpc"
@@ -37,4 +38,16 @@ func (svc serviceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ..
 		}
 	}
 	return nil, users.ErrUnauthorizedAccess
+}
+
+func (svc serviceMock) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
+	panic("not implemented")
+}
+
+func (svc serviceMock) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
+	panic("not implemented")
+}
+
+func (svc serviceMock) Assign(ctx context.Context, req *mainflux.Assignment, _ ...grpc.CallOption) (r *empty.Empty, err error) {
+	panic("not implemented")
 }
