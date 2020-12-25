@@ -36,7 +36,7 @@ func NewSingleUserService(email, token string) mainflux.AuthServiceClient {
 	}
 }
 
-func (repo singleUserRepo) Issue(ctx context.Context, req *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (repo singleUserRepo) IssueKey(ctx context.Context, req *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 

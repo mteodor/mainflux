@@ -5,7 +5,6 @@ package grpc
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -80,7 +79,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 	}
 }
 
-func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
+func (client grpcClient) IssueKey(ctx context.Context, req *mainflux.IssueReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -90,7 +89,7 @@ func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ..
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.Token{Value: ir.id}, ir.err
+	return &mainflux.Token{Value: ir.id}, nil
 }
 
 func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -100,7 +99,7 @@ func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, er
 
 func decodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*mainflux.UserIdentity)
-	return identityRes{id: res.GetId(), email: res.GetEmail(), err: nil}, nil
+	return identityRes{id: res.GetId(), email: res.GetEmail()}, nil
 }
 
 func (client grpcClient) Identify(ctx context.Context, token *mainflux.Token, _ ...grpc.CallOption) (*mainflux.UserIdentity, error) {
@@ -113,7 +112,7 @@ func (client grpcClient) Identify(ctx context.Context, token *mainflux.Token, _ 
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.UserIdentity{Id: ir.id, Email: ir.email}, ir.err
+	return &mainflux.UserIdentity{Id: ir.id, Email: ir.email}, nil
 }
 
 func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -123,7 +122,7 @@ func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func decodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*mainflux.UserIdentity)
-	return identityRes{id: res.GetId(), email: res.GetEmail(), err: nil}, nil
+	return identityRes{id: res.GetId(), email: res.GetEmail()}, nil
 }
 
 func (client grpcClient) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
@@ -132,19 +131,16 @@ func (client grpcClient) Authorize(ctx context.Context, req *mainflux.AuthorizeR
 
 	res, err := client.authorize(ctx, authReq{Act: req.Act, Obj: req.Obj, Sub: req.Sub})
 	if err != nil {
-		return &mainflux.AuthorizeRes{Authorized: false, Err: err.Error()}, err
+		return &mainflux.AuthorizeRes{Authorized: false}, err
 	}
 
 	ar := res.(authorizeRes)
-	if ar.err != "" {
-		err = errors.New(ar.err)
-	}
-	return &mainflux.AuthorizeRes{Authorized: ar.authorized, Err: ar.err}, err
+	return &mainflux.AuthorizeRes{Authorized: ar.authorized}, err
 }
 
 func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*mainflux.AuthorizeRes)
-	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
+	return authorizeRes{authorized: res.Authorized}, nil
 }
 
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -179,7 +175,7 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 
 func encodeMembersRequest(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*mainflux.AuthorizeRes)
-	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
+	return authorizeRes{authorized: res.Authorized}, nil
 }
 
 func decodeMembersResponse(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -195,21 +191,17 @@ func (client grpcClient) Assign(ctx context.Context, req *mainflux.Assignment, _
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.assign(ctx, assignReq{token: req.GetToken(), groupID: req.GetGroupID(), memberID: req.GetMemberID()})
+	_, err = client.assign(ctx, assignReq{token: req.GetToken(), groupID: req.GetGroupID(), memberID: req.GetMemberID()})
 	if err != nil {
 		return &empty.Empty{}, err
 	}
 
-	ar := res.(authorizeRes)
-	if ar.err != "" {
-		err = errors.New(ar.err)
-	}
 	return &empty.Empty{}, err
 }
 
 func encodeAssignRequest(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*mainflux.AuthorizeRes)
-	return authorizeRes{authorized: res.Authorized, err: res.Err}, nil
+	return authorizeRes{authorized: res.Authorized}, nil
 }
 
 func decodeAssignResponse(_ context.Context, grpcReq interface{}) (interface{}, error) {

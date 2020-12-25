@@ -63,6 +63,9 @@ func (req assignReq) validate() error {
 type membersReq struct {
 	token   string
 	groupID string
+	offset  uint64
+	limit   uint64
+	typ     string
 }
 
 func (req membersReq) validate() error {
@@ -70,6 +73,9 @@ func (req membersReq) validate() error {
 		return auth.ErrUnauthorizedAccess
 	}
 	if req.groupID == "" {
+		return auth.ErrMalformedEntity
+	}
+	if req.typ == "" {
 		return auth.ErrMalformedEntity
 	}
 	return nil
@@ -80,12 +86,17 @@ func (req membersReq) validate() error {
 // 2. object - an entity over which action will be executed
 // 3. action - type of action that will be executed (read/write)
 type authReq struct {
-	Sub string
-	Obj string
-	Act string
+	token string
+	Sub   string
+	Obj   string
+	Act   string
 }
 
 func (req authReq) validate() error {
+	if req.token == "" {
+		return auth.ErrMalformedEntity
+	}
+
 	if req.Sub == "" {
 		return auth.ErrMalformedEntity
 	}

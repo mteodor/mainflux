@@ -41,24 +41,24 @@ func NewServer(tracer opentracing.Tracer, svc auth.Service) mainflux.AuthService
 			encodeIdentifyResponse,
 		),
 		authorize: kitgrpc.NewServer(
-			kitot.TraceServer(tracer, "authorize")(identifyEndpoint(svc)),
+			kitot.TraceServer(tracer, "authorize")(authorizeEndpoint(svc)),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
 		),
 		assign: kitgrpc.NewServer(
-			kitot.TraceServer(tracer, "assign")(identifyEndpoint(svc)),
+			kitot.TraceServer(tracer, "assign")(assignEndpoint(svc)),
 			decodeAssignRequest,
 			encodeEmptyResponse,
 		),
 		members: kitgrpc.NewServer(
-			kitot.TraceServer(tracer, "members")(identifyEndpoint(svc)),
+			kitot.TraceServer(tracer, "members")(membersEndpoint(svc)),
 			decodeMembersRequest,
 			encodeMembersResponse,
 		),
 	}
 }
 
-func (s *grpcServer) Issue(ctx context.Context, req *mainflux.IssueReq) (*mainflux.Token, error) {
+func (s *grpcServer) IssueKey(ctx context.Context, req *mainflux.IssueReq) (*mainflux.Token, error) {
 	_, res, err := s.issue.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
@@ -105,7 +105,7 @@ func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, er
 
 func encodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(issueRes)
-	return &mainflux.Token{Value: res.value}, encodeError(res.err)
+	return &mainflux.Token{Value: res.value}, nil
 }
 
 func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -115,7 +115,7 @@ func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(identityRes)
-	return &mainflux.UserIdentity{Id: res.id, Email: res.email}, encodeError(res.err)
+	return &mainflux.UserIdentity{Id: res.id, Email: res.email}, nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

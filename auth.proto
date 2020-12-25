@@ -14,7 +14,7 @@ service ThingsService {
 }
 
 service AuthService {
-    rpc Issue(IssueReq) returns (Token) {}
+    rpc IssueKey(IssueReq) returns (Token) {}
     rpc Identify(Token) returns (UserIdentity) {}
     rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
     rpc Assign(Assignment) returns(google.protobuf.Empty) {}
@@ -61,7 +61,6 @@ message AuthorizeReq {
 
 message AuthorizeRes {
     bool authorized = 1;
-    string err      = 2;
 }
 
 message Assignment {
@@ -80,8 +79,8 @@ message MembersReq {
 
 message MembersRes {
     uint64 total            = 1;
-	uint64 offset           = 2;
-	uint64 limit            = 3;
-	string type             = 4;
+    uint64 offset           = 2;
+    uint64 limit            = 3;
+    string type             = 4;
     repeated string members = 5;
 }

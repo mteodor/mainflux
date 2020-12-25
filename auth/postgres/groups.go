@@ -57,10 +57,10 @@ func NewGroupRepo(db Database) groups.Repository {
 		if err := rows.StructScan(&dbgrt); err != nil {
 			panic(errors.Wrap(errSelectDb, err))
 		}
-		if _, ok := types[dbgrt.Type]; ok {
-			panic(fmt.Sprintf("duplicated group type: %s", dbgrt.Type))
+		if _, ok := types[dbgrt.Name]; ok {
+			panic(fmt.Sprintf("duplicated group type: %s", dbgrt.Name))
 		}
-		types[dbgrt.Type] = dbgrt
+		types[dbgrt.Name] = dbgrt
 	}
 
 	return &groupRepository{
@@ -477,7 +477,7 @@ type dbMember struct {
 }
 type dbGroupType struct {
 	ID   int    `db:"id"`
-	Type string `db:"type"`
+	Name string `db:"name"`
 }
 
 type dbGroup struct {

@@ -6,6 +6,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/users"
 	"google.golang.org/grpc"
@@ -29,7 +30,7 @@ func (svc authServiceMock) Identify(ctx context.Context, in *mainflux.Token, opt
 	return nil, users.ErrUnauthorizedAccess
 }
 
-func (svc authServiceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (svc authServiceMock) IssueKey(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	if id, ok := svc.users[in.GetEmail()]; ok {
 		switch in.Type {
 		default:
@@ -37,4 +38,16 @@ func (svc authServiceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opt
 		}
 	}
 	return nil, users.ErrUnauthorizedAccess
+}
+
+func (svc authServiceMock) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
+	panic("not implemented")
+}
+
+func (svc authServiceMock) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
+	panic("not implemented")
+}
+
+func (svc authServiceMock) Assign(ctx context.Context, req *mainflux.Assignment, _ ...grpc.CallOption) (r *empty.Empty, err error) {
+	panic("not implemented")
 }

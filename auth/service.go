@@ -48,24 +48,28 @@ var (
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
-// an AuthN service request.
+// an Auth service request.
 type Service interface {
 	// Issue issues a new Key, returning its token value alongside.
-	Issue(ctx context.Context, token string, key Key) (Key, string, error)
+	IssueKey(ctx context.Context, token string, key Key) (Key, string, error)
 
 	// Revoke removes the Key with the provided id that is
 	// issued by the user identified by the provided key.
-	Revoke(ctx context.Context, token, id string) error
+	RevokeKey(ctx context.Context, token, id string) error
 
 	// Retrieve retrieves data for the Key identified by the provided
 	// ID, that is issued by the user identified by the provided key.
-	Retrieve(ctx context.Context, token, id string) (Key, error)
+	RetrieveKey(ctx context.Context, token, id string) (Key, error)
 
 	// Identify validates token token. If token is valid, content
 	// is returned. If token is invalid, or invocation failed for some
 	// other reason, non-nil error value is returned in response.
 	Identify(ctx context.Context, token string) (Identity, error)
 
+	// Authorize checks access rights
+	Authorize(ctx context.Context, token, sub, obj, act string) (bool, error)
+
+	// Implements groups API, creating groups, assigning members
 	groups.Service
 }
 
@@ -90,7 +94,7 @@ func New(keys KeyRepository, groups groups.Repository, up mainflux.IDProvider, t
 	}
 }
 
-func (svc service) Issue(ctx context.Context, token string, key Key) (Key, string, error) {
+func (svc service) IssueKey(ctx context.Context, token string, key Key) (Key, string, error) {
 	if key.IssuedAt.IsZero() {
 		return Key{}, "", ErrInvalidKeyIssuedAt
 	}
@@ -104,7 +108,7 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Key, strin
 	}
 }
 
-func (svc service) Revoke(ctx context.Context, token, id string) error {
+func (svc service) RevokeKey(ctx context.Context, token, id string) error {
 	issuerID, _, err := svc.login(token)
 	if err != nil {
 		return errors.Wrap(errRevoke, err)
@@ -115,7 +119,7 @@ func (svc service) Revoke(ctx context.Context, token, id string) error {
 	return nil
 }
 
-func (svc service) Retrieve(ctx context.Context, token, id string) (Key, error) {
+func (svc service) RetrieveKey(ctx context.Context, token, id string) (Key, error) {
 	issuerID, _, err := svc.login(token)
 	if err != nil {
 		return Key{}, errors.Wrap(errRetrieve, err)
@@ -140,6 +144,10 @@ func (svc service) Identify(ctx context.Context, token string) (Identity, error)
 	default:
 		return Identity{}, ErrUnauthorizedAccess
 	}
+}
+
+func (svc service) Authorize(ctx context.Context, token, sub, obj, act string) (bool, error) {
+	return true, nil
 }
 
 func (svc service) tmpKey(duration time.Duration, key Key) (Key, string, error) {

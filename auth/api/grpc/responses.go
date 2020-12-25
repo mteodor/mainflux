@@ -6,17 +6,14 @@ package grpc
 type identityRes struct {
 	id    string
 	email string
-	err   error
 }
 
 type issueRes struct {
 	value string
-	err   error
 }
 
 type authorizeRes struct {
 	authorized bool
-	err        string
 }
 type membersRes struct {
 	total     uint64

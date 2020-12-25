@@ -405,7 +405,7 @@ func (svc usersService) ListMemberships(ctx context.Context, token, userID strin
 
 // Auth helpers
 func (svc usersService) issue(ctx context.Context, id, email string, keyType uint32) (string, error) {
-	key, err := svc.auth.Issue(ctx, &mainflux.IssueReq{Id: id, Email: email, Type: keyType})
+	key, err := svc.auth.IssueKey(ctx, &mainflux.IssueReq{Id: id, Email: email, Type: keyType})
 	if err != nil {
 		return "", errors.Wrap(ErrUserNotFound, err)
 	}

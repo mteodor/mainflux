@@ -27,7 +27,7 @@ func LoggingMiddleware(svc auth.Service, logger log.Logger) auth.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Issue(ctx context.Context, token string, newKey auth.Key) (key auth.Key, secret string, err error) {
+func (lm *loggingMiddleware) IssueKey(ctx context.Context, token string, newKey auth.Key) (key auth.Key, secret string, err error) {
 	defer func(begin time.Time) {
 		d := "infinite duration"
 		if !key.ExpiresAt.IsZero() {
@@ -41,10 +41,10 @@ func (lm *loggingMiddleware) Issue(ctx context.Context, token string, newKey aut
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Issue(ctx, token, newKey)
+	return lm.svc.IssueKey(ctx, token, newKey)
 }
 
-func (lm *loggingMiddleware) Revoke(ctx context.Context, token, id string) (err error) {
+func (lm *loggingMiddleware) RevokeKey(ctx context.Context, token, id string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method revoke for key %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -54,10 +54,10 @@ func (lm *loggingMiddleware) Revoke(ctx context.Context, token, id string) (err 
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Revoke(ctx, token, id)
+	return lm.svc.RevokeKey(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) Retrieve(ctx context.Context, token, id string) (key auth.Key, err error) {
+func (lm *loggingMiddleware) RetrieveKey(ctx context.Context, token, id string) (key auth.Key, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method retrieve for key %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -67,7 +67,7 @@ func (lm *loggingMiddleware) Retrieve(ctx context.Context, token, id string) (ke
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Retrieve(ctx, token, id)
+	return lm.svc.RetrieveKey(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id auth.Identity, err error) {
@@ -81,6 +81,19 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id auth.
 	}(time.Now())
 
 	return lm.svc.Identify(ctx, key)
+}
+
+func (lm *loggingMiddleware) Authorize(ctx context.Context, token, sub, obj, act string) (auth bool, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method authorize took %s to complete", time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.Authorize(ctx, token, sub, obj, act)
 }
 
 func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (id string, err error) {
