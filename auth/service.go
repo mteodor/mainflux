@@ -35,7 +35,7 @@ var (
 	// ErrConflict indicates that entity already exists.
 	ErrConflict = errors.New("entity already exists")
 
-	// ErrFailedToRetrieveMembers
+	// ErrFailedToRetrieveMembers failed to retrieve group members.
 	ErrFailedToRetrieveMembers = errors.New("failed to retrieve group members")
 
 	errIssueUser = errors.New("failed to issue new user key")
