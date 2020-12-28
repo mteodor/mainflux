@@ -79,7 +79,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 	}
 }
 
-func (client grpcClient) IssueKey(ctx context.Context, req *mainflux.IssueReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
+func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 

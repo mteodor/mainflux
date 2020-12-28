@@ -26,7 +26,7 @@ func issueEndpoint(svc auth.Service) endpoint.Endpoint {
 			IssuedAt: now,
 		}
 
-		_, secret, err := svc.IssueKey(ctx, "", key)
+		_, secret, err := svc.Issue(ctx, "", key)
 		if err != nil {
 			return issueRes{}, err
 		}

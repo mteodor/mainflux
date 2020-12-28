@@ -30,7 +30,7 @@ func (svc authNServiceClient) Identify(ctx context.Context, in *mainflux.Token, 
 	return nil, users.ErrUnauthorizedAccess
 }
 
-func (svc *authNServiceClient) IssueKey(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (svc *authNServiceClient) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	return new(mainflux.Token), nil
 }
 

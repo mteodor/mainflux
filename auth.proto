@@ -14,7 +14,7 @@ service ThingsService {
 }
 
 service AuthService {
-    rpc IssueKey(IssueReq) returns (Token) {}
+    rpc Issue(IssueReq) returns (Token) {}
     rpc Identify(Token) returns (UserIdentity) {}
     rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
     rpc Assign(Assignment) returns(google.protobuf.Empty) {}

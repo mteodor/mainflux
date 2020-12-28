@@ -30,22 +30,22 @@ func MetricsMiddleware(svc auth.Service, counter metrics.Counter, latency metric
 	}
 }
 
-func (ms *metricsMiddleware) IssueKey(ctx context.Context, token string, key auth.Key) (auth.Key, string, error) {
+func (ms *metricsMiddleware) Issue(ctx context.Context, token string, key auth.Key) (auth.Key, string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_key").Add(1)
 		ms.latency.With("method", "issue_key").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.IssueKey(ctx, token, key)
+	return ms.svc.Issue(ctx, token, key)
 }
 
-func (ms *metricsMiddleware) RevokeKey(ctx context.Context, token, id string) error {
+func (ms *metricsMiddleware) Revoke(ctx context.Context, token, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke_key").Add(1)
 		ms.latency.With("method", "revoke_key").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RevokeKey(ctx, token, id)
+	return ms.svc.Revoke(ctx, token, id)
 }
 
 func (ms *metricsMiddleware) RetrieveKey(ctx context.Context, token, id string) (auth.Key, error) {

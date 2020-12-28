@@ -45,17 +45,17 @@ var (
 	errIdentify  = errors.New("failed to validate token")
 )
 
-// Service specifies an API that must be fullfiled by the domain service
+// Authn specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
-// an Auth service request.
-type Service interface {
+// an Authn service request.
+type Authn interface {
 	// Issue issues a new Key, returning its token value alongside.
-	IssueKey(ctx context.Context, token string, key Key) (Key, string, error)
+	Issue(ctx context.Context, token string, key Key) (Key, string, error)
 
 	// Revoke removes the Key with the provided id that is
 	// issued by the user identified by the provided key.
-	RevokeKey(ctx context.Context, token, id string) error
+	Revoke(ctx context.Context, token, id string) error
 
 	// Retrieve retrieves data for the Key identified by the provided
 	// ID, that is issued by the user identified by the provided key.
@@ -65,9 +65,22 @@ type Service interface {
 	// is returned. If token is invalid, or invocation failed for some
 	// other reason, non-nil error value is returned in response.
 	Identify(ctx context.Context, token string) (Identity, error)
+}
 
+// Authz specifies an API for authorization, authorization will be implemented
+// by evaluation of policies.
+type Authz interface {
 	// Authorize checks access rights
 	Authorize(ctx context.Context, token, sub, obj, act string) (bool, error)
+}
+
+// Service specifies an API that must be fullfiled by the domain service
+// implementation, and all of its decorators (e.g. logging & metrics).
+// Token is a string value of the actual Key and is used to authenticate
+// an Auth service request.
+type Service interface {
+	Authn
+	Authz
 
 	// Implements groups API, creating groups, assigning members
 	groups.Service
@@ -94,7 +107,7 @@ func New(keys KeyRepository, groups groups.Repository, up mainflux.IDProvider, t
 	}
 }
 
-func (svc service) IssueKey(ctx context.Context, token string, key Key) (Key, string, error) {
+func (svc service) Issue(ctx context.Context, token string, key Key) (Key, string, error) {
 	if key.IssuedAt.IsZero() {
 		return Key{}, "", ErrInvalidKeyIssuedAt
 	}
@@ -108,7 +121,7 @@ func (svc service) IssueKey(ctx context.Context, token string, key Key) (Key, st
 	}
 }
 
-func (svc service) RevokeKey(ctx context.Context, token, id string) error {
+func (svc service) Revoke(ctx context.Context, token, id string) error {
 	issuerID, _, err := svc.login(token)
 	if err != nil {
 		return errors.Wrap(errRevoke, err)

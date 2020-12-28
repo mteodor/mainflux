@@ -58,7 +58,7 @@ func NewServer(tracer opentracing.Tracer, svc auth.Service) mainflux.AuthService
 	}
 }
 
-func (s *grpcServer) IssueKey(ctx context.Context, req *mainflux.IssueReq) (*mainflux.Token, error) {
+func (s *grpcServer) Issue(ctx context.Context, req *mainflux.IssueReq) (*mainflux.Token, error) {
 	_, res, err := s.issue.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)

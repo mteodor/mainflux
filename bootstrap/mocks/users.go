@@ -30,7 +30,7 @@ func (svc serviceMock) Identify(ctx context.Context, in *mainflux.Token, opts ..
 	return nil, users.ErrUnauthorizedAccess
 }
 
-func (svc serviceMock) IssueKey(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (svc serviceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	if id, ok := svc.users[in.GetEmail()]; ok {
 		switch in.Type {
 		default:

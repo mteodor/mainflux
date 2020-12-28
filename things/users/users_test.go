@@ -67,7 +67,7 @@ func TestIssue(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		id, err := svc.IssueKey(context.Background(), &mainflux.IssueReq{Id: tc.id, Email: tc.token, Type: 0})
+		id, err := svc.Issue(context.Background(), &mainflux.IssueReq{Id: tc.id, Email: tc.token, Type: 0})
 		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s, got %s", desc, tc.id, id.GetValue()))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", desc, tc.err, err))
 	}
