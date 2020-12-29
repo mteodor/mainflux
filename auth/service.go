@@ -270,7 +270,6 @@ func (svc service) ListMembers(ctx context.Context, token, groupID string, offse
 			Total:  p.Total,
 			Offset: p.Offset,
 			Limit:  p.Limit,
-			// Name:   things,
 		},
 		Members: make([]groups.Member, 0),
 	}

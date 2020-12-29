@@ -18,12 +18,11 @@ func issueEndpoint(svc auth.Service) endpoint.Endpoint {
 			return issueRes{}, err
 		}
 
-		now := time.Now().UTC()
 		key := auth.Key{
 			Type:     req.keyType,
 			Subject:  req.email,
 			IssuerID: req.id,
-			IssuedAt: now,
+			IssuedAt: time.Now().UTC(),
 		}
 
 		_, secret, err := svc.Issue(ctx, "", key)
