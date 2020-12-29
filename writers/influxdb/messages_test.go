@@ -84,7 +84,7 @@ func TestSave(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		// Clean previously saved messages.
+		// // Clean previously saved messages.
 		_, err := queryDB(dropMsgs)
 		require.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
