@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/internal/groups"
 )
 
 func issueEndpoint(svc auth.Service) endpoint.Endpoint {
@@ -106,19 +107,18 @@ func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return membersRes{}, err
 		}
-
-		_, err := svc.Identify(ctx, req.token)
-		if err != nil {
-			return membersRes{}, err
+		group := groups.Group{
+			ID:   req.groupID,
+			Type: req.typ,
 		}
 
-		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, nil)
+		mp, err := svc.ListMembers(ctx, req.token, group, req.offset, req.limit, nil)
 		if err != nil {
 			return membersRes{}, err
 		}
 		memberIDs := []string{}
 		for _, m := range mp.Members {
-			memberIDs = append(memberIDs, m.(string))
+			memberIDs = append(memberIDs, m.GetID())
 		}
 		return membersRes{
 			offset:  req.offset,
@@ -126,6 +126,5 @@ func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 			total:   mp.PageMetadata.Total,
 			members: memberIDs,
 		}, nil
-
 	}
 }

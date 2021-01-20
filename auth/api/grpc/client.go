@@ -5,6 +5,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -66,13 +67,13 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			decodeAssignResponse,
 			mainflux.AuthorizeRes{},
 		).Endpoint()),
-		members: kitot.TraceClient(tracer, "member")(kitgrpc.NewClient(
+		members: kitot.TraceClient(tracer, "members")(kitgrpc.NewClient(
 			conn,
 			svcName,
 			"Members",
 			encodeMembersRequest,
 			decodeMembersResponse,
-			mainflux.AuthorizeRes{},
+			mainflux.MembersRes{},
 		).Endpoint()),
 
 		timeout: timeout,
@@ -156,7 +157,9 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.members(ctx, membersReq{token: req.GetToken(), groupID: req.GetGroupID()})
+	fmt.Println("get members")
+	fmt.Println(req)
+	res, err := client.members(ctx, membersReq{token: req.GetToken(), groupID: req.GetGroupID(), typ: req.GetType()})
 	if err != nil {
 		return &mainflux.MembersRes{}, err
 	}
@@ -173,17 +176,27 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 
 }
 
-func encodeMembersRequest(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.AuthorizeRes)
-	return authorizeRes{authorized: res.Authorized}, nil
+func encodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	fmt.Println("encodeMembersRequest")
+	req := grpcReq.(membersReq)
+	fmt.Println(req)
+	return &mainflux.MembersReq{
+		Token:   req.token,
+		Offset:  req.offset,
+		Limit:   req.limit,
+		GroupID: req.groupID,
+		Type:    req.typ,
+	}, nil
 }
 
-func decodeMembersResponse(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(authReq)
-	return &mainflux.AuthorizeReq{
-		Sub: req.Sub,
-		Obj: req.Obj,
-		Act: req.Act,
+func decodeMembersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	fmt.Println("decodeMembersResponse")
+	res := grpcRes.(*mainflux.MembersRes)
+	return membersRes{
+		offset:  res.Offset,
+		limit:   res.Limit,
+		total:   res.Total,
+		members: res.Members,
 	}, nil
 }
 

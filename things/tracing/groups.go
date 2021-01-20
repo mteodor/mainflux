@@ -105,12 +105,12 @@ func (grm groupRepositoryMiddleware) Memberships(ctx context.Context, memberID s
 	return grm.repo.Memberships(ctx, memberID, offset, limit, gm)
 }
 
-func (grm groupRepositoryMiddleware) Members(ctx context.Context, memberID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+func (grm groupRepositoryMiddleware) Members(ctx context.Context, group groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
 	span := createSpan(ctx, grm.tracer, members)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.Members(ctx, memberID, offset, limit, gm)
+	return grm.repo.Members(ctx, group, offset, limit, gm)
 }
 
 func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, memberID, groupID string) error {

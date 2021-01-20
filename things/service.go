@@ -458,24 +458,15 @@ func (ts *thingsService) ListChildren(ctx context.Context, token string, parentI
 	return ts.groups.RetrieveAllChildren(ctx, parentID, level, gm)
 }
 
-func (ts *thingsService) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+func (ts *thingsService) ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
 	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return groups.MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	p, err := ts.groups.Members(ctx, groupID, offset, limit, gm)
+	mp, err := ts.groups.Members(ctx, group, offset, limit, gm)
 	if err != nil {
 		return groups.MemberPage{}, errors.Wrap(ErrFailedToRetrieveThings, err)
 	}
-	mp := groups.MemberPage{
-		PageMetadata: groups.PageMetadata{
-			Total:  p.Total,
-			Offset: p.Offset,
-			Limit:  p.Limit,
-			Name:   things,
-		},
-		Members: make([]groups.Member, 0),
-	}
-	mp.Members = append(mp.Members, p.Members)
+
 	return mp, nil
 }
 

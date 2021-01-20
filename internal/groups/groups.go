@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-type Member interface{}
+type Member interface {
+	GetID() string
+}
 
 type Metadata map[string]interface{}
 
@@ -65,7 +67,7 @@ type Service interface {
 	ListParents(ctx context.Context, token, childID string, level uint64, m Metadata) (GroupPage, error)
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (MemberPage, error)
+	ListMembers(ctx context.Context, token string, group Group, offset, limit uint64, m Metadata) (MemberPage, error)
 
 	// ListMemberships retrieves all groups for member that is identified with memberID belongs to.
 	ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, m Metadata) (GroupPage, error)
@@ -106,7 +108,7 @@ type Repository interface {
 	Memberships(ctx context.Context, memberID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.
-	Members(ctx context.Context, groupID string, offset, limit uint64, m Metadata) (MemberPage, error)
+	Members(ctx context.Context, group Group, offset, limit uint64, m Metadata) (MemberPage, error)
 
 	// Assign adds member to group.
 	Assign(ctx context.Context, memberID, groupID string) error

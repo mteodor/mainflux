@@ -213,8 +213,10 @@ func ListMembersEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return memberPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-
-		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		group := groups.Group{
+			ID: req.groupID,
+		}
+		page, err := svc.ListMembers(ctx, req.token, group, req.offset, req.limit, req.metadata)
 		if err != nil {
 			return memberPageRes{}, err
 		}

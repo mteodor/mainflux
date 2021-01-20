@@ -260,7 +260,7 @@ func (svc *mainfluxThings) ListParents(ctx context.Context, token, childID strin
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+func (svc *mainfluxThings) ListMembers(ctx context.Context, token string, g groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
 	panic("not implemented")
 }
 

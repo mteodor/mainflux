@@ -265,8 +265,8 @@ func (es eventStore) ListChildren(ctx context.Context, token, parentID string, l
 	return es.svc.ListChildren(ctx, token, parentID, level, gm)
 }
 
-func (es eventStore) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
-	return es.svc.ListMembers(ctx, token, groupID, offset, limit, gm)
+func (es eventStore) ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+	return es.svc.ListMembers(ctx, token, group, offset, limit, gm)
 }
 
 func (es eventStore) RemoveGroup(ctx context.Context, token, id string) error {

@@ -97,7 +97,7 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "things_4",
 				Up: []string{
 					`ALTER TABLE IF EXISTS things ADD CONSTRAINT things_id_key UNIQUE (id)`,
-					`CREATE extension LTREE`,
+					`CREATE EXTENSION IF NOT EXISTS LTREE`,
 					`CREATE TABLE IF NOT EXISTS thing_groups ( 
 						id          VARCHAR(254) UNIQUE NOT NULL,
 						parent_id   VARCHAR(254), 

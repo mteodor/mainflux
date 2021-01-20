@@ -54,7 +54,7 @@ func migrateDB(db *sqlx.DB) error {
 						expires_at  TIMESTAMP,
 						PRIMARY KEY (id, issuer_id)
 					)`,
-					`CREATE extension LTREE`,
+					`CREATE EXTENSION IF NOT EXISTS LTREE`,
 					`CREATE TABLE IF NOT EXISTS group_type (
 						id INTEGER UNIQUE NOT NULL,
 						name VARCHAR(254) UNIQUE NOT NULL,

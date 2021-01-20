@@ -286,18 +286,19 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	return page, nil
 }
 
-func (gr groupRepository) Members(ctx context.Context, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+func (gr groupRepository) Members(ctx context.Context, group groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
 	m, mq, err := getGroupsMetadataQuery("things_group", gm)
 	if err != nil {
 		return groups.MemberPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
 	q := fmt.Sprintf(`SELECT th.id, th.name, th.key, th.metadata FROM things th, thing_group_relations g
-					  WHERE th.id = g.thing_id AND g.group_id = :group 
+					  WHERE th.id = g.thing_id AND g.group_id = :group AND g.type = :type
 					  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
-		"group":    groupID,
+		"group":    group.ID,
+		"type":     group.Type,
 		"limit":    limit,
 		"offset":   offset,
 		"metadata": m,

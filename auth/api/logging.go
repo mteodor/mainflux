@@ -187,9 +187,9 @@ func (lm *loggingMiddleware) ListParents(ctx context.Context, token, childID str
 	return lm.svc.ListParents(ctx, token, childID, level, gm)
 }
 
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (gp groups.MemberPage, err error) {
+func (lm *loggingMiddleware) ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, gm groups.Metadata) (gp groups.MemberPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_members for token %s and group id %s took %s to complete", token, groupID, time.Since(begin))
+		message := fmt.Sprintf("Method list_members for token %s and group id %s took %s to complete", token, group.ID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -197,7 +197,7 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID str
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListMembers(ctx, token, groupID, offset, limit, gm)
+	return lm.svc.ListMembers(ctx, token, group, offset, limit, gm)
 }
 
 func (lm *loggingMiddleware) ListMemberships(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (gp groups.GroupPage, err error) {
