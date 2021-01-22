@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/groups"
+	"github.com/mainflux/mainflux/auth/groups"
 )
 
 var _ groups.Repository = (*groupRepositoryMock)(nil)

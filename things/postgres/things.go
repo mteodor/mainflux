@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq" // required for DB access
@@ -181,7 +182,7 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm things.PageMetadata) (things.Page, error) {
+func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, ids []string, pm things.PageMetadata) (things.Page, error) {
 	nq, name := getNameQuery(pm.Name)
 	oq := getOrderQuery(pm.Order)
 	dq := getDirQuery(pm.Dir)
@@ -190,8 +191,17 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
+	if len(ids) > 0 {
+		if len(nq) == 0 {
+			nq = fmt.Sprintf("WHERE id IN ('%s')", strings.Join(ids, ",'"))
+		} else {
+			nq = fmt.Sprintf("%s AND id IN ('%s')", nq, strings.Join(ids, ",'"))
+		}
+	}
+
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
 	      WHERE owner = :owner %s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, mq, nq, oq, dq)
+
 	params := map[string]interface{}{
 		"owner":    owner,
 		"limit":    pm.Limit,

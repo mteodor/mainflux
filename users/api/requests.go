@@ -4,6 +4,7 @@
 package api
 
 import (
+	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -195,5 +196,26 @@ func (req groupReq) validate() error {
 	if req.groupID == "" && req.name == "" {
 		return users.ErrMalformedEntity
 	}
+	return nil
+}
+
+type listMemberGroupReq struct {
+	token    string
+	offset   uint64
+	limit    uint64
+	metadata users.Metadata
+	groupID  string
+	userID   string
+}
+
+func (req listMemberGroupReq) validate() error {
+	if req.token == "" {
+		return groups.ErrUnauthorizedAccess
+	}
+
+	if req.groupID == "" && req.userID == "" {
+		return groups.ErrMalformedEntity
+	}
+
 	return nil
 }

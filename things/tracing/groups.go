@@ -7,7 +7,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/internal/groups"
+	"github.com/mainflux/mainflux/auth/groups"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 

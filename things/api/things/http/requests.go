@@ -4,6 +4,7 @@
 package http
 
 import (
+	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -286,4 +287,42 @@ func (req createConnectionsReq) validate() error {
 	}
 
 	return nil
+}
+
+type listThingsGroupReq struct {
+	token        string
+	groupID      string
+	thingID      string
+	pageMetadata things.PageMetadata
+}
+
+func (req listThingsGroupReq) validate() error {
+	if req.token == "" {
+		return groups.ErrUnauthorizedAccess
+	}
+
+	if req.groupID == "" && req.thingID == "" {
+		return groups.ErrMalformedEntity
+	}
+
+	if req.pageMetadata.Limit == 0 || req.pageMetadata.Limit > maxLimitSize {
+		return things.ErrMalformedEntity
+	}
+
+	if len(req.pageMetadata.Name) > maxNameSize {
+		return things.ErrMalformedEntity
+	}
+
+	if req.pageMetadata.Order != "" &&
+		req.pageMetadata.Order != "name" && req.pageMetadata.Order != "id" {
+		return things.ErrMalformedEntity
+	}
+
+	if req.pageMetadata.Dir != "" &&
+		req.pageMetadata.Dir != "asc" && req.pageMetadata.Dir != "desc" {
+		return things.ErrMalformedEntity
+	}
+
+	return nil
+
 }

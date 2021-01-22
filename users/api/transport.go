@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	groups "github.com/mainflux/mainflux/internal/groups/api"
 	"github.com/mainflux/mainflux/pkg/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
@@ -110,30 +109,9 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Put("/groups/:groupID/users/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "assign_user_to_group")(groups.AssignEndpoint(svc)),
-		groups.DecodeMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Delete("/groups/:groupID/users/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "remove_user_from_group")(groups.UnassignEndpoint(svc)),
-		groups.DecodeMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
 	mux.Get("/groups/:groupID/users", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_members")(groups.ListMembersEndpoint(svc)),
-		groups.DecodeListMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	mux.Get("/users/:memberID/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_memberships")(groups.ListMembership(svc)),
-		groups.DecodeListMemberGroupRequest,
+		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
+		decodeListMemberGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -346,6 +324,33 @@ func decodeUserGroupRequest(_ context.Context, r *http.Request) (interface{}, er
 		token:   r.Header.Get("Authorization"),
 		groupID: bone.GetValue(r, "groupID"),
 		userID:  bone.GetValue(r, "userID"),
+	}
+	return req, nil
+}
+
+func decodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listMemberGroupReq{
+		token:    r.Header.Get("Authorization"),
+		groupID:  bone.GetValue(r, "groupID"),
+		userID:   bone.GetValue(r, "userID"),
+		offset:   o,
+		limit:    l,
+		metadata: m,
 	}
 	return req, nil
 }

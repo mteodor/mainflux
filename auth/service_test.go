@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/auth/jwt"
 	"github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -18,9 +19,11 @@ import (
 )
 
 const (
-	secret = "secret"
-	email  = "test@example.com"
-	id     = "testID"
+	secret    = "secret"
+	email     = "test@example.com"
+	id        = "testID"
+	token     = "token"
+	groupName = "mfx"
 )
 
 func newService() auth.Service {
@@ -289,3 +292,159 @@ func TestIdentify(t *testing.T) {
 		assert.Equal(t, tc.idt, idt, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.idt, idt))
 	}
 }
+
+func TestCreateGroup(t *testing.T) {
+	svc := newService()
+	_, secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+
+	key := auth.Key{
+		ID:       "id",
+		Type:     auth.APIKey,
+		IssuerID: id,
+		Subject:  email,
+		IssuedAt: time.Now(),
+	}
+
+	_, apiToken, err := svc.Issue(context.Background(), secret, key)
+	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
+
+	parent := groups.Group{
+		Name: "parent_group",
+	}
+
+	parentID, err := svc.CreateGroup(context.Background(), apiToken, parent)
+	assert.Nil(t, err, fmt.Sprintf("Creating parent group failed: %s", err))
+
+	group := groups.Group{
+		Name: groupName,
+	}
+
+	cases := []struct {
+		desc  string
+		group groups.Group
+		err   error
+	}{
+		{
+			desc:  "create new group",
+			group: group,
+			err:   nil,
+		},
+		{
+			desc:  "create group with existing name",
+			group: group,
+			err:   nil,
+		},
+		{
+			desc: "create group with parent",
+			group: groups.Group{
+				Name:     groupName,
+				ParentID: parentID,
+			},
+			err: nil,
+		},
+		{
+			desc: "create group with invalid parent",
+			group: groups.Group{
+				Name:     groupName,
+				ParentID: "xxxxxxxxxx",
+			},
+			err: groups.ErrCreateGroup,
+		},
+	}
+
+	for _, tc := range cases {
+		_, err := svc.CreateGroup(context.Background(), apiToken, tc.group)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+// func TestUpdateGroup(t *testing.T) {
+// 	svc := newService()
+// 	svc := newService(map[string]string{token: email})
+
+// 	_, err := svc.Register(context.Background(), user)
+// 	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
+
+// 	token, err := svc.Login(context.Background(), user)
+// 	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
+
+// 	group := groups.Group{
+// 		Name: groupName,
+// 	}
+
+// 	saved, err := svc.CreateGroup(context.Background(), token, group)
+// 	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
+
+// 	group.Description = "test description"
+// 	group.Name = "NewName"
+// 	group.ID = saved.ID
+// 	group.OwnerID = saved.OwnerID
+
+// 	cases := []struct {
+// 		desc  string
+// 		group groups.Group
+// 		err   error
+// 	}{
+// 		{
+// 			desc:  "update group",
+// 			group: group,
+// 			err:   nil,
+// 		},
+// 	}
+
+// 	for _, tc := range cases {
+// 		err := svc.UpdateGroup(context.Background(), token, tc.group)
+// 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+// 		g, err := svc.ViewGroup(context.Background(), token, saved.ID)
+// 		assert.Nil(t, err, fmt.Sprintf("retrieve group failed: %s", err))
+// 		assert.Equal(t, tc.group.Description, g.Description, tc.desc, tc.err)
+// 		assert.Equal(t, tc.group.Name, g.Name, tc.desc, tc.err)
+// 		assert.Equal(t, tc.group.ID, g.ID, tc.desc, tc.err)
+// 		assert.Equal(t, tc.group.OwnerID, g.OwnerID, tc.desc, tc.err)
+// 	}
+// }
+
+// func TestRemoveGroup(t *testing.T) {
+// 	svc := newService()
+
+// 	_, err := svc.Register(context.Background(), user)
+// 	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
+
+// 	token, err := svc.Login(context.Background(), user)
+// 	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
+
+// 	group := groups.Group{
+// 		Name: groupName,
+// 	}
+
+// 	saved, err := svc.CreateGroup(context.Background(), token, group)
+// 	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
+
+// 	group.Description = "test description"
+// 	group.Name = "NewName"
+// 	group.ID = saved.ID
+// 	group.OwnerID = saved.OwnerID
+
+// 	cases := []struct {
+// 		desc  string
+// 		group groups.Group
+// 		err   error
+// 	}{
+// 		{
+// 			desc:  "remove existing group",
+// 			group: group,
+// 			err:   nil,
+// 		},
+// 		{
+// 			desc:  "remove non existing group",
+// 			group: group,
+// 			err:   groups.ErrNotFound,
+// 		},
+// 	}
+
+// 	for _, tc := range cases {
+// 		err := svc.RemoveGroup(context.Background(), token, tc.group.ID)
+// 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+// 	}
+// }

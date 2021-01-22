@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/mainflux/mainflux/auth/groups"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -172,74 +174,22 @@ func loginEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func removeUserFromGroup(svc users.Service) endpoint.Endpoint {
+func listMembersEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(userGroupReq)
+		req := request.(listMemberGroupReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return userPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-		if err := svc.Unassign(ctx, req.token, req.userID, req.groupID); err != nil {
-			return nil, err
+		group := groups.Group{
+			ID: req.groupID,
 		}
-		return removeUserFromGroupRes{}, nil
-	}
-}
-
-func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(groupReq)
-		if err := req.validate(); err != nil {
-			return viewGroupRes{}, err
-		}
-		group, err := svc.ViewGroup(ctx, req.token, req.groupID)
+		page, err := svc.ListMembers(ctx, req.token, group, req.offset, req.limit, req.metadata)
 		if err != nil {
-			return viewGroupRes{}, err
+			return userPageRes{}, err
 		}
-		res := viewGroupRes{
-			ID:          group.ID,
-			Name:        group.Name,
-			ParentID:    group.ParentID,
-			OwnerID:     group.OwnerID,
-			Description: group.Description,
-			Metadata:    group.Metadata,
-		}
-		return res, nil
-	}
-}
 
-func deleteGroupEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(groupReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
-			return nil, err
-		}
-		return groupDeleteRes{}, nil
+		return buildUsersResponse(page), nil
 	}
-}
-
-func buildGroupsResponse(gp users.GroupPage) groupPageRes {
-	res := groupPageRes{
-		pageRes: pageRes{
-			Total:  gp.Total,
-			Offset: gp.Offset,
-			Limit:  gp.Limit,
-		},
-		Groups: []viewGroupRes{},
-	}
-	for _, group := range gp.Groups {
-		view := viewGroupRes{
-			ID:          group.ID,
-			ParentID:    group.ParentID,
-			Name:        group.Name,
-			Description: group.Description,
-			Metadata:    group.Metadata,
-		}
-		res.Groups = append(res.Groups, view)
-	}
-	return res
 }
 
 func buildUsersResponse(up users.UserPage) userPageRes {

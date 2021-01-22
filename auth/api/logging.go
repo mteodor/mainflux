@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/internal/groups"
+	"github.com/mainflux/mainflux/auth/groups"
 	log "github.com/mainflux/mainflux/logger"
 )
 

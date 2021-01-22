@@ -14,7 +14,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/mainflux/mainflux/internal/groups"
+	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
