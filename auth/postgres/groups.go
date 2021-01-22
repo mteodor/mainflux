@@ -338,7 +338,7 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 	}
 	defer rows.Close()
 
-	var items []groups.Member
+	var items []groups.MemberIF
 	for rows.Next() {
 		member := dbMember{}
 		if err := rows.StructScan(&member); err != nil {
@@ -430,8 +430,8 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, offs
 	return page, nil
 }
 
-func (gr groupRepository) Assign(ctx context.Context, memberID, groupID string) error {
-	dbr, err := toDBGroupRelation(memberID, groupID)
+func (gr groupRepository) Assign(ctx context.Context, m groups.MemberIF, g groups.Group) error {
+	dbr, err := gr.toDBGroupRelation(m.GetID(), g.ID, g.Type)
 	if err != nil {
 		return errors.Wrap(groups.ErrAssignToGroup, err)
 	}
@@ -456,9 +456,9 @@ func (gr groupRepository) Assign(ctx context.Context, memberID, groupID string) 
 	return nil
 }
 
-func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) error {
+func (gr groupRepository) Unassign(ctx context.Context, m groups.MemberIF, g groups.Group) error {
 	q := `DELETE FROM group_relations WHERE member_id = :member_id AND group_id = :group_id`
-	dbr, err := toDBGroupRelation(userID, groupID)
+	dbr, err := gr.toDBGroupRelation(m.GetID(), g.ID, g.Type)
 	if err != nil {
 		return errors.Wrap(groups.ErrNotFound, err)
 	}
@@ -625,12 +625,18 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 type dbGroupRelation struct {
 	GroupID  sql.NullString `db:"group_id"`
 	MemberID uuid.UUID      `db:"member_id"`
+	Type     int            `db:"type"`
 }
 
-func toDBGroupRelation(memberID, groupID string) (dbGroupRelation, error) {
+func (gr groupRepository) toDBGroupRelation(memberID, groupID string, t string) (dbGroupRelation, error) {
 	var grID sql.NullString
 	if groupID != "" {
 		grID = sql.NullString{String: groupID, Valid: true}
+	}
+
+	gType, ok := gr.types[t]
+	if !ok {
+		return dbGroupRelation{}, errInvalidGroupType
 	}
 
 	mID, err := uuid.FromString(memberID)
@@ -640,6 +646,7 @@ func toDBGroupRelation(memberID, groupID string) (dbGroupRelation, error) {
 	return dbGroupRelation{
 		GroupID:  grID,
 		MemberID: mID,
+		Type:     gType.ID,
 	}, nil
 }
 

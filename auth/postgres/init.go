@@ -71,6 +71,7 @@ func migrateDB(db *sqlx.DB) error {
 						type        SMALLINT NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
+						UNIQUE  KEY (id, type),
 						PRIMARY KEY (owner_id, path, type),
 						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE,
 						FOREIGN KEY (type) REFERENCES group_type (id)
@@ -78,9 +79,10 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE TABLE IF NOT EXISTS group_relations (
 						member_id VARCHAR(254) NOT NULL,
 						group_id VARCHAR(254) NOT NULL,
+						type        SMALLINT NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+						FOREIGN KEY (group_id, type) REFERENCES groups (id, type) ON DELETE CASCADE,
 						PRIMARY KEY (member_id, group_id)
 				   )`,
 					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,

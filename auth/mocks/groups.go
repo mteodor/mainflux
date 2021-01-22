@@ -19,14 +19,14 @@ type groupRepositoryMock struct {
 	// Map of "Maps of users assigned to a group" where group is a key
 	childrenByGroups map[string]map[string]groups.Group
 	groupsByMember   map[string]map[string]groups.Group
-	members          map[string]map[string]groups.Member
+	members          map[string]map[string]groups.MemberIF
 }
 
-type member struct {
+type mockMember struct {
 	memberID string
 }
 
-func (m member) GetID() string {
+func (m mockMember) GetID() string {
 	return m.memberID
 }
 
@@ -116,29 +116,29 @@ func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, level uint64, m
 	}, nil
 }
 
-func (grm *groupRepositoryMock) Unassign(ctx context.Context, memberID, groupID string) error {
+func (grm *groupRepositoryMock) Unassign(ctx context.Context, member groups.MemberIF, group groups.Group) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[groupID]; !ok {
+	if _, ok := grm.groups[group.ID]; !ok {
 		return groups.ErrNotFound
 	}
-	delete(grm.members[groupID], memberID)
-	delete(grm.groupsByMember, memberID)
+	delete(grm.members[group.ID], member.GetID())
+	delete(grm.groupsByMember, member.GetID())
 	return nil
 }
 
-func (grm *groupRepositoryMock) Assign(ctx context.Context, memberID, groupID string) error {
+func (grm *groupRepositoryMock) Assign(ctx context.Context, member groups.MemberIF, group groups.Group) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[groupID]; !ok {
+	if _, ok := grm.groups[group.ID]; !ok {
 		return groups.ErrNotFound
 	}
-	if _, ok := grm.members[groupID]; !ok {
-		grm.members[groupID] = make(map[string]groups.Member)
+	if _, ok := grm.members[group.ID]; !ok {
+		grm.members[group.ID] = make(map[string]groups.MemberIF)
 	}
 
-	grm.members[groupID][memberID] = member{memberID: memberID}
-	grm.groupsByMember[memberID][groupID] = grm.groups[groupID]
+	grm.members[group.ID][member.GetID()] = mockMember{memberID: member.GetID()}
+	grm.groupsByMember[member.GetID()][group.ID] = grm.groups[group.ID]
 	return nil
 
 }
@@ -167,7 +167,7 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, memberID string
 func (grm *groupRepositoryMock) Members(ctx context.Context, group groups.Group, offset, limit uint64, m groups.Metadata) (groups.MemberPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	var items []groups.Member
+	var items []groups.MemberIF
 	members, ok := grm.members[group.ID]
 	if !ok {
 		return groups.MemberPage{}, groups.ErrNotFound

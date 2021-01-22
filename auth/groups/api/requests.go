@@ -107,6 +107,7 @@ type memberGroupReq struct {
 	token    string
 	groupID  string
 	memberID string
+	typ      string
 }
 
 func (req memberGroupReq) validate() error {
@@ -114,7 +115,7 @@ func (req memberGroupReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && req.memberID == "" {
+	if req.groupID == "" && req.memberID == "" && req.typ == "" {
 		return groups.ErrMalformedEntity
 	}
 
