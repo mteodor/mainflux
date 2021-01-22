@@ -373,7 +373,6 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 }
 
 func (gr groupRepository) Memberships(ctx context.Context, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	fmt.Println("memberships")
 	_, mq, err := getGroupsMetadataQuery("groups", gm)
 	if err != nil {
 		return groups.GroupPage{}, errors.Wrap(errRetrieveDB, err)
@@ -392,7 +391,6 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, offs
 		return groups.GroupPage{}, err
 	}
 
-	fmt.Println(params)
 	rows, err := gr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
 		return groups.GroupPage{}, errors.Wrap(errSelectDb, err)

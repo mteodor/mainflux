@@ -347,7 +347,6 @@ func decodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface
 	req := listMemberGroupReq{
 		token:    r.Header.Get("Authorization"),
 		groupID:  bone.GetValue(r, "groupID"),
-		userID:   bone.GetValue(r, "userID"),
 		offset:   o,
 		limit:    l,
 		metadata: m,

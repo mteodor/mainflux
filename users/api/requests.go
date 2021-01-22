@@ -205,7 +205,6 @@ type listMemberGroupReq struct {
 	limit    uint64
 	metadata users.Metadata
 	groupID  string
-	userID   string
 }
 
 func (req listMemberGroupReq) validate() error {
@@ -213,7 +212,7 @@ func (req listMemberGroupReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && req.userID == "" {
+	if req.groupID == "" {
 		return groups.ErrMalformedEntity
 	}
 

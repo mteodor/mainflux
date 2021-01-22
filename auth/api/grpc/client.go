@@ -177,9 +177,7 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 }
 
 func encodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	fmt.Println("encodeMembersRequest")
 	req := grpcReq.(membersReq)
-	fmt.Println(req)
 	return &mainflux.MembersReq{
 		Token:   req.token,
 		Offset:  req.offset,
@@ -190,7 +188,6 @@ func encodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, 
 }
 
 func decodeMembersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	fmt.Println("decodeMembersResponse")
 	res := grpcRes.(*mainflux.MembersRes)
 	return membersRes{
 		offset:  res.Offset,

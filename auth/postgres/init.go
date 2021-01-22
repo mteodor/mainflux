@@ -56,7 +56,7 @@ func migrateDB(db *sqlx.DB) error {
 					)`,
 					`CREATE EXTENSION IF NOT EXISTS LTREE`,
 					`CREATE TABLE IF NOT EXISTS group_type (
-						id INTEGER UNIQUE NOT NULL,
+						id SMALLINT UNIQUE NOT NULL,
 						name VARCHAR(254) UNIQUE NOT NULL,
 						PRIMARY KEY (id)
 					)`,
@@ -68,10 +68,10 @@ func migrateDB(db *sqlx.DB) error {
 						description VARCHAR(1024),
 						metadata    JSONB,
 						path        LTREE, 
-						type        INTEGER NOT NULL,
+						type        SMALLINT NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						PRIMARY KEY (owner_id, path),
+						PRIMARY KEY (owner_id, path, type),
 						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE,
 						FOREIGN KEY (type) REFERENCES group_type (id)
 				   )`,

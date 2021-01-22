@@ -5,13 +5,10 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth/groups"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/ulid"
 )
@@ -97,19 +94,16 @@ type service struct {
 	idProvider   mainflux.IDProvider
 	ulidProvider mainflux.IDProvider
 	tokenizer    Tokenizer
-	Logger       logger.Logger
 }
 
 // New instantiates the auth service implementation.
 func New(keys KeyRepository, groups groups.Repository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
-	l, _ := logger.New(os.Stdout, "DEBUG")
 	return &service{
 		tokenizer:    tokenizer,
 		keys:         keys,
 		groups:       groups,
 		idProvider:   idp,
 		ulidProvider: ulid.New(),
-		Logger:       l,
 	}
 }
 
@@ -264,11 +258,10 @@ func (svc service) ListChildren(ctx context.Context, token string, parentID stri
 }
 
 func (svc service) ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
-	fmt.Println("service ListMembers")
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return groups.MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	fmt.Println("service get group members")
+
 	mp, err := svc.groups.Members(ctx, group, offset, limit, gm)
 	if err != nil {
 		return groups.MemberPage{}, errors.Wrap(ErrFailedToRetrieveMembers, err)
