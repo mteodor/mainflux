@@ -113,7 +113,7 @@ func (grm groupRepositoryMiddleware) Members(ctx context.Context, group groups.G
 	return grm.repo.Members(ctx, group, offset, limit, gm)
 }
 
-func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, m groups.MemberIF, g groups.Group) error {
+func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, m groups.Member, g groups.Group) error {
 	span := createSpan(ctx, grm.tracer, unassign)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
@@ -121,7 +121,7 @@ func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, m groups.Memb
 	return grm.repo.Unassign(ctx, m, g)
 }
 
-func (grm groupRepositoryMiddleware) Assign(ctx context.Context, m groups.MemberIF, g groups.Group) error {
+func (grm groupRepositoryMiddleware) Assign(ctx context.Context, m groups.Member, g groups.Group) error {
 	span := createSpan(ctx, grm.tracer, assign)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)

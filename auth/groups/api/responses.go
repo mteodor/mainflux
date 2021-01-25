@@ -47,6 +47,7 @@ type viewGroupRes struct {
 	OwnerID     string                 `json:"owner_id,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Type        string                 `json:"type,omitempty"`
 	// Indicates a level in tree hierarchy from first group node.
 	Level int `json:"level,omitempty"`
 	// Path is a path in a tree, consisted of group names

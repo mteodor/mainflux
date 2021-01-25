@@ -5,16 +5,8 @@ import (
 	"time"
 )
 
-type MemberIF interface {
+type Member interface {
 	GetID() string
-}
-
-type Member struct {
-	ID string
-}
-
-func (m Member) GetID() string {
-	return m.ID
 }
 
 type Metadata map[string]interface{}
@@ -52,7 +44,7 @@ type GroupPage struct {
 
 type MemberPage struct {
 	PageMetadata
-	Members []MemberIF
+	Members []Member
 }
 
 type Service interface {
@@ -84,10 +76,10 @@ type Service interface {
 	RemoveGroup(ctx context.Context, token, id string) error
 
 	// Assign adds  member with memberID into the group identified by groupID.
-	Assign(ctx context.Context, token string, member MemberIF, group Group) error
+	Assign(ctx context.Context, token string, member Member, group Group) error
 
 	// Unassign removes member with memberID from group identified by groupID.
-	Unassign(ctx context.Context, token string, member MemberIF, group Group) error
+	Unassign(ctx context.Context, token string, member Member, group Group) error
 }
 
 type Repository interface {
@@ -119,8 +111,8 @@ type Repository interface {
 	Members(ctx context.Context, group Group, offset, limit uint64, m Metadata) (MemberPage, error)
 
 	// Assign adds member to group.
-	Assign(ctx context.Context, member MemberIF, group Group) error
+	Assign(ctx context.Context, member Member, group Group) error
 
 	// Unassign removes a member from a group
-	Unassign(ctx context.Context, member MemberIF, group Group) error
+	Unassign(ctx context.Context, member Member, group Group) error
 }

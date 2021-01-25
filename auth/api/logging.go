@@ -213,7 +213,7 @@ func (lm *loggingMiddleware) ListMemberships(ctx context.Context, token, groupID
 	return lm.svc.ListMemberships(ctx, token, groupID, offset, limit, gm)
 }
 
-func (lm *loggingMiddleware) Assign(ctx context.Context, token string, m groups.MemberIF, g groups.Group) (err error) {
+func (lm *loggingMiddleware) Assign(ctx context.Context, token string, m groups.Member, g groups.Group) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method assign for token %s and member %s group id %s took %s to complete", token, m.GetID(), g.ID, time.Since(begin))
 		if err != nil {
@@ -226,7 +226,7 @@ func (lm *loggingMiddleware) Assign(ctx context.Context, token string, m groups.
 	return lm.svc.Assign(ctx, token, m, g)
 }
 
-func (lm *loggingMiddleware) Unassign(ctx context.Context, token string, m groups.MemberIF, g groups.Group) (err error) {
+func (lm *loggingMiddleware) Unassign(ctx context.Context, token string, m groups.Member, g groups.Group) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method unassign for token %s and member %s group id %s took %s to complete", token, m.GetID(), g.ID, time.Since(begin))
 		if err != nil {

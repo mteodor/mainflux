@@ -292,7 +292,6 @@ func (req createConnectionsReq) validate() error {
 type listThingsGroupReq struct {
 	token        string
 	groupID      string
-	thingID      string
 	pageMetadata things.PageMetadata
 }
 
@@ -301,7 +300,7 @@ func (req listThingsGroupReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && req.thingID == "" {
+	if req.groupID == "" {
 		return groups.ErrMalformedEntity
 	}
 

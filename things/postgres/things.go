@@ -187,20 +187,26 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, ids []s
 	oq := getOrderQuery(pm.Order)
 	dq := getDirQuery(pm.Dir)
 	m, mq, err := getMetadataQuery(pm.Metadata)
+	owq := ""
+	idq := ""
 	if err != nil {
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
-	if len(ids) > 0 {
-		if len(nq) == 0 {
-			nq = fmt.Sprintf("WHERE id IN ('%s')", strings.Join(ids, ",'"))
-		} else {
-			nq = fmt.Sprintf("%s AND id IN ('%s')", nq, strings.Join(ids, ",'"))
-		}
+	if len(owner) > 0 {
+		owq = " AND owner = :owner "
 	}
 
-	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
-	      WHERE owner = :owner %s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, mq, nq, oq, dq)
+	if len(ids) > 0 {
+		idq = fmt.Sprintf(" AND id IN ('%s') ", strings.Join(ids, ",'"))
+	}
+
+	if len(fmt.Sprintf("%s%s%s%s", owq, idq, mq, nq)) == 0 {
+		return things.Page{}, nil
+	}
+
+	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things WHERE 1=1
+		  %s%s%s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, owq, idq, mq, nq, oq, dq)
 
 	params := map[string]interface{}{
 		"owner":    owner,

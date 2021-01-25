@@ -16,7 +16,6 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth/groups"
-	groupsAPI "github.com/mainflux/mainflux/auth/groups/api"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -178,7 +177,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 	r.Get("/groups/:groupID/things", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_things")(listMembersEndpoint(svc)),
-		groupsAPI.DecodeListMemberGroupRequest,
+		decodeListThingsGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -406,6 +405,34 @@ func decodeCreateConnections(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.Wrap(things.ErrMalformedEntity, err)
 	}
 
+	return req, nil
+}
+
+func decodeListThingsGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listThingsGroupReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupID"),
+		pageMetadata: things.PageMetadata{
+			Offset:   o,
+			Limit:    l,
+			Metadata: m,
+		},
+	}
 	return req, nil
 }
 

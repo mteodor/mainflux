@@ -5,7 +5,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -157,8 +156,6 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	fmt.Println("get members")
-	fmt.Println(req)
 	res, err := client.members(ctx, membersReq{token: req.GetToken(), groupID: req.GetGroupID(), typ: req.GetType()})
 	if err != nil {
 		return &mainflux.MembersRes{}, err

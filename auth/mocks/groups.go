@@ -19,7 +19,7 @@ type groupRepositoryMock struct {
 	// Map of "Maps of users assigned to a group" where group is a key
 	childrenByGroups map[string]map[string]groups.Group
 	groupsByMember   map[string]map[string]groups.Group
-	members          map[string]map[string]groups.MemberIF
+	members          map[string]map[string]groups.Member
 }
 
 type mockMember struct {
@@ -116,7 +116,7 @@ func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, level uint64, m
 	}, nil
 }
 
-func (grm *groupRepositoryMock) Unassign(ctx context.Context, member groups.MemberIF, group groups.Group) error {
+func (grm *groupRepositoryMock) Unassign(ctx context.Context, member groups.Member, group groups.Group) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[group.ID]; !ok {
@@ -127,14 +127,14 @@ func (grm *groupRepositoryMock) Unassign(ctx context.Context, member groups.Memb
 	return nil
 }
 
-func (grm *groupRepositoryMock) Assign(ctx context.Context, member groups.MemberIF, group groups.Group) error {
+func (grm *groupRepositoryMock) Assign(ctx context.Context, member groups.Member, group groups.Group) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[group.ID]; !ok {
 		return groups.ErrNotFound
 	}
 	if _, ok := grm.members[group.ID]; !ok {
-		grm.members[group.ID] = make(map[string]groups.MemberIF)
+		grm.members[group.ID] = make(map[string]groups.Member)
 	}
 
 	grm.members[group.ID][member.GetID()] = mockMember{memberID: member.GetID()}
@@ -167,7 +167,7 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, memberID string
 func (grm *groupRepositoryMock) Members(ctx context.Context, group groups.Group, offset, limit uint64, m groups.Metadata) (groups.MemberPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	var items []groups.MemberIF
+	var items []groups.Member
 	members, ok := grm.members[group.ID]
 	if !ok {
 		return groups.MemberPage{}, groups.ErrNotFound

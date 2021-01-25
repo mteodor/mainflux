@@ -72,7 +72,7 @@ const (
 	defAuthTLS     = "false"
 	defAuthCACerts = ""
 	defAuthURL     = "localhost:8181"
-	defAuthTimeout = "1s"
+	defAuthTimeout = "2s"
 
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"

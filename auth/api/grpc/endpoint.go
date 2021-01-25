@@ -12,6 +12,14 @@ import (
 	"github.com/mainflux/mainflux/auth/groups"
 )
 
+type member struct {
+	id string
+}
+
+func (m member) GetID() string {
+	return m.id
+}
+
 func issueEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(issueReq)
@@ -90,8 +98,9 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err != nil {
 			return emptyRes{}, err
 		}
-		m := groups.Member{
-			ID: req.memberID,
+
+		m := member{
+			id: req.memberID,
 		}
 		g := groups.Group{
 			ID:   req.groupID,

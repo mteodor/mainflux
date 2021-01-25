@@ -499,7 +499,8 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 			return thingsPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 		group := groups.Group{
-			ID: req.groupID,
+			ID:   req.groupID,
+			Type: "things",
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, group, req.pageMetadata)

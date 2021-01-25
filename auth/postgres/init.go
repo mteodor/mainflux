@@ -71,7 +71,7 @@ func migrateDB(db *sqlx.DB) error {
 						type        SMALLINT NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						UNIQUE  KEY (id, type),
+						CONSTRAINT group_id_type UNIQUE (id, type),
 						PRIMARY KEY (owner_id, path, type),
 						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE,
 						FOREIGN KEY (type) REFERENCES group_type (id)

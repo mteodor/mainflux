@@ -8,6 +8,14 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+type member struct {
+	id string
+}
+
+func (m member) GetID() string {
+	return m.id
+}
+
 func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
@@ -184,8 +192,8 @@ func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 
-		m := groups.Member{
-			ID: req.memberID,
+		m := member{
+			id: req.memberID,
 		}
 		g := groups.Group{
 			ID:   req.groupID,
@@ -206,8 +214,8 @@ func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-		m := groups.Member{
-			ID: req.memberID,
+		m := member{
+			id: req.memberID,
 		}
 		g := groups.Group{
 			ID:   req.groupID,

@@ -76,8 +76,8 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, :type, now(), now()) RETURNING id`
 	if g.ParentID != "" {
 		// For children groups type is inherited from the parent, this is done in trigger inherit_type_tr - init.go
-		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, path) 
-			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name) FROM groups tg WHERE id = :parent_id RETURNING id`
+		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, path, created_at, updated_at) 
+			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name), now(), now() FROM groups tg WHERE id = :parent_id RETURNING id`
 	}
 
 	dbu, err := gr.toDBGroup(g)
@@ -324,8 +324,8 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 		return groups.MemberPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	q := fmt.Sprintf(`SELECT gr.member_id, gr.group_id FROM groups g, group_relations gr
-					  WHERE gr.group_id = :id AND gr.group_id = g.id AND g.type = :type %s;`, mq)
+	q := fmt.Sprintf(`SELECT gr.member_id, gr.group_id, gr.type, gr.created_at, gr.updated_at FROM group_relations gr
+					  WHERE gr.group_id = :id AND gr.type = :type %s`, mq)
 
 	params, err := gr.toDBMemberPage("", group, offset, limit, gm)
 	if err != nil {
@@ -338,7 +338,7 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 	}
 	defer rows.Close()
 
-	var items []groups.MemberIF
+	var items []groups.Member
 	for rows.Next() {
 		member := dbMember{}
 		if err := rows.StructScan(&member); err != nil {
@@ -430,14 +430,20 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, offs
 	return page, nil
 }
 
-func (gr groupRepository) Assign(ctx context.Context, m groups.MemberIF, g groups.Group) error {
+func (gr groupRepository) Assign(ctx context.Context, m groups.Member, g groups.Group) error {
 	dbr, err := gr.toDBGroupRelation(m.GetID(), g.ID, g.Type)
 	if err != nil {
+		fmt.Println(err)
 		return errors.Wrap(groups.ErrAssignToGroup, err)
 	}
 
-	qIns := `INSERT INTO group_relations (group_id, member_id) VALUES (:group_id, :member_id)`
+	dbr.CreatedAt = time.Now()
+	dbr.UpdatedAt = dbr.CreatedAt
+
+	qIns := `INSERT INTO group_relations (group_id, member_id, type, created_at, updated_at) VALUES (:group_id, :member_id, :type, :created_at, :updated_at)`
 	_, err = gr.db.NamedQueryContext(ctx, qIns, dbr)
+	fmt.Println(err)
+	fmt.Println(dbr)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
@@ -447,7 +453,7 @@ func (gr groupRepository) Assign(ctx context.Context, m groups.MemberIF, g group
 			case errDuplicate:
 				return errors.Wrap(groups.ErrGroupConflict, err)
 			case errFK:
-				return errors.Wrap(groups.ErrNotFound, err)
+				return errors.New(pqErr.Detail)
 			}
 		}
 		return errors.Wrap(groups.ErrAssignToGroup, err)
@@ -456,7 +462,7 @@ func (gr groupRepository) Assign(ctx context.Context, m groups.MemberIF, g group
 	return nil
 }
 
-func (gr groupRepository) Unassign(ctx context.Context, m groups.MemberIF, g groups.Group) error {
+func (gr groupRepository) Unassign(ctx context.Context, m groups.Member, g groups.Group) error {
 	q := `DELETE FROM group_relations WHERE member_id = :member_id AND group_id = :group_id`
 	dbr, err := gr.toDBGroupRelation(m.GetID(), g.ID, g.Type)
 	if err != nil {
@@ -469,8 +475,11 @@ func (gr groupRepository) Unassign(ctx context.Context, m groups.MemberIF, g gro
 }
 
 type dbMember struct {
-	MemberID string `db:"member_id"`
-	GroupID  string `db:"group_id"`
+	MemberID  string    `db:"member_id"`
+	GroupID   string    `db:"group_id"`
+	Type      int       `db:"type"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 func (m dbMember) GetID() string {
@@ -623,9 +632,11 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 }
 
 type dbGroupRelation struct {
-	GroupID  sql.NullString `db:"group_id"`
-	MemberID uuid.UUID      `db:"member_id"`
-	Type     int            `db:"type"`
+	GroupID   sql.NullString `db:"group_id"`
+	MemberID  uuid.UUID      `db:"member_id"`
+	CreatedAt time.Time      `db:"created_at"`
+	UpdatedAt time.Time      `db:"updated_at"`
+	Type      int            `db:"type"`
 }
 
 func (gr groupRepository) toDBGroupRelation(memberID, groupID string, t string) (dbGroupRelation, error) {
