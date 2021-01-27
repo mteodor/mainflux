@@ -78,8 +78,10 @@ type ThingRepository interface {
 	RetrieveByKey(ctx context.Context, key string) (string, error)
 
 	// RetrieveAll retrieves the subset of things owned by the specified user
-	// and/or for given thing ids.
-	RetrieveAll(ctx context.Context, owner string, ids []string, pm PageMetadata) (Page, error)
+	RetrieveAll(ctx context.Context, owner string, pm PageMetadata) (Page, error)
+
+	// RetrieveByIDs retrieves the subset of things specified by given thing ids.
+	RetrieveByIDs(ctx context.Context, ids []string, pm PageMetadata) (Page, error)
 
 	// RetrieveByChannel retrieves the subset of things owned by the specified
 	// user and connected or not connected to specified channel.

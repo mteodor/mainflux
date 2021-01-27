@@ -182,32 +182,84 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, ids []string, pm things.PageMetadata) (things.Page, error) {
+func (tr thingRepository) RetrieveByIDs(ctx context.Context, ids []string, pm things.PageMetadata) (things.Page, error) {
+	if len(ids) == 0 {
+		return things.Page{}, nil
+	}
+
 	nq, name := getNameQuery(pm.Name)
 	oq := getOrderQuery(pm.Order)
 	dq := getDirQuery(pm.Dir)
+	idq := fmt.Sprintf("WHERE id IN ('%s') ", strings.Join(ids, "','"))
+
 	m, mq, err := getMetadataQuery(pm.Metadata)
-	owq := ""
-	idq := ""
 	if err != nil {
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
-	if len(owner) > 0 {
-		owq = " AND owner = :owner "
+	q := fmt.Sprintf(`SELECT id, owner, name, key, metadata FROM things 
+					   %s%s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, idq, mq, nq, oq, dq)
+
+	fmt.Println(q)
+	params := map[string]interface{}{
+		"limit":    pm.Limit,
+		"offset":   pm.Offset,
+		"name":     name,
+		"metadata": m,
 	}
 
-	if len(ids) > 0 {
-		idq = fmt.Sprintf(" AND id IN ('%s') ", strings.Join(ids, ",'"))
+	rows, err := tr.db.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+	}
+	defer rows.Close()
+
+	var items []things.Thing
+	for rows.Next() {
+		dbth := dbThing{}
+		if err := rows.StructScan(&dbth); err != nil {
+			return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		}
+
+		th, err := toThing(dbth)
+		if err != nil {
+			return things.Page{}, errors.Wrap(things.ErrViewEntity, err)
+		}
+
+		items = append(items, th)
 	}
 
-	if len(fmt.Sprintf("%s%s%s%s", owq, idq, mq, nq)) == 0 {
-		return things.Page{}, nil
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things %s%s%s;`, idq, mq, nq)
+
+	total, err := total(ctx, tr.db, cq, params)
+	if err != nil {
+		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
-	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things WHERE 1=1
-		  %s%s%s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, owq, idq, mq, nq, oq, dq)
+	page := things.Page{
+		Things: items,
+		PageMetadata: things.PageMetadata{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+			Order:  pm.Order,
+		},
+	}
 
+	return page, nil
+}
+
+func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm things.PageMetadata) (things.Page, error) {
+	nq, name := getNameQuery(pm.Name)
+	oq := getOrderQuery(pm.Order)
+	dq := getDirQuery(pm.Dir)
+	m, mq, err := getMetadataQuery(pm.Metadata)
+	if err != nil {
+		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+	}
+
+	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
+	      WHERE owner = :owner %s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, mq, nq, oq, dq)
 	params := map[string]interface{}{
 		"owner":    owner,
 		"limit":    pm.Limit,

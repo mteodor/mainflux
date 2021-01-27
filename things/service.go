@@ -231,7 +231,7 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMe
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.things.RetrieveAll(ctx, res.GetEmail(), nil, pm)
+	return ts.things.RetrieveAll(ctx, res.GetEmail(), pm)
 }
 
 func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, chID string, pm PageMetadata) (Page, error) {
@@ -426,7 +426,7 @@ func (ts *thingsService) ListMembers(ctx context.Context, token string, group gr
 		return Page{}, nil
 	}
 
-	return ts.things.RetrieveAll(ctx, "", res, pm)
+	return ts.things.RetrieveByIDs(ctx, res, pm)
 }
 
 func (ts *thingsService) members(ctx context.Context, token string, group groups.Group, limit, offset uint64) ([]string, error) {
