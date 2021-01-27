@@ -125,7 +125,7 @@ type PageMetadata struct {
 // GroupPage contains a page of groups.
 type GroupPage struct {
 	PageMetadata
-	Groups []Group
+	Groups []groups.Group
 }
 
 // UserPage contains a page of users.

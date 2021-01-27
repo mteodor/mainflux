@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/auth/groups"
 )
 
 var (
@@ -93,7 +93,7 @@ func (res updateUserRes) Empty() bool {
 type viewUserRes struct {
 	ID       string                 `json:"id"`
 	Email    string                 `json:"email"`
-	Groups   []users.Group          `json:"groups"`
+	Groups   []groups.Group         `json:"groups"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 

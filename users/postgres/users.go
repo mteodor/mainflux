@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
@@ -169,7 +170,7 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 	if eq != "" && mq != "" {
 		emq = fmt.Sprintf("WHERE %s AND %s", eq, mq)
 	}
-	
+
 	if len(ids) > 0 {
 		if len(emq) == 0 {
 			emq = fmt.Sprintf("WHERE id IN ('%s')", strings.Join(ids, ",'"))
@@ -277,11 +278,11 @@ func (m dbMetadata) Value() (driver.Value, error) {
 }
 
 type dbUser struct {
-	ID       string        `db:"id"`
-	Email    string        `db:"email"`
-	Password string        `db:"password"`
-	Metadata []byte        `db:"metadata"`
-	Groups   []users.Group `db:"groups"`
+	ID       string         `db:"id"`
+	Email    string         `db:"email"`
+	Password string         `db:"password"`
+	Metadata []byte         `db:"metadata"`
+	Groups   []groups.Group `db:"groups"`
 }
 
 func toDBUser(u users.User) (dbUser, error) {
