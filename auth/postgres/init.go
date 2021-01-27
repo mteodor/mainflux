@@ -71,8 +71,8 @@ func migrateDB(db *sqlx.DB) error {
 						type        SMALLINT NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						CONSTRAINT group_id_type UNIQUE (id, type),
-						PRIMARY KEY (owner_id, path, type),
+						UNIQUE (id, type),
+						UNIQUE (owner_id, name, parent_id, type),
 						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE,
 						FOREIGN KEY (type) REFERENCES group_type (id)
 				   )`,
@@ -82,8 +82,8 @@ func migrateDB(db *sqlx.DB) error {
 						type        SMALLINT NOT NULL,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						FOREIGN KEY (group_id, type) REFERENCES groups (id, type) ON DELETE CASCADE,
-						PRIMARY KEY (member_id, group_id)
+						FOREIGN KEY (group_id, type) REFERENCES groups (id, type),
+						PRIMARY KEY (member_id,  group_id)
 				   )`,
 					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,
 					`INSERT INTO group_type (id, name) VALUES (1, 'things')`,
@@ -97,7 +97,10 @@ func migrateDB(db *sqlx.DB) error {
 					 IF NEW.parent_id IS NULL OR NEW.parent_id = '' THEN
 						RETURN NEW;
 					 END IF;
-					 SELECT type INTO NEW.type FROM groups WHERE id = NEW.parent_id;
+					 IF NOT EXISTS (SELECT id FROM groups WHERE id = NEW.parent_id) THEN
+						RAISE EXCEPTION 'wrong parent id';
+					 END IF;
+					 SELECT type, text2ltree(ltree2text(path) || '.' || NEW.id) INTO NEW.type, NEW.path FROM groups WHERE id = NEW.parent_id;
 					 RETURN NEW;
 					 END;
 					 $$`,

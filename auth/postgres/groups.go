@@ -26,7 +26,6 @@ var (
 	errSelectDb               = errors.New("select group from db error")
 	errSelectMembersDb        = errors.New("retrieving members from db error")
 	errConvertingStringToUUID = errors.New("error converting string")
-	errInvalidGroupType       = errors.New("invalid group type")
 	errUpdateDB               = errors.New("failed to update db")
 	errRetrieveDB             = errors.New("failed retrieving from db")
 
@@ -37,8 +36,9 @@ var (
 var _ groups.Repository = (*groupRepository)(nil)
 
 type groupRepository struct {
-	db    Database
-	types map[string]dbGroupType
+	db        Database
+	types     map[string]dbGroupType
+	typesByID map[int]dbGroupType
 }
 
 // NewGroupRepo instantiates a PostgreSQL implementation of group
@@ -53,6 +53,7 @@ func NewGroupRepo(db Database) groups.Repository {
 	}
 
 	types := map[string]dbGroupType{}
+	typesByID := map[int]dbGroupType{}
 	for rows.Next() {
 		dbgrt := dbGroupType{}
 		if err := rows.StructScan(&dbgrt); err != nil {
@@ -62,28 +63,42 @@ func NewGroupRepo(db Database) groups.Repository {
 			panic(fmt.Sprintf("duplicated group type: %s", dbgrt.Name))
 		}
 		types[dbgrt.Name] = dbgrt
+		typesByID[dbgrt.ID] = dbgrt
 	}
 
 	return &groupRepository{
-		db:    db,
-		types: types,
+		db:        db,
+		types:     types,
+		typesByID: typesByID,
 	}
 }
 
 func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	var id string
 	q := `INSERT INTO groups (name, description, id, owner_id, metadata, path, type, created_at, updated_at) 
-		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, :type, now(), now()) RETURNING id`
+		  VALUES (:name, :description, :id, :owner_id, :metadata, :id, :type, :created_at, :updated_at) RETURNING id`
 	if g.ParentID != "" {
 		// For children groups type is inherited from the parent, this is done in trigger inherit_type_tr - init.go
-		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, path, created_at, updated_at) 
-			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name), now(), now() FROM groups tg WHERE id = :parent_id RETURNING id`
+		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, path, metadata, created_at, updated_at) 
+			 VALUES (:name, :description, :id, :owner_id, :parent_id, :path, :metadata, :created_at, :updated_at) RETURNING id`
+	}
+
+	if g.UpdatedAt.IsZero() {
+		g.UpdatedAt = time.Now().UTC()
+	}
+
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = time.Now().UTC()
 	}
 
 	dbu, err := gr.toDBGroup(g)
 	if err != nil {
 		return groups.Group{}, err
 	}
+
+	fmt.Println("Save")
+	fmt.Println(dbu)
+	fmt.Println("")
 
 	row, err := gr.db.NamedQueryContext(ctx, q, dbu)
 	if err != nil {
@@ -92,12 +107,17 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
 				return groups.Group{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			case errFK:
+				switch pqErr.Constraint {
+				case "groups_type_fkey":
+					return groups.Group{}, errors.Wrap(groups.ErrInvalidGroupType, err)
+				}
 			case errDuplicate:
 				return groups.Group{}, errors.Wrap(groups.ErrGroupConflict, err)
 			}
 		}
 
-		return groups.Group{}, errors.Wrap(groups.ErrCreateGroup, err)
+		return groups.Group{}, errors.Wrap(groups.ErrCreateGroup, errors.New(pqErr.Message))
 	}
 
 	defer row.Close()
@@ -110,18 +130,45 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 }
 
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
-	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = now()  WHERE id = :id`
+	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = :updated_at  WHERE id = :id 
+		  RETURNING id, name, owner_id, parent_id, description, metadata, path, type, nlevel(path) as level, created_at, updated_at`
+
+	if g.UpdatedAt.IsZero() {
+		g.UpdatedAt = time.Now().UTC()
+	}
 
 	dbu, err := gr.toDBGroup(g)
 	if err != nil {
 		return groups.Group{}, errors.Wrap(errUpdateDB, err)
 	}
 
-	if _, err := gr.db.NamedExecContext(ctx, q, dbu); err != nil {
-		return groups.Group{}, errors.Wrap(errUpdateDB, err)
+	row, err := gr.db.NamedQueryContext(ctx, q, dbu)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return groups.Group{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			case errFK:
+				switch pqErr.Constraint {
+				case "groups_type_fkey":
+					return groups.Group{}, errors.Wrap(groups.ErrInvalidGroupType, err)
+				}
+			case errDuplicate:
+				return groups.Group{}, errors.Wrap(groups.ErrGroupConflict, err)
+			}
+		}
+		return groups.Group{}, errors.Wrap(groups.ErrUpdateGroup, errors.New(pqErr.Message))
 	}
 
-	return g, nil
+	defer row.Close()
+	row.Next()
+	dbu = dbGroup{}
+	if err := row.StructScan(&dbu); err != nil {
+		return g, errors.Wrap(groups.ErrUpdateGroup, err)
+	}
+
+	return gr.toGroup(dbu)
 }
 
 func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
@@ -136,7 +183,21 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 
 	res, err := gr.db.NamedExecContext(ctx, qd, dbg)
 	if err != nil {
-		return errors.Wrap(errDeleteGroupDB, err)
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return errors.Wrap(groups.ErrMalformedEntity, err)
+			case errFK:
+				switch pqErr.Constraint {
+				case "group_relations_group_id_fkey":
+					return errors.Wrap(groups.ErrGroupNotEmpty, err)
+				}
+			case errDuplicate:
+				return errors.Wrap(groups.ErrGroupConflict, err)
+			}
+		}
+		return errors.Wrap(groups.ErrUpdateGroup, errors.New(pqErr.Message))
 	}
 
 	cnt, err := res.RowsAffected()
@@ -154,8 +215,7 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (groups.G
 	dbu := dbGroup{
 		ID: id,
 	}
-
-	q := `SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM groups WHERE id = $1`
+	q := `SELECT id, name, owner_id, parent_id, description, metadata, path, type, nlevel(path) as level, created_at, updated_at FROM groups WHERE id = $1`
 	if err := gr.db.QueryRowxContext(ctx, q, id).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
 			return groups.Group{}, errors.Wrap(groups.ErrNotFound, err)
@@ -163,8 +223,10 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (groups.G
 		}
 		return groups.Group{}, errors.Wrap(errRetrieveDB, err)
 	}
-
-	return toGroup(dbu)
+	fmt.Println("RetriveByID")
+	fmt.Println(dbu.CreatedAt)
+	fmt.Println("")
+	return gr.toGroup(dbu)
 }
 
 func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
@@ -176,7 +238,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm grou
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM groups 
+	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, type, path, nlevel(path) as level, created_at, updated_at FROM groups 
 					  WHERE nlevel(path) <= :level %s ORDER BY path`, mq)
 	cq := fmt.Sprintf("SELECT COUNT(*) FROM groups WHERE nlevel(path) <= :level %s", mq)
 
@@ -191,7 +253,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, level uint64, gm grou
 	}
 	defer rows.Close()
 
-	items, err := processRows(rows)
+	items, err := gr.processRows(rows)
 	if err != nil {
 		return groups.GroupPage{}, err
 	}
@@ -245,7 +307,7 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 	}
 	defer rows.Close()
 
-	items, err := processRows(rows)
+	items, err := gr.processRows(rows)
 	if err != nil {
 		return groups.GroupPage{}, err
 	}
@@ -298,7 +360,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	}
 	defer rows.Close()
 
-	items, err := processRows(rows)
+	items, err := gr.processRows(rows)
 	if err != nil {
 		return groups.GroupPage{}, err
 	}
@@ -403,7 +465,7 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, offs
 		if err := rows.StructScan(&dbgr); err != nil {
 			return groups.GroupPage{}, errors.Wrap(errSelectDb, err)
 		}
-		gr, err := toGroup(dbgr)
+		gr, err := gr.toGroup(dbgr)
 		if err != nil {
 			return groups.GroupPage{}, err
 		}
@@ -450,8 +512,13 @@ func (gr groupRepository) Assign(ctx context.Context, m groups.Member, g groups.
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
 				return errors.Wrap(groups.ErrMalformedEntity, err)
+			case errFK:
+				switch pqErr.Constraint {
+				case "group_relations_group_id_fkey":
+					return errors.Wrap(groups.ErrMalformedEntity, err)
+				}
 			case errDuplicate:
-				return errors.Wrap(groups.ErrGroupConflict, err)
+				return errors.Wrap(groups.ErrMemberAlreadyAssigned, err)
 			case errFK:
 				return errors.New(pqErr.Detail)
 			}
@@ -545,10 +612,17 @@ func toString(id uuid.NullUUID) (string, error) {
 }
 
 func (gr groupRepository) toDBGroup(g groups.Group) (dbGroup, error) {
-
 	ownerID, err := toUUID(g.OwnerID)
 	if err != nil {
 		return dbGroup{}, err
+	}
+
+	// If ParentID is set then group will inherit type from parent
+	// otherwise group type must be set.
+	groupType := 0
+	gType, ok := gr.types[g.Type]
+	if ok {
+		groupType = gType.ID
 	}
 
 	var parentID sql.NullString
@@ -557,10 +631,6 @@ func (gr groupRepository) toDBGroup(g groups.Group) (dbGroup, error) {
 	}
 
 	meta := dbMetadata(g.Metadata)
-	gType, ok := gr.types[g.Type]
-	if !ok {
-		return dbGroup{}, errInvalidGroupType
-	}
 
 	return dbGroup{
 		ID:          g.ID,
@@ -569,7 +639,7 @@ func (gr groupRepository) toDBGroup(g groups.Group) (dbGroup, error) {
 		OwnerID:     ownerID,
 		Description: g.Description,
 		Metadata:    meta,
-		Type:        gType.ID,
+		Type:        groupType,
 		Path:        g.Path,
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
@@ -599,7 +669,7 @@ func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata gr
 func (gr groupRepository) toDBMemberPage(memberID string, group groups.Group, offset, limit uint64, gm groups.Metadata) (dbMemberPage, error) {
 	gType, ok := gr.types[group.Type]
 	if !ok {
-		return dbMemberPage{}, errInvalidGroupType
+		return dbMemberPage{}, groups.ErrInvalidGroupType
 	}
 	return dbMemberPage{
 		ID:       group.ID,
@@ -611,10 +681,14 @@ func (gr groupRepository) toDBMemberPage(memberID string, group groups.Group, of
 	}, nil
 }
 
-func toGroup(dbu dbGroup) (groups.Group, error) {
+func (gr groupRepository) toGroup(dbu dbGroup) (groups.Group, error) {
 	ownerID, err := toString(dbu.OwnerID)
 	if err != nil {
 		return groups.Group{}, err
+	}
+	gType, ok := gr.typesByID[dbu.Type]
+	if !ok {
+		return groups.Group{}, groups.ErrInvalidGroupType
 	}
 
 	return groups.Group{
@@ -624,6 +698,7 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 		OwnerID:     ownerID,
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),
+		Type:        gType.Name,
 		Level:       dbu.Level,
 		Path:        dbu.Path,
 		UpdatedAt:   dbu.UpdatedAt,
@@ -647,7 +722,7 @@ func (gr groupRepository) toDBGroupRelation(memberID, groupID string, t string) 
 
 	gType, ok := gr.types[t]
 	if !ok {
-		return dbGroupRelation{}, errInvalidGroupType
+		return dbGroupRelation{}, groups.ErrInvalidGroupType
 	}
 
 	mID, err := uuid.FromString(memberID)
@@ -679,16 +754,16 @@ func getGroupsMetadataQuery(db string, m groups.Metadata) ([]byte, string, error
 	return mb, mq, nil
 }
 
-func processRows(rows *sqlx.Rows) ([]groups.Group, error) {
+func (gr groupRepository) processRows(rows *sqlx.Rows) ([]groups.Group, error) {
 	var items []groups.Group
 	for rows.Next() {
 		dbgr := dbGroup{}
 		if err := rows.StructScan(&dbgr); err != nil {
 			return items, errors.Wrap(errSelectDb, err)
 		}
-		gr, err := toGroup(dbgr)
+		gr, err := gr.toGroup(dbgr)
 		if err != nil {
-			continue
+			return items, err
 		}
 		items = append(items, gr)
 	}

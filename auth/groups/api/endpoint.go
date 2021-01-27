@@ -59,6 +59,8 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Metadata:    group.Metadata,
 			ParentID:    group.ParentID,
 			OwnerID:     group.OwnerID,
+			CreatedAt:   group.CreatedAt,
+			UpdatedAt:   group.UpdatedAt,
 		}
 
 		return res, nil

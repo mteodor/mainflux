@@ -50,4 +50,13 @@ var (
 
 	// ErrMissingGroupType indicates missing group type
 	ErrMissingGroupType = errors.New("specifying group type is mandatory")
+
+	// ErrInvalidGroupType Invalid group type
+	ErrInvalidGroupType = errors.New("invalid group type")
+
+	// ErrGroupNotEmpty
+	ErrGroupNotEmpty = errors.New("group is not empty")
+
+	// ErrMemberAlreadyAssigned
+	ErrMemberAlreadyAssigned = errors.New("member is already assigned")
 )

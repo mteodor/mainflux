@@ -60,6 +60,7 @@ func TestMain(m *testing.M) {
 		SSLCert:     "",
 		SSLKey:      "",
 		SSLRootCert: "",
+		
 	}
 
 	if db, err = postgres.Connect(dbConfig); err != nil {
