@@ -54,9 +54,9 @@ var (
 	// ErrInvalidGroupType Invalid group type
 	ErrInvalidGroupType = errors.New("invalid group type")
 
-	// ErrGroupNotEmpty
+	// ErrGroupNotEmpty indicates group is not empty, can't be deleted.
 	ErrGroupNotEmpty = errors.New("group is not empty")
 
-	// ErrMemberAlreadyAssigned
+	// ErrMemberAlreadyAssigned indicates that members is already assigned.
 	ErrMemberAlreadyAssigned = errors.New("member is already assigned")
 )
