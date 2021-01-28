@@ -45,7 +45,7 @@ container locally:
 version: "3"
 services:
   twins:
-    image: mainflux/twins:[version]
+    image: mainflux/twins:[MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]

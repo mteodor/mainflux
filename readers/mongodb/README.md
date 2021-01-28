@@ -21,13 +21,14 @@ default values.
 | MF_JAEGER_URL               | Jaeger server URL                                   | localhost:6831 |
 | MF_THINGS_AUTH_GRPC_URL     | Things service Auth gRPC URL                        | localhost:8181 |
 | MF_THINGS_AUTH_GRPC_TIMEOUT | Things service Auth gRPC request timeout in seconds | 1s             |
+| MF_RELEASE_TAG              | Docker image version to be deployed                 | latest         |
 
 ## Deployment
 
 ```yaml
   version: "3.7"
   mongodb-reader:
-    image: mainflux/mongodb-reader:[version]
+    image: mainflux/mongodb-reader:[MF_RELEASE_TAG]
     container_name: [instance name]
     expose:
       - [Service HTTP port]

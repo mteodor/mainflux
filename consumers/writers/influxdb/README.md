@@ -27,7 +27,7 @@ default values.
 ```yaml
   version: "3.7"
   influxdb-writer:
-    image: mainflux/influxdb:[version]
+    image: mainflux/influxdb:[MF_RELEASE_TAG]
     container_name: [instance name]
     expose:
       - [Service HTTP port]

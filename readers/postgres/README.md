@@ -32,7 +32,7 @@ default values.
 ```yaml
   version: "3.7"
   postgres-writer:
-    image: mainflux/postgres-writer:[version]
+    image: mainflux/postgres-writer:[MF_RELEASE_TAG]
     container_name: [instance name]
     depends_on:
       - postgres

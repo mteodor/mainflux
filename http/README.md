@@ -28,7 +28,7 @@ a compose file template that can be used to deploy the service container locally
 version: "3.7"
 services:
   adapter:
-    image: mainflux/http:[version]
+    image: mainflux/http:[MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:8180

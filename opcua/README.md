@@ -38,7 +38,7 @@ a compose file template that can be used to deploy the service container locally
 version: "3.7"
 services:
   adapter:
-    image: mainflux/opcua:[version]
+    image: mainflux/opcua:[MF_RELEASE_TAG]
     container_name: [instance name]
     environment:
       MF_OPCUA_ADAPTER_HTTP_PORT: [Service HTTP port]

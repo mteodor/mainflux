@@ -46,6 +46,7 @@ default values.
 | MF_JAEGER_URL               | Jaeger server URL                                                      | localhost:6831 |
 | MF_AUTH_GRPC_URL            | Auth service gRPC URL                                                  | localhost:8181 |
 | MF_AUTH_GRPC_TIMEOUT        | Auth service gRPC request timeout in seconds                           | 1s             |
+| MF_RELEASE_TAG              | Docker image version to be deployed                                    | latest         |
 
 **Note** that if you want `things` service to have only one user locally, you should use `MF_THINGS_SINGLE_USER` env vars. By specifying these, you don't need `users` service in your deployment as it won't be used for authorization.
 
@@ -59,7 +60,7 @@ locally:
 version: "3.7"
 services:
   things:
-    image: mainflux/things:[version]
+    image: mainflux/things:[MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]

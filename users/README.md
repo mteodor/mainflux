@@ -43,6 +43,7 @@ default values.
 | MF_EMAIL_FROM_NAME        | Email "from" name                                                       |                |
 | MF_EMAIL_TEMPLATE         | Email template for sending emails with password reset link              | email.tmpl     |
 | MF_TOKEN_RESET_ENDPOINT   | Password request reset endpoint, for constructing link                  | /reset-request |
+| MF_RELEASE_TAG            | Image version to be deployed, it should be aligned to release           | latest         |
 
 ## Deployment
 
@@ -54,7 +55,7 @@ locally:
 version: "3.7"
 services:
   users:
-    image: mainflux/users:[version]
+    image: mainflux/users:[MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]

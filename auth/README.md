@@ -67,7 +67,7 @@ locally:
 version: "3.7"
 services:
   auth:
-    image: mainflux/auth:[version]
+    image: mainflux/auth:[MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]

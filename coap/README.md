@@ -30,7 +30,7 @@ a compose file template that can be used to deploy the service container locally
 version: "3.7"
 services:
   adapter:
-    image: mainflux/coap:[version]
+    image: mainflux/coap:[MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured port]
