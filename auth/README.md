@@ -56,6 +56,7 @@ default values.
 | MF_AUTH_SERVER_KEY        | Path to server key in pem format                                         |               |
 | MF_AUTH_SECRET            | String used for signing tokens                                           | auth          |
 | MF_JAEGER_URL             | Jaeger server URL                                                        | localhost:6831|
+| MF_RELEASE_TAG            | Docker image version to be deployed                                      | latest         |
 
 ## Deployment
 

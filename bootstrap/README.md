@@ -65,6 +65,7 @@ The service is configured using the environment variables presented in the follo
 | MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
 | MF_AUTH_GRPC_URL              | Auth service gRPC URL                                                   | localhost:8181                   |
 | MF_AUTH_GRPC_TIMEOUT          | Auth service gRPC request timeout in seconds                            | 1s                               |
+| MF_RELEASE_TAG                | Docker image version to be deployed                                     | latest                           |
 
 ## Deployment
 

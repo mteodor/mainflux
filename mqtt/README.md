@@ -35,6 +35,7 @@ default values.
 | MF_AUTH_CACHE_URL                        | Auth cache URL                                         | localhost:6379        |
 | MF_AUTH_CACHE_PASS                       | Auth cache password                                    | ""                    |
 | MF_AUTH_CACHE_DB                         | Auth cache database                                    | "0"                   |
+| MF_RELEASE_TAG                           | Docker image version to be deployed                    | latest                |
 
 
 ## Deployment
