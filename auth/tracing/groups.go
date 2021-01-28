@@ -12,18 +12,17 @@ import (
 )
 
 const (
-	assign               = "assign"
-	saveGroup            = "save_group"
-	deleteGroup          = "delete_group"
-	updateGroup          = "update_group"
-	retrieveByID         = "retrieve_by_id"
-	retrieveAllAncestors = "retrieve_all_ancestors"
-	retrieveAllChildren  = "retrieve_all_children"
-	retrieveAll          = "retrieve_all_groups"
-	retrieveByName       = "retrieve_by_name"
-	memberships          = "memberships"
-	members              = "members"
-	unassign             = "unassign"
+	assign              = "assign"
+	saveGroup           = "save_group"
+	deleteGroup         = "delete_group"
+	updateGroup         = "update_group"
+	retrieveByID        = "retrieve_by_id"
+	retrieveAllParents  = "retrieve_all_parents"
+	retrieveAllChildren = "retrieve_all_children"
+	retrieveAll         = "retrieve_all_groups"
+	memberships         = "memberships"
+	members             = "members"
+	unassign            = "unassign"
 )
 
 var _ groups.Repository = (*groupRepositoryMiddleware)(nil)
@@ -74,7 +73,7 @@ func (grm groupRepositoryMiddleware) RetrieveByID(ctx context.Context, id string
 }
 
 func (grm groupRepositoryMiddleware) RetrieveAllParents(ctx context.Context, groupID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	span := createSpan(ctx, grm.tracer, retrieveAllAncestors)
+	span := createSpan(ctx, grm.tracer, retrieveAllParents)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
