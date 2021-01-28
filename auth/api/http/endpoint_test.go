@@ -24,12 +24,10 @@ import (
 )
 
 const (
-	secret       = "secret"
-	contentType  = "application/json"
-	invalidEmail = "userexample.com"
-	wrongID      = "123e4567-e89b-12d3-a456-000000000042"
-	id           = "123e4567-e89b-12d3-a456-000000000001"
-	email        = "user@example.com"
+	secret      = "secret"
+	contentType = "application/json"
+	id          = "123e4567-e89b-12d3-a456-000000000001"
+	email       = "user@example.com"
 )
 
 type issueRequest struct {
