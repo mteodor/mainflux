@@ -43,7 +43,7 @@ default values.
 | MF_EMAIL_FROM_NAME        | Email "from" name                                                       |                |
 | MF_EMAIL_TEMPLATE         | Email template for sending emails with password reset link              | email.tmpl     |
 | MF_TOKEN_RESET_ENDPOINT   | Password request reset endpoint, for constructing link                  | /reset-request |
-| MF_RELEASE_TAG            | Docker image version tag to be deployed                                 | latest         |
+| MF_RELEASE_TAG            | Tag of docker image to be deployed                                      | latest         |
 
 ## Deployment
 
