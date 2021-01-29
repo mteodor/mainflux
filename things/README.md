@@ -60,7 +60,7 @@ locally:
 version: "3.7"
 services:
   things:
-    image: mainflux/things:[MF_RELEASE_TAG]
+    image: mainflux/things: [Docker image version tag specified by MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]

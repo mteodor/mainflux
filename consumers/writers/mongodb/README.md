@@ -25,7 +25,7 @@ default values.
 ```yaml
   version: "3.7"
   mongodb-writer:
-    image: mainflux/mongodb-writer:[MF_RELEASE_TAG]
+    image: mainflux/mongodb-writer: [Docker image version tag specified by MF_RELEASE_TAG]
     container_name: [instance name]
     depends_on:
       - mongodb

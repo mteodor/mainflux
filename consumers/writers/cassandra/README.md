@@ -27,7 +27,7 @@ default values.
 ```yaml
   version: "3.7"
   cassandra-writer:
-    image: mainflux/cassandra-writer:[MF_RELEASE_TAG]
+    image: mainflux/cassandra-writer: [Docker image version tag specified by MF_RELEASE_TAG]
     container_name: [instance name]
     expose:
       - [Service HTTP port]

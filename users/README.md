@@ -55,7 +55,7 @@ locally:
 version: "3.7"
 services:
   users:
-    image: mainflux/users:[MF_RELEASE_TAG]
+    image: mainflux/users: [Docker image version tag specified by MF_RELEASE_TAG]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]

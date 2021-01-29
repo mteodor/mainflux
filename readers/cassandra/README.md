@@ -31,7 +31,7 @@ default values.
 ```yaml
   version: "3.7"
   cassandra-reader:
-    image: mainflux/cassandra-reader:[MF_RELEASE_TAG]
+    image: mainflux/cassandra-reader: [Docker image version tag specified by MF_RELEASE_TAG]
     container_name: [instance name]
     expose:
       - [Service HTTP port]
