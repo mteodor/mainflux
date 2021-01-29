@@ -34,7 +34,7 @@ The following actions are supported:
 
 ## Configuration
 
-The service is configured using the environment variables presented in the
+The service is configured using the envir onment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
@@ -56,7 +56,7 @@ default values.
 | MF_AUTH_SERVER_KEY        | Path to server key in pem format                                         |               |
 | MF_AUTH_SECRET            | String used for signing tokens                                           | auth          |
 | MF_JAEGER_URL             | Jaeger server URL                                                        | localhost:6831|
-| MF_RELEASE_TAG            | Docker image version to be deployed                                      | latest         |
+| MF_RELEASE_TAG            | Docker image version tag to be deployed                                  | latest        |
 
 ## Deployment
 
