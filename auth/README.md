@@ -34,7 +34,7 @@ The following actions are supported:
 
 ## Configuration
 
-The service is configured using the envir onment variables presented in the
+The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
