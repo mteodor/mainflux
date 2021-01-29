@@ -27,7 +27,7 @@ default values.
 ```yaml
   version: "3.7"
   influxdb-writer:
-    image: mainflux/influxdb: [Docker image version tag specified by MF_RELEASE_TAG]
+    image: mainflux/influxdb: [Tag of docker image to be deployed  specified by MF_RELEASE_TAG]
     container_name: [instance name]
     expose:
       - [Service HTTP port]

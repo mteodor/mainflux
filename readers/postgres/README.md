@@ -33,7 +33,7 @@ default values.
 ```yaml
   version: "3.7"
   postgres-writer:
-    image: mainflux/postgres-writer: [Docker image version tag specified by MF_RELEASE_TAG]
+    image: mainflux/postgres-writer: [Tag of docker image to be deployed  specified by MF_RELEASE_TAG]
     container_name: [instance name]
     depends_on:
       - postgres

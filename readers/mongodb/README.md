@@ -28,7 +28,7 @@ default values.
 ```yaml
   version: "3.7"
   mongodb-reader:
-    image: mainflux/mongodb-reader: [Docker image version tag specified by MF_RELEASE_TAG]
+    image: mainflux/mongodb-reader: [Tag of docker image to be deployed  specified by MF_RELEASE_TAG]
     container_name: [instance name]
     expose:
       - [Service HTTP port]

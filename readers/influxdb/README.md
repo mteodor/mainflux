@@ -30,7 +30,7 @@ default values.
 ```yaml
   version: "3.7"
   influxdb-reader:
-    image: mainflux/influxdb-reader: [Docker image version tag specified by MF_RELEASE_TAG]
+    image: mainflux/influxdb-reader: [Tag of docker image to be deployed  specified by MF_RELEASE_TAG]
     container_name: [instance name]
     restart: on-failure
     environment:
