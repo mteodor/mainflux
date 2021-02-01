@@ -13,7 +13,6 @@ import (
 	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/auth/postgres"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,6 +47,7 @@ func generateGroupID(t *testing.T) string {
 }
 
 func TestGroupSave(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 
@@ -168,6 +168,7 @@ func TestGroupSave(t *testing.T) {
 }
 
 func TestGroupRetrieveByID(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 
@@ -224,6 +225,7 @@ func TestGroupRetrieveByID(t *testing.T) {
 }
 
 func TestGroupUpdate(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 
@@ -301,7 +303,7 @@ func TestGroupUpdate(t *testing.T) {
 				ID:          groupID,
 				Description: invalidDesc,
 			},
-			err: users.ErrMalformedEntity,
+			err: groups.ErrMalformedEntity,
 		},
 	}
 
@@ -318,6 +320,7 @@ func TestGroupUpdate(t *testing.T) {
 }
 
 func TestGroupDelete(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 
@@ -402,9 +405,9 @@ func TestGroupDelete(t *testing.T) {
 }
 
 func TestRetrieveAll(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
-
 	uid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
@@ -485,7 +488,215 @@ func TestRetrieveAll(t *testing.T) {
 	}
 }
 
+func TestRetrieveAllParents(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
+	dbMiddleware := postgres.NewDatabase(db)
+	groupRepo := postgres.NewGroupRepo(dbMiddleware)
+
+	uid, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	metadata := groups.Metadata{
+		"field": "value",
+	}
+	wrongMeta := groups.Metadata{
+		"wrong": "wrong",
+	}
+
+	p, err := groupRepo.RetrieveAll(context.Background(), 5, nil)
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Equal(t, uint64(0), p.Total, fmt.Sprintf("expected total %d got %d\n", 0, p.Total))
+
+	metaNum := uint64(3)
+
+	n := uint64(10)
+	parentID := ""
+	parentMiddle := ""
+	for i := uint64(0); i < n; i++ {
+		creationTime := time.Now().UTC()
+		group := groups.Group{
+			ID:        generateGroupID(t),
+			Name:      fmt.Sprintf("%s-%d", groupName, i),
+			OwnerID:   uid,
+			Type:      "things",
+			ParentID:  parentID,
+			CreatedAt: creationTime,
+			UpdatedAt: creationTime,
+		}
+		// Create Groups with metadata.
+		if n-i <= metaNum {
+			group.Metadata = metadata
+		}
+		if i == n/2 {
+			parentMiddle = group.ID
+		}
+		_, err = groupRepo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		parentID = group.ID
+	}
+
+	cases := map[string]struct {
+		level    uint64
+		parentID string
+		Size     uint64
+		Total    uint64
+		Metadata groups.Metadata
+	}{
+		"retrieve all parents": {
+			Total:    n,
+			Size:     postgres.MaxLevel + 1,
+			level:    postgres.MaxLevel,
+			parentID: parentID,
+		},
+		"retrieve groups with existing metadata": {
+			Total:    metaNum,
+			Size:     metaNum,
+			Metadata: metadata,
+			parentID: parentID,
+			level:    postgres.MaxLevel,
+		},
+		"retrieve groups with non-existing metadata": {
+			Total:    uint64(0),
+			Metadata: wrongMeta,
+			Size:     uint64(0),
+			level:    postgres.MaxLevel,
+			parentID: parentID,
+		},
+		"retrieve groups with hierarchy level depth": {
+			Total:    n,
+			Size:     2 + 1,
+			level:    uint64(2),
+			parentID: parentID,
+		},
+		"retrieve groups with hierarchy level depth and existing metadata": {
+			Total:    metaNum,
+			Size:     metaNum,
+			level:    3,
+			Metadata: metadata,
+			parentID: parentID,
+		},
+		"retrieve parent groups from children in the middle": {
+			Total:    n/2 + 1,
+			Size:     n/2 + 1,
+			level:    postgres.MaxLevel,
+			parentID: parentMiddle,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := groupRepo.RetrieveAllParents(context.Background(), tc.parentID, tc.level, tc.Metadata)
+		size := len(page.Groups)
+		assert.Equal(t, tc.Size, uint64(size), fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.Size, size))
+		assert.Equal(t, tc.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.Total, page.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+	}
+}
+
+func TestRetrieveAllChildren(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
+	dbMiddleware := postgres.NewDatabase(db)
+	groupRepo := postgres.NewGroupRepo(dbMiddleware)
+
+	uid, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	metadata := groups.Metadata{
+		"field": "value",
+	}
+	// wrongMeta := groups.Metadata{
+	// 	"wrong": "wrong",
+	// }
+
+	metaNum := uint64(3)
+
+	n := uint64(10)
+	groupID := generateGroupID(t)
+	firstParentID := groupID
+	parentID := ""
+	// parentMiddle := ""
+	for i := uint64(0); i < n; i++ {
+		creationTime := time.Now().UTC()
+		group := groups.Group{
+			ID:        groupID,
+			Name:      fmt.Sprintf("%s-%d", groupName, i),
+			OwnerID:   uid,
+			Type:      "things",
+			ParentID:  parentID,
+			CreatedAt: creationTime,
+			UpdatedAt: creationTime,
+		}
+		// Create Groups with metadata.
+		if i < metaNum {
+			group.Metadata = metadata
+		}
+		// if i == n/2 {
+		// 	parentMiddle = group.ID
+		// }
+		_, err = groupRepo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		parentID = group.ID
+		groupID = generateGroupID(t)
+	}
+
+	cases := map[string]struct {
+		level    uint64
+		parentID string
+		Size     uint64
+		Total    uint64
+		Metadata groups.Metadata
+	}{
+		// "retrieve all children": {
+		// 	Total:    n,
+		// 	Size:     postgres.MaxLevel + 1,
+		// 	level:    postgres.MaxLevel,
+		// 	parentID: firstParentID,
+		// },
+		// "retrieve groups with existing metadata": {
+		// 	Total:    metaNum,
+		// 	Size:     metaNum,
+		// 	Metadata: metadata,
+		// 	parentID: firstParentID,
+		// 	level:    postgres.MaxLevel,
+		// },
+		// "retrieve groups with non-existing metadata": {
+		// 	Total:    0,
+		// 	Metadata: wrongMeta,
+		// 	Size:     0,
+		// 	level:    postgres.MaxLevel,
+		// 	parentID: firstParentID,
+		// },
+		// "retrieve groups with hierarchy level depth": {
+		// 	Total:    n,
+		// 	Size:     2 + 1,
+		// 	level:    2,
+		// 	parentID: firstParentID,
+		// },
+		"retrieve groups with hierarchy level depth and existing metadata": {
+			Total:    metaNum,
+			Size:     metaNum,
+			level:    3,
+			Metadata: metadata,
+			parentID: firstParentID,
+		},
+		// "retrieve parent groups from children in the middle": {
+		// 	Total:    n / 2,
+		// 	Size:     n / 2,
+		// 	level:    postgres.MaxLevel,
+		// 	parentID: parentMiddle,
+		// },
+	}
+
+	for desc, tc := range cases {
+		page, err := groupRepo.RetrieveAllChildren(context.Background(), tc.parentID, tc.level, tc.Metadata)
+		size := len(page.Groups)
+		assert.Equal(t, tc.Size, uint64(size), fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.Size, size))
+		assert.Equal(t, tc.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.Total, page.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+	}
+}
+
 func TestAssign(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 
@@ -528,6 +739,7 @@ func TestAssign(t *testing.T) {
 }
 
 func TestUnassign(t *testing.T) {
+	t.Cleanup(func() { cleanUp(t) })
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 
@@ -568,4 +780,12 @@ func TestUnassign(t *testing.T) {
 	mp, err = groupRepo.Members(context.Background(), group, 10, 10, nil)
 	require.Nil(t, err, fmt.Sprintf("members retrieve unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
+}
+
+func cleanUp(t *testing.T) {
+	_, err := db.Exec("delete from group_relations")
+	require.Nil(t, err, fmt.Sprintf("clean relations unexpected error: %s", err))
+	_, err = db.Exec("delete from groups")
+	require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
+	fmt.Println("cleaned up")
 }

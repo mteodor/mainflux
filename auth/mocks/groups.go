@@ -5,6 +5,8 @@ package mocks
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,9 +54,11 @@ func (grm *groupRepositoryMock) Save(ctx context.Context, g groups.Group) (group
 	if _, ok := grm.groups[GroupID(g.ID)]; ok {
 		return groups.Group{}, groups.ErrGroupConflict
 	}
+	path := g.ID
 
 	if g.ParentID != "" {
-		if _, ok := grm.groups[GroupID(g.ParentID)]; !ok {
+		parent, ok := grm.groups[GroupID(g.ParentID)]
+		if !ok {
 			return groups.Group{}, groups.ErrCreateGroup
 		}
 		if _, ok := grm.children[ParentID(g.ParentID)]; !ok {
@@ -62,7 +66,11 @@ func (grm *groupRepositoryMock) Save(ctx context.Context, g groups.Group) (group
 		}
 		grm.children[ParentID(g.ParentID)][GroupID(g.ID)] = g
 		grm.parents[ChildID(g.ID)] = ParentID(g.ParentID)
+		path = fmt.Sprintf("%s.%s", parent.Path, path)
 	}
+
+	g.Path = path
+	g.Level = len(strings.Split(path, "."))
 
 	grm.groups[GroupID(g.ID)] = g
 	return g, nil
@@ -87,7 +95,7 @@ func (grm *groupRepositoryMock) Update(ctx context.Context, g groups.Group) (gro
 func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	group, ok := grm.groups[GroupID(id)]
+	_, ok := grm.groups[GroupID(id)]
 	if !ok {
 		return groups.ErrNotFound
 	}
@@ -96,18 +104,20 @@ func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 		return groups.ErrGroupNotEmpty
 	}
 
+	// This is not quite exact, it should go in depth
 	for _, ch := range grm.children[ParentID(id)] {
 		if len(grm.members[GroupID(ch.ID)]) > 0 {
 			return groups.ErrGroupNotEmpty
 		}
 	}
 
+	// This is not quite exact, it should go in depth
 	delete(grm.groups, GroupID(id))
 	for _, ch := range grm.children[ParentID(id)] {
 		delete(grm.members, GroupID(ch.ID))
 	}
 
-	delete(grm.children)
+	delete(grm.children, ParentID(id))
 
 	return nil
 
@@ -117,7 +127,7 @@ func (grm *groupRepositoryMock) RetrieveByID(ctx context.Context, id string) (gr
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 
-	val, ok := grm.groups[id]
+	val, ok := grm.groups[GroupID(id)]
 	if !ok {
 		return groups.Group{}, groups.ErrNotFound
 	}
@@ -142,26 +152,32 @@ func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, level uint64, m
 func (grm *groupRepositoryMock) Unassign(ctx context.Context, member groups.Member, group groups.Group) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[group.ID]; !ok {
+	if _, ok := grm.groups[GroupID(group.ID)]; !ok {
 		return groups.ErrNotFound
 	}
-	delete(grm.members[group.ID], member.GetID())
-	delete(grm.groupsByMember, member.GetID())
+	if _, ok := grm.members[GroupID(group.ID)][MemberID(member.GetID())]; !ok {
+		return groups.ErrNotFound
+	}
+	delete(grm.members[GroupID(group.ID)], MemberID(member.GetID()))
+	delete(grm.memberships[MemberID(member.GetID())], GroupID(group.ID))
 	return nil
 }
 
 func (grm *groupRepositoryMock) Assign(ctx context.Context, member groups.Member, group groups.Group) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[group.ID]; !ok {
+	if _, ok := grm.groups[GroupID(group.ID)]; !ok {
 		return groups.ErrNotFound
 	}
-	if _, ok := grm.members[group.ID]; !ok {
-		grm.members[group.ID] = make(map[string]groups.Member)
+	if _, ok := grm.members[GroupID(group.ID)]; !ok {
+		grm.members[GroupID(group.ID)] = make(map[MemberID]groups.Member)
+	}
+	if _, ok := grm.memberships[MemberID(member.GetID())]; !ok {
+		grm.memberships[MemberID(member.GetID())] = make(map[GroupID]groups.Group)
 	}
 
-	grm.members[group.ID][member.GetID()] = mockMember{memberID: member.GetID()}
-	grm.groupsByMember[member.GetID()][group.ID] = grm.groups[group.ID]
+	grm.members[GroupID(group.ID)][MemberID(member.GetID())] = mockMember{memberID: member.GetID()}
+	grm.memberships[MemberID(member.GetID())][GroupID(group.ID)] = grm.groups[GroupID(group.ID)]
 	return nil
 
 }
@@ -170,8 +186,16 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, memberID string
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []groups.Group
+
+	first := uint64(offset)
+	last := first + uint64(limit)
+
+	i := uint64(0)
 	for _, g := range grm.memberships[MemberID(memberID)] {
-		items = append(items, g)
+		if i >= first && i < last {
+			items = append(items, g)
+		}
+		i = i + 1
 	}
 
 	return groups.GroupPage{
@@ -192,8 +216,16 @@ func (grm *groupRepositoryMock) Members(ctx context.Context, group groups.Group,
 	if !ok {
 		return groups.MemberPage{}, groups.ErrNotFound
 	}
+
+	first := uint64(offset)
+	last := first + uint64(limit)
+
+	i := uint64(0)
 	for _, g := range members {
-		items = append(items, g)
+		if i >= first && i < last {
+			items = append(items, g)
+		}
+		i = i + 1
 	}
 	return groups.MemberPage{
 		Members: items,
@@ -216,12 +248,9 @@ func (grm *groupRepositoryMock) RetrieveAllParents(ctx context.Context, groupID 
 	}
 
 	grps := make([]groups.Group, 0)
-
 	grps, err := grm.getParents(grps, g)
 	if err != nil {
-		return groups.GroupPage{
-			Groups: grps,
-		}, err
+		return groups.GroupPage{}, err
 	}
 
 	return groups.GroupPage{
@@ -236,16 +265,39 @@ func (grm *groupRepositoryMock) RetrieveAllParents(ctx context.Context, groupID 
 func (grm *groupRepositoryMock) getParents(grps []groups.Group, g groups.Group) ([]groups.Group, error) {
 	grps = append(grps, g)
 	parentID, ok := grm.parents[ChildID(g.ID)]
-	if !ok {
+	if !ok && parentID == "" {
 		return grps, nil
 	}
 	parent, ok := grm.groups[GroupID(parentID)]
 	if !ok {
-		return grps, groups.ErrNotFound
+		panic(fmt.Sprintf("parent with id: %s not found", parentID))
 	}
 	return grm.getParents(grps, parent)
 }
 
 func (grm *groupRepositoryMock) RetrieveAllChildren(ctx context.Context, groupID string, level uint64, um groups.Metadata) (groups.GroupPage, error) {
-	panic("not implemented")
+	grm.mu.Lock()
+	defer grm.mu.Unlock()
+	g, ok := grm.groups[GroupID(groupID)]
+	if !ok {
+		return groups.GroupPage{}, nil
+	}
+
+	grps := make([]groups.Group, 0)
+	grps = append(grps, g)
+	for ch := range grm.parents {
+		g, ok := grm.groups[GroupID(ch)]
+		if !ok {
+			panic(fmt.Sprintf("child with id %s not found", ch))
+		}
+		grps = append(grps, g)
+	}
+
+	return groups.GroupPage{
+		Groups: grps,
+		PageMetadata: groups.PageMetadata{
+			Total: uint64(len(grps)),
+			Name:  g.Type,
+		},
+	}, nil
 }

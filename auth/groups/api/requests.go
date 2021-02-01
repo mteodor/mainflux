@@ -61,11 +61,10 @@ func (req updateGroupReq) validate() error {
 
 type listGroupsReq struct {
 	token    string
+	id       string
 	level    uint64
+	tree     bool // If `true` result is JSON that represents groups hierarchy, otherwise JSON just holds array of groups.
 	metadata groups.Metadata
-	name     string
-	groupID  string
-	tree     bool
 }
 
 func (req listGroupsReq) validate() error {
@@ -80,37 +79,56 @@ func (req listGroupsReq) validate() error {
 	return nil
 }
 
-type listMemberGroupReq struct {
+type listMembersReq struct {
 	token    string
+	id       string
 	offset   uint64
 	limit    uint64
-	metadata groups.Metadata
-	name     string
-	groupID  string
-	memberID string
 	tree     bool
+	metadata groups.Metadata
 }
 
-func (req listMemberGroupReq) validate() error {
+func (req listMembersReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && req.memberID == "" {
+	if req.id == "" {
 		return groups.ErrMalformedEntity
 	}
 
 	return nil
 }
 
-type memberGroupReq struct {
+type listMembershipReq struct {
+	token    string
+	id       string
+	offset   uint64
+	limit    uint64
+	tree     bool
+	metadata groups.Metadata
+}
+
+func (req listMembershipReq) validate() error {
+	if req.token == "" {
+		return groups.ErrUnauthorizedAccess
+	}
+
+	if req.id == "" {
+		return groups.ErrMalformedEntity
+	}
+
+	return nil
+}
+
+type assignMemberGroupReq struct {
 	token    string
 	groupID  string
 	memberID string
 	typ      string
 }
 
-func (req memberGroupReq) validate() error {
+func (req assignMemberGroupReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
@@ -123,9 +141,8 @@ func (req memberGroupReq) validate() error {
 }
 
 type groupReq struct {
-	token   string
-	groupID string
-	name    string
+	token string
+	id    string
 }
 
 func (req groupReq) validate() error {
@@ -133,7 +150,7 @@ func (req groupReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && req.name == "" {
+	if req.id == "" {
 		return groups.ErrMalformedEntity
 	}
 

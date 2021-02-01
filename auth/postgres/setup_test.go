@@ -17,8 +17,6 @@ import (
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-const wrong string = "wrong-value"
-
 var db *sqlx.DB
 
 func TestMain(m *testing.M) {
@@ -60,7 +58,6 @@ func TestMain(m *testing.M) {
 		SSLCert:     "",
 		SSLKey:      "",
 		SSLRootCert: "",
-		
 	}
 
 	if db, err = postgres.Connect(dbConfig); err != nil {

@@ -240,7 +240,6 @@ func (svc service) ListGroups(ctx context.Context, token string, level uint64, g
 		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.RetrieveAll(ctx, level, gm)
-
 }
 
 func (svc service) ListParents(ctx context.Context, token string, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
