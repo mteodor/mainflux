@@ -66,6 +66,25 @@ paths:
           description: Missing or invalid access token provided.
         '500':
          $ref: "#/components/responses/ServiceError"
+  /groups/{groupID}:
+    get:
+      summary: Get users that belongs to a group
+      description: Retrieves a list of users that belongs to a group.
+      tags:
+      - users
+      security:
+        - Authorization: []
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        '200':
+          $ref: '#/components/responses/UserRes'
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: '#/components/responses/ServiceError'
   /tokens:
     post:
       summary: User authentication
@@ -168,7 +187,7 @@ components:
     Authorization:
       type: http
       scheme: bearer
-      bearerFormat: jwt
+      bearerFormat: JWT
 
   schemas:
     Token:
@@ -176,7 +195,6 @@ components:
       properties:
         token:
           type: string
-          format: jwt
           description: Generated access token.
       required:
         - token
@@ -203,12 +221,12 @@ components:
           type: string
           format: uuid
           example: 18167738-f7a8-4e96-a123-58c3cd14de3a
-          description: User unique identifier.
+          description: UUID id of the user.
         email:
           type: string
           format: email
           example: "test@example.com"
-          description: User's email address will be used as its unique identifier.
+          description: User's email address will be used as its unique identifier
         metadata:
           type: string
           format: JSON
@@ -218,10 +236,10 @@ components:
       properties:
         email:
           type: string
-          description: User unique identifier.
+          description: ID of the user
         metadata:
           type: object
-          description: Arbitrary, object-encoded user's data.
+          description: Custom metadata related to User
     UserMetadata:
       type: object
       properties:
@@ -257,7 +275,7 @@ components:
       in: path
       schema:
         type: string
-        format: uuid
+        format: UUID
       required: true
     Limit:
       name: limit
@@ -304,8 +322,7 @@ components:
             properties:
               email:
                 type: string
-                format: email
-                description: User email.
+                description: Email of the user
     PasswordReset:
       description: Password reset request data, new password and token that is appended on password reset link received in email.
       content:
@@ -315,18 +332,15 @@ components:
             properties:
               password:
                 type: string
-                format: password
-                description: New password.
+                description: New password
                 minimum: 8
               confirm_password:
                 type: string
-                format: password
-                description: New confirmation password.
+                description: New password confirmed
                 minimum: 8
               token:
                 type: string
-                format: jwt
-                description: Reset token generated and sent in email.
+                description: Reset token generated and sent in email
     PasswordChange:
       description: Password change data. User can change its password.
       required: true
@@ -337,12 +351,11 @@ components:
             properties:
               password:
                 type: string
-                format: password
-                description: New password.
+                format: pass
+                description: New password
               old_password:
                 type: string
-                format: password
-                description: Old password.
+                description: Confirm password
 
   responses:
     UserCreateRes:
@@ -353,8 +366,7 @@ components:
             text/plain:
               schema:
                 type: string
-                format: url
-                description: Registered user relative URL.
+                description: Registred user relative URL
                 example: /users/{userId}
     UserRes:
       description: Data retrieved.
@@ -362,6 +374,5 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
-
     ServiceError:
       description: Unexpected server-side error occurred.
