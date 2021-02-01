@@ -28,7 +28,6 @@ default values.
 | MF_THINGS_ES_PASS                | Things service event source password   |                            |
 | MF_THINGS_ES_DB                  | Things service event source DB         | 0                          |
 | MF_OPCUA_ADAPTER_EVENT_CONSUMER  | Service event consumer name            | opcua                      |
-| MF_RELEASE_TAG                   | Tag of docker image to be deployed     | latest                     |
 
 ## Deployment
 

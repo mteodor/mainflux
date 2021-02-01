@@ -33,7 +33,6 @@ default values.
 | MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
 | MF_TWINS_CACHE_PASS        | Cache database password                                              |                       |
 | MF_TWINS_CACHE_DB          | Cache instance name                                                  | 0                     |
-| MF_RELEASE_TAG             | Tag of docker image to be deployed                                   | latest                |
 
 
 ## Deployment
