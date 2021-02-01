@@ -544,8 +544,8 @@ func TestRetrieveAllParents(t *testing.T) {
 	}{
 		"retrieve all parents": {
 			Total:    n,
-			Size:     postgres.MaxLevel + 1,
-			level:    postgres.MaxLevel,
+			Size:     groups.MaxLevel + 1,
+			level:    groups.MaxLevel,
 			parentID: parentID,
 		},
 		"retrieve groups with existing metadata": {
@@ -553,13 +553,13 @@ func TestRetrieveAllParents(t *testing.T) {
 			Size:     metaNum,
 			Metadata: metadata,
 			parentID: parentID,
-			level:    postgres.MaxLevel,
+			level:    groups.MaxLevel,
 		},
 		"retrieve groups with non-existing metadata": {
 			Total:    uint64(0),
 			Metadata: wrongMeta,
 			Size:     uint64(0),
-			level:    postgres.MaxLevel,
+			level:    groups.MaxLevel,
 			parentID: parentID,
 		},
 		"retrieve groups with hierarchy level depth": {
@@ -578,7 +578,7 @@ func TestRetrieveAllParents(t *testing.T) {
 		"retrieve parent groups from children in the middle": {
 			Total:    n/2 + 1,
 			Size:     n/2 + 1,
-			level:    postgres.MaxLevel,
+			level:    groups.MaxLevel,
 			parentID: parentMiddle,
 		},
 	}
@@ -647,8 +647,8 @@ func TestRetrieveAllChildren(t *testing.T) {
 	}{
 		// "retrieve all children": {
 		// 	Total:    n,
-		// 	Size:     postgres.MaxLevel + 1,
-		// 	level:    postgres.MaxLevel,
+		// 	Size:     groups.MaxLevel + 1,
+		// 	level:    groups.MaxLevel,
 		// 	parentID: firstParentID,
 		// },
 		// "retrieve groups with existing metadata": {
@@ -656,13 +656,13 @@ func TestRetrieveAllChildren(t *testing.T) {
 		// 	Size:     metaNum,
 		// 	Metadata: metadata,
 		// 	parentID: firstParentID,
-		// 	level:    postgres.MaxLevel,
+		// 	level:    groups.MaxLevel,
 		// },
 		// "retrieve groups with non-existing metadata": {
 		// 	Total:    0,
 		// 	Metadata: wrongMeta,
 		// 	Size:     0,
-		// 	level:    postgres.MaxLevel,
+		// 	level:    groups.MaxLevel,
 		// 	parentID: firstParentID,
 		// },
 		// "retrieve groups with hierarchy level depth": {
@@ -681,7 +681,7 @@ func TestRetrieveAllChildren(t *testing.T) {
 		// "retrieve parent groups from children in the middle": {
 		// 	Total:    n / 2,
 		// 	Size:     n / 2,
-		// 	level:    postgres.MaxLevel,
+		// 	level:    groups.MaxLevel,
 		// 	parentID: parentMiddle,
 		// },
 	}

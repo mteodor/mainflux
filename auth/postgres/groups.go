@@ -19,8 +19,6 @@ import (
 	"github.com/mainflux/mainflux/users"
 )
 
-const MaxLevel = 5
-
 var (
 	errDeleteGroupDB          = errors.New("delete group failed")
 	errSelectDb               = errors.New("select group from db error")
@@ -285,8 +283,8 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :parent_id AND g.path @> parent.path %s`, mq)
 
-	if level > MaxLevel {
-		level = MaxLevel
+	if level > groups.MaxLevel {
+		level = groups.MaxLevel
 	}
 
 	dbPage, err := toDBGroupPage("", "", groupID, "", level, gm)
@@ -338,8 +336,8 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path <@ parent.path %s`, mq)
 
-	if level > MaxLevel {
-		level = MaxLevel
+	if level > groups.MaxLevel {
+		level = groups.MaxLevel
 	}
 
 	dbPage, err := toDBGroupPage("", groupID, "", "", level, gm)
