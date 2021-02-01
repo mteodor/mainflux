@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const MaxLevel = 5
+
 type Member interface {
 	GetID() string
 }
