@@ -72,7 +72,7 @@ func (req listGroupsReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.level > 5 {
+	if req.level > groups.MaxLevel {
 		return groups.ErrMalformedEntity
 	}
 
