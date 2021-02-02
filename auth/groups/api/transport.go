@@ -172,10 +172,10 @@ func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 func DecodeAssignMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := assignMemberGroupReq{
-		token:    r.Header.Get("Authorization"),
-		groupID:  bone.GetValue(r, "groupID"),
-		memberID: bone.GetValue(r, "memberID"),
-		typ:      bone.GetValue(r, "type"),
+		token:     r.Header.Get("Authorization"),
+		groupID:   bone.GetValue(r, "groupID"),
+		memberID:  bone.GetValue(r, "memberID"),
+		groupType: bone.GetValue(r, "type"),
 	}
 
 	return req, nil

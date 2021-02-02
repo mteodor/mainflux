@@ -199,7 +199,7 @@ func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 		}
 		g := groups.Group{
 			ID:   req.groupID,
-			Type: req.typ,
+			Type: req.groupType,
 		}
 
 		if err := svc.Assign(ctx, req.token, m, g); err != nil {
@@ -221,7 +221,7 @@ func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
 		}
 		g := groups.Group{
 			ID:   req.groupID,
-			Type: req.typ,
+			Type: req.groupType,
 		}
 
 		if err := svc.Unassign(ctx, req.token, m, g); err != nil {

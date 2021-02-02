@@ -122,10 +122,10 @@ func (req listMembershipReq) validate() error {
 }
 
 type assignMemberGroupReq struct {
-	token    string
-	groupID  string
-	memberID string
-	typ      string
+	token     string
+	groupID   string
+	memberID  string
+	groupType string
 }
 
 func (req assignMemberGroupReq) validate() error {
@@ -133,7 +133,7 @@ func (req assignMemberGroupReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && req.memberID == "" && req.typ == "" {
+	if req.groupID == "" && req.memberID == "" && req.groupType == "" {
 		return groups.ErrMalformedEntity
 	}
 

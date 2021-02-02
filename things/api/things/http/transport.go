@@ -175,7 +175,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/groups/:groupID/things", kithttp.NewServer(
+	r.Get("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_things")(listMembersEndpoint(svc)),
 		decodeListThingsGroupRequest,
 		encodeResponse,

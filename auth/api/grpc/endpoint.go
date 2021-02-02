@@ -104,7 +104,7 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 		g := groups.Group{
 			ID:   req.groupID,
-			Type: req.typ,
+			Type: req.groupType,
 		}
 		err = svc.Assign(ctx, req.token, m, g)
 		if err != nil {
@@ -124,7 +124,7 @@ func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 		group := groups.Group{
 			ID:   req.groupID,
-			Type: req.typ,
+			Type: req.groupType,
 		}
 
 		mp, err := svc.ListMembers(ctx, req.token, group, req.offset, req.limit, nil)

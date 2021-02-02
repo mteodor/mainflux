@@ -135,7 +135,7 @@ func decodeAssignRequest(_ context.Context, grpcReq interface{}) (interface{}, e
 
 func decodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.MembersReq)
-	return membersReq{token: req.GetToken(), groupID: req.GetGroupID(), typ: req.GetType()}, nil
+	return membersReq{token: req.GetToken(), groupID: req.GetGroupID(), groupType: req.GetType()}, nil
 }
 
 func encodeMembersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
