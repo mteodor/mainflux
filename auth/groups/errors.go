@@ -9,6 +9,9 @@ var (
 	// ErrMalformedEntity malformed entity.
 	ErrMalformedEntity = errors.New("malformed entity")
 
+	// ErrMaxLevelExceeded malformed entity.
+	ErrMaxLevelExceeded = errors.New("level must be <=5")
+
 	// ErrBadGroupName malformed entity.
 	ErrBadGroupName = errors.New("incorrect group name")
 

@@ -73,7 +73,7 @@ func (req listGroupsReq) validate() error {
 	}
 
 	if req.level > groups.MaxLevel {
-		return groups.ErrMalformedEntity
+		return groups.ErrMaxLevelExceeded
 	}
 
 	return nil
