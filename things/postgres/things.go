@@ -200,7 +200,6 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, ids []string, pm th
 	q := fmt.Sprintf(`SELECT id, owner, name, key, metadata FROM things 
 					   %s%s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, idq, mq, nq, oq, dq)
 
-	fmt.Println(q)
 	params := map[string]interface{}{
 		"limit":    pm.Limit,
 		"offset":   pm.Offset,
