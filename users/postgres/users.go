@@ -160,27 +160,23 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	emq := ""
-	if eq != "" && mq == "" {
-		emq = fmt.Sprintf("WHERE %s", eq)
+	var query []string
+	var emq string
+	if eq != "" {
+		query = append(query, eq)
 	}
-	if eq == "" && mq != "" {
-		emq = fmt.Sprintf("WHERE %s", mq)
+	if mq != "" {
+		query = append(query, mq)
 	}
-	if eq != "" && mq != "" {
-		emq = fmt.Sprintf("WHERE %s AND %s", eq, mq)
-	}
-
 	if len(ids) > 0 {
-		if len(emq) == 0 {
-			emq = fmt.Sprintf("WHERE id IN ('%s')", strings.Join(ids, ",'"))
-		} else {
-			emq = fmt.Sprintf("%s AND id IN ('%s')", emq, strings.Join(ids, ",'"))
-		}
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(ids, "','")))
+	}
+	if len(query) > 0 {
+		emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
 	}
 
 	q := fmt.Sprintf(`SELECT id, email, metadata FROM users %s ORDER BY email LIMIT :limit OFFSET :offset;`, emq)
-
+	fmt.Println(emq)
 	params := map[string]interface{}{
 		"limit":    limit,
 		"offset":   offset,
