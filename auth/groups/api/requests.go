@@ -25,7 +25,7 @@ func (req createGroupReq) validate() error {
 	if len(req.Name) > maxNameSize || req.Name == "" || !groupRegexp.MatchString(req.Name) {
 		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrBadGroupName)
 	}
-	// If the group is root i.e. no parent type must specified
+	// If the group is root (i.e. no parent) type must specified
 	// otherwise group inherits type from the parent.
 	if req.Type == "" && req.ParentID == "" {
 		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrMissingGroupType)

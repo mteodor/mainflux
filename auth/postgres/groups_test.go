@@ -603,9 +603,9 @@ func TestRetrieveAllChildren(t *testing.T) {
 	metadata := groups.Metadata{
 		"field": "value",
 	}
-	// wrongMeta := groups.Metadata{
-	// 	"wrong": "wrong",
-	// }
+	wrongMeta := groups.Metadata{
+		"wrong": "wrong",
+	}
 
 	metaNum := uint64(3)
 
@@ -613,7 +613,7 @@ func TestRetrieveAllChildren(t *testing.T) {
 	groupID := generateGroupID(t)
 	firstParentID := groupID
 	parentID := ""
-	// parentMiddle := ""
+	parentMiddle := ""
 	for i := uint64(0); i < n; i++ {
 		creationTime := time.Now().UTC()
 		group := groups.Group{
@@ -629,9 +629,9 @@ func TestRetrieveAllChildren(t *testing.T) {
 		if i < metaNum {
 			group.Metadata = metadata
 		}
-		// if i == n/2 {
-		// 	parentMiddle = group.ID
-		// }
+		if i == n/2 {
+			parentMiddle = group.ID
+		}
 		_, err = groupRepo.Save(context.Background(), group)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 		parentID = group.ID
@@ -645,32 +645,32 @@ func TestRetrieveAllChildren(t *testing.T) {
 		Total    uint64
 		Metadata groups.Metadata
 	}{
-		// "retrieve all children": {
-		// 	Total:    n,
-		// 	Size:     groups.MaxLevel + 1,
-		// 	level:    groups.MaxLevel,
-		// 	parentID: firstParentID,
-		// },
-		// "retrieve groups with existing metadata": {
-		// 	Total:    metaNum,
-		// 	Size:     metaNum,
-		// 	Metadata: metadata,
-		// 	parentID: firstParentID,
-		// 	level:    groups.MaxLevel,
-		// },
-		// "retrieve groups with non-existing metadata": {
-		// 	Total:    0,
-		// 	Metadata: wrongMeta,
-		// 	Size:     0,
-		// 	level:    groups.MaxLevel,
-		// 	parentID: firstParentID,
-		// },
-		// "retrieve groups with hierarchy level depth": {
-		// 	Total:    n,
-		// 	Size:     2 + 1,
-		// 	level:    2,
-		// 	parentID: firstParentID,
-		// },
+		"retrieve all children": {
+			Total:    n,
+			Size:     groups.MaxLevel + 1,
+			level:    groups.MaxLevel,
+			parentID: firstParentID,
+		},
+		"retrieve groups with existing metadata": {
+			Total:    metaNum,
+			Size:     metaNum,
+			Metadata: metadata,
+			parentID: firstParentID,
+			level:    groups.MaxLevel,
+		},
+		"retrieve groups with non-existing metadata": {
+			Total:    0,
+			Metadata: wrongMeta,
+			Size:     0,
+			level:    groups.MaxLevel,
+			parentID: firstParentID,
+		},
+		"retrieve groups with hierarchy level depth": {
+			Total:    n,
+			Size:     2 + 1,
+			level:    2,
+			parentID: firstParentID,
+		},
 		"retrieve groups with hierarchy level depth and existing metadata": {
 			Total:    metaNum,
 			Size:     metaNum,
@@ -678,12 +678,12 @@ func TestRetrieveAllChildren(t *testing.T) {
 			Metadata: metadata,
 			parentID: firstParentID,
 		},
-		// "retrieve parent groups from children in the middle": {
-		// 	Total:    n / 2,
-		// 	Size:     n / 2,
-		// 	level:    groups.MaxLevel,
-		// 	parentID: parentMiddle,
-		// },
+		"retrieve parent groups from children in the middle": {
+			Total:    n / 2,
+			Size:     n / 2,
+			level:    groups.MaxLevel,
+			parentID: parentMiddle,
+		},
 	}
 
 	for desc, tc := range cases {
