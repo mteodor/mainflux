@@ -28,13 +28,6 @@ const (
 	groupName = "mfx"
 )
 
-type mockMember struct {
-	ID string
-}
-
-func (m mockMember) GetID() string {
-	return m.ID
-}
 func newService() auth.Service {
 	repo := mocks.NewKeyRepository()
 	groupRepo := mocks.NewGroupRepository()
@@ -725,7 +718,7 @@ func TestListMembers(t *testing.T) {
 		uid, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-		err = svc.Assign(context.Background(), apiToken, mockMember{ID: uid}, group)
+		err = svc.Assign(context.Background(), apiToken, uid, group)
 		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
@@ -809,7 +802,7 @@ func TestListMemberships(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 		group.ID = g
-		err = svc.Assign(context.Background(), apiToken, mockMember{ID: memberID}, group)
+		err = svc.Assign(context.Background(), apiToken, memberID, group)
 		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
@@ -940,14 +933,14 @@ func TestAssign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = svc.Assign(context.Background(), apiToken, mockMember{ID: mid}, group)
+	err = svc.Assign(context.Background(), apiToken, mid, group)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	mp, err := svc.ListMembers(context.Background(), apiToken, group, 0, 10, nil)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	err = svc.Assign(context.Background(), "wrongToken", mockMember{ID: mid}, group)
+	err = svc.Assign(context.Background(), "wrongToken", mid, group)
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
 }
@@ -987,23 +980,23 @@ func TestUnassign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = svc.Assign(context.Background(), apiToken, mockMember{ID: mid}, group)
+	err = svc.Assign(context.Background(), apiToken, mid, group)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	mp, err := svc.ListMembers(context.Background(), apiToken, group, 0, 10, nil)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	err = svc.Unassign(context.Background(), apiToken, mockMember{ID: mid}, group)
+	err = svc.Unassign(context.Background(), apiToken, mid, group)
 	require.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
 
 	mp, err = svc.ListMembers(context.Background(), apiToken, group, 0, 10, nil)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, mp.Total))
 
-	err = svc.Unassign(context.Background(), "wrongToken", mockMember{ID: mid}, group)
+	err = svc.Unassign(context.Background(), "wrongToken", mid, group)
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
-	err = svc.Unassign(context.Background(), apiToken, mockMember{ID: mid}, group)
+	err = svc.Unassign(context.Background(), apiToken, mid, group)
 	assert.True(t, errors.Contains(err, groups.ErrNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 }

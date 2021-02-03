@@ -8,14 +8,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-type member struct {
-	id string
-}
-
-func (m member) GetID() string {
-	return m.id
-}
-
 func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
@@ -194,15 +186,12 @@ func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 
-		m := member{
-			id: req.memberID,
-		}
 		g := groups.Group{
 			ID:   req.groupID,
 			Type: req.groupType,
 		}
 
-		if err := svc.Assign(ctx, req.token, m, g); err != nil {
+		if err := svc.Assign(ctx, req.token, req.memberID, g); err != nil {
 			return nil, errors.Wrap(groups.ErrAssignToGroup, err)
 		}
 
@@ -216,15 +205,13 @@ func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-		m := member{
-			id: req.memberID,
-		}
+
 		g := groups.Group{
 			ID:   req.groupID,
 			Type: req.groupType,
 		}
 
-		if err := svc.Unassign(ctx, req.token, m, g); err != nil {
+		if err := svc.Unassign(ctx, req.token, req.memberID, g); err != nil {
 			return nil, errors.Wrap(groups.ErrUnassignFromGroup, err)
 		}
 

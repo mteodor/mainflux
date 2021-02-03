@@ -99,14 +99,11 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 			return emptyRes{}, err
 		}
 
-		m := member{
-			id: req.memberID,
-		}
 		g := groups.Group{
 			ID:   req.groupID,
 			Type: req.groupType,
 		}
-		err = svc.Assign(ctx, req.token, m, g)
+		err = svc.Assign(ctx, req.token, req.memberID, g)
 		if err != nil {
 			return emptyRes{}, err
 		}
@@ -133,7 +130,7 @@ func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 		memberIDs := []string{}
 		for _, m := range mp.Members {
-			memberIDs = append(memberIDs, m.GetID())
+			memberIDs = append(memberIDs, m)
 		}
 		return membersRes{
 			offset:  req.offset,

@@ -378,7 +378,7 @@ func TestGroupDelete(t *testing.T) {
 	thingID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("thing id create unexpected error: %s", err))
 
-	err = groupRepo.Assign(context.Background(), member{ID: thingID}, groupChild1)
+	err = groupRepo.Assign(context.Background(), thingID, groupChild1)
 	require.Nil(t, err, fmt.Sprintf("thing assign got unexpected error: %s", err))
 
 	err = groupRepo.Delete(context.Background(), groupChild1.ID)
@@ -394,7 +394,7 @@ func TestGroupDelete(t *testing.T) {
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("retrieve children after one child removed: expected %v got %v\n", nil, err))
 	assert.True(t, gp.Total == 2, fmt.Sprintf("number of children + parent: expected %d got %d\n", 2, gp.Total))
 
-	err = groupRepo.Unassign(context.Background(), member{ID: thingID}, groupChild1)
+	err = groupRepo.Unassign(context.Background(), thingID, groupChild1)
 	require.Nil(t, err, fmt.Sprintf("failed to remove thing from a group error: %s", err))
 
 	err = groupRepo.Delete(context.Background(), groupParent.ID)
@@ -719,7 +719,7 @@ func TestAssign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = groupRepo.Assign(context.Background(), member{ID: mid}, group)
+	err = groupRepo.Assign(context.Background(), mid, group)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	mp, err := groupRepo.Members(context.Background(), group, 10, 10, nil)
@@ -727,14 +727,14 @@ func TestAssign(t *testing.T) {
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
 	group = groups.Group{ID: group.ID, Type: "things"}
-	err = groupRepo.Assign(context.Background(), member{ID: mid}, group)
+	err = groupRepo.Assign(context.Background(), mid, group)
 	assert.True(t, errors.Contains(err, groups.ErrMemberAlreadyAssigned), fmt.Sprintf("assign member again: expected %v got %v\n", nil, err))
 
 	mid, err = idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	group = groups.Group{ID: group.ID, Type: "users"}
-	err = groupRepo.Assign(context.Background(), member{ID: mid}, group)
+	err = groupRepo.Assign(context.Background(), mid, group)
 	assert.True(t, errors.Contains(err, groups.ErrMalformedEntity), fmt.Sprintf("assign new member with wrong group type: expected %v got %v\n", nil, err))
 }
 
@@ -762,19 +762,19 @@ func TestUnassign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = groupRepo.Assign(context.Background(), member{ID: mid}, group)
+	err = groupRepo.Assign(context.Background(), mid, group)
 	require.Nil(t, err, fmt.Sprintf("member assign unexpected error: %s", err))
 
 	mid, err = idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	err = groupRepo.Assign(context.Background(), member{ID: mid}, group)
+	err = groupRepo.Assign(context.Background(), mid, group)
 	require.Nil(t, err, fmt.Sprintf("member assign unexpected error: %s", err))
 
 	mp, err := groupRepo.Members(context.Background(), group, 10, 10, nil)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 2, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 2, mp.Total))
 
-	err = groupRepo.Unassign(context.Background(), member{ID: mid}, group)
+	err = groupRepo.Unassign(context.Background(), mid, group)
 	require.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
 
 	mp, err = groupRepo.Members(context.Background(), group, 10, 10, nil)

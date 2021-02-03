@@ -380,7 +380,7 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 	q := fmt.Sprintf(`SELECT gr.member_id, gr.group_id, gr.type, gr.created_at, gr.updated_at FROM group_relations gr
 					  WHERE gr.group_id = :group_id AND gr.type = :type %s`, mq)
 
-	params, err := gr.toDBMemberPage(dbMember{}, group, offset, limit, gm)
+	params, err := gr.toDBMemberPage("", group, offset, limit, gm)
 	if err != nil {
 		return groups.MemberPage{}, err
 	}
@@ -391,7 +391,7 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 	}
 	defer rows.Close()
 
-	var items []groups.Member
+	var items []string
 	for rows.Next() {
 		member := dbMember{}
 		if err := rows.StructScan(&member); err != nil {
@@ -402,7 +402,7 @@ func (gr groupRepository) Members(ctx context.Context, group groups.Group, offse
 			return groups.MemberPage{}, err
 		}
 
-		items = append(items, member)
+		items = append(items, member.MemberID)
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups g, group_relations gr
@@ -439,7 +439,7 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, offs
 					  WHERE gr.group_id = g.id and gr.member_id = :member_id AND g.type = :type
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
-	params, err := gr.toDBMemberPage(dbMember{}, groups.Group{}, offset, limit, gm)
+	params, err := gr.toDBMemberPage("", groups.Group{}, offset, limit, gm)
 	if err != nil {
 		return groups.GroupPage{}, err
 	}
@@ -483,8 +483,8 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, offs
 	return page, nil
 }
 
-func (gr groupRepository) Assign(ctx context.Context, m groups.Member, g groups.Group) error {
-	dbr, err := gr.toDBGroupRelation(m.GetID(), g.ID, g.Type)
+func (gr groupRepository) Assign(ctx context.Context, memberID string, g groups.Group) error {
+	dbr, err := gr.toDBGroupRelation(memberID, g.ID, g.Type)
 	if err != nil {
 		return errors.Wrap(groups.ErrAssignToGroup, err)
 	}
@@ -517,9 +517,9 @@ func (gr groupRepository) Assign(ctx context.Context, m groups.Member, g groups.
 	return nil
 }
 
-func (gr groupRepository) Unassign(ctx context.Context, m groups.Member, g groups.Group) error {
+func (gr groupRepository) Unassign(ctx context.Context, memberID string, g groups.Group) error {
 	q := `DELETE FROM group_relations WHERE member_id = :member_id AND group_id = :group_id`
-	dbr, err := gr.toDBGroupRelation(m.GetID(), g.ID, g.Type)
+	dbr, err := gr.toDBGroupRelation(memberID, g.ID, g.Type)
 	if err != nil {
 		return errors.Wrap(groups.ErrNotFound, err)
 	}
@@ -654,14 +654,14 @@ func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata gr
 	}, nil
 }
 
-func (gr groupRepository) toDBMemberPage(m groups.Member, group groups.Group, offset, limit uint64, gm groups.Metadata) (dbMemberPage, error) {
+func (gr groupRepository) toDBMemberPage(memberID string, group groups.Group, offset, limit uint64, gm groups.Metadata) (dbMemberPage, error) {
 	gType, ok := gr.types[group.Type]
 	if !ok {
 		return dbMemberPage{}, groups.ErrInvalidGroupType
 	}
 	return dbMemberPage{
 		GroupID:  group.ID,
-		MemberID: m.GetID(),
+		MemberID: memberID,
 		Metadata: dbMetadata(gm),
 		Type:     gType.ID,
 		Offset:   offset,

@@ -152,20 +152,20 @@ func (ms *metricsMiddleware) ListMemberships(ctx context.Context, token, groupID
 	return ms.svc.ListMemberships(ctx, token, groupID, offset, limit, gm)
 }
 
-func (ms *metricsMiddleware) Assign(ctx context.Context, token string, m groups.Member, g groups.Group) (err error) {
+func (ms *metricsMiddleware) Assign(ctx context.Context, token string, memberID string, g groups.Group) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "assign").Add(1)
 		ms.latency.With("method", "assign").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Assign(ctx, token, m, g)
+	return ms.svc.Assign(ctx, token, memberID, g)
 }
 
-func (ms *metricsMiddleware) Unassign(ctx context.Context, token string, m groups.Member, g groups.Group) (err error) {
+func (ms *metricsMiddleware) Unassign(ctx context.Context, token string, memberID string, g groups.Group) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "unassign").Add(1)
 		ms.latency.With("method", "unassign").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Unassign(ctx, token, m, g)
+	return ms.svc.Unassign(ctx, token, memberID, g)
 }

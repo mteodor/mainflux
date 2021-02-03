@@ -7,10 +7,6 @@ import (
 
 const MaxLevel = 5
 
-type Member interface {
-	GetID() string
-}
-
 type Metadata map[string]interface{}
 
 type Group struct {
@@ -46,7 +42,7 @@ type GroupPage struct {
 
 type MemberPage struct {
 	PageMetadata
-	Members []Member
+	Members []string
 }
 
 type Service interface {
@@ -78,10 +74,10 @@ type Service interface {
 	RemoveGroup(ctx context.Context, token, id string) error
 
 	// Assign adds  member with memberID into the group identified by groupID.
-	Assign(ctx context.Context, token string, member Member, group Group) error
+	Assign(ctx context.Context, token string, memberID string, group Group) error
 
 	// Unassign removes member with memberID from group identified by groupID.
-	Unassign(ctx context.Context, token string, member Member, group Group) error
+	Unassign(ctx context.Context, token string, memberID string, group Group) error
 }
 
 type Repository interface {
@@ -113,8 +109,8 @@ type Repository interface {
 	Members(ctx context.Context, group Group, offset, limit uint64, m Metadata) (MemberPage, error)
 
 	// Assign adds member to group.
-	Assign(ctx context.Context, member Member, group Group) error
+	Assign(ctx context.Context, memberID string, group Group) error
 
 	// Unassign removes a member from a group
-	Unassign(ctx context.Context, member Member, group Group) error
+	Unassign(ctx context.Context, memberID string, group Group) error
 }

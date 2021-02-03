@@ -274,11 +274,11 @@ func (svc service) RemoveGroup(ctx context.Context, token, id string) error {
 	return svc.groups.Delete(ctx, id)
 }
 
-func (svc service) Unassign(ctx context.Context, token string, m groups.Member, g groups.Group) error {
+func (svc service) Unassign(ctx context.Context, token string, memberID string, g groups.Group) error {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Unassign(ctx, m, g)
+	return svc.groups.Unassign(ctx, memberID, g)
 }
 
 func (svc service) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
@@ -295,11 +295,11 @@ func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Grou
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
-func (svc service) Assign(ctx context.Context, token string, m groups.Member, g groups.Group) error {
+func (svc service) Assign(ctx context.Context, token string, memberID string, g groups.Group) error {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Assign(ctx, m, g)
+	return svc.groups.Assign(ctx, memberID, g)
 }
 
 func (svc service) ListMemberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
