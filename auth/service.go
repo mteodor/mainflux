@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/ulid"
 )
@@ -83,21 +82,21 @@ type Service interface {
 	Authz
 
 	// Implements groups API, creating groups, assigning members
-	groups.Service
+	GroupService
 }
 
 var _ Service = (*service)(nil)
 
 type service struct {
 	keys         KeyRepository
-	groups       groups.Repository
+	groups       GroupRepository
 	idProvider   mainflux.IDProvider
 	ulidProvider mainflux.IDProvider
 	tokenizer    Tokenizer
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, groups groups.Repository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
+func New(keys KeyRepository, groups GroupRepository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
 	return &service{
 		tokenizer:    tokenizer,
 		keys:         keys,
@@ -215,54 +214,55 @@ func (svc service) login(token string) (string, string, error) {
 	return key.IssuerID, key.Subject, nil
 }
 
-func (svc service) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
+func (svc service) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
 	user, err := svc.Identify(ctx, token)
 	if err != nil {
-		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	ulid, err := svc.ulidProvider.ID()
 	if err != nil {
-		return "", errors.Wrap(ErrGenerateGroupID, err)
+		return Group{}, errors.Wrap(ErrGenerateGroupID, err)
 	}
 
-	g.ID = ulid
-	g.OwnerID = user.ID
-	if _, err := svc.groups.Save(ctx, g); err != nil {
-		return "", err
+	group.ID = ulid
+	group.OwnerID = user.ID
+	group, err = svc.groups.Save(ctx, group)
+	if err != nil {
+		return Group{}, err
 	}
 
-	return g.ID, nil
+	return group, nil
 }
 
-func (svc service) ListGroups(ctx context.Context, token string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc service) ListGroups(ctx context.Context, token string, level uint64, gm GroupMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.RetrieveAll(ctx, level, gm)
 }
 
-func (svc service) ListParents(ctx context.Context, token string, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc service) ListParents(ctx context.Context, token string, childID string, level uint64, gm GroupMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.RetrieveAllParents(ctx, childID, level, gm)
 }
 
-func (svc service) ListChildren(ctx context.Context, token string, parentID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc service) ListChildren(ctx context.Context, token string, parentID string, level uint64, gm GroupMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.RetrieveAllChildren(ctx, parentID, level, gm)
 }
 
-func (svc service) ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+func (svc service) ListMembers(ctx context.Context, token string, groupID string, offset, limit uint64, gm GroupMetadata) (MemberPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	mp, err := svc.groups.Members(ctx, group, offset, limit, gm)
+	mp, err := svc.groups.Members(ctx, groupID, offset, limit, gm)
 	if err != nil {
-		return groups.MemberPage{}, errors.Wrap(ErrFailedToRetrieveMembers, err)
+		return MemberPage{}, errors.Wrap(ErrFailedToRetrieveMembers, err)
 	}
 	return mp, nil
 }
@@ -274,37 +274,37 @@ func (svc service) RemoveGroup(ctx context.Context, token, id string) error {
 	return svc.groups.Delete(ctx, id)
 }
 
-func (svc service) Unassign(ctx context.Context, token string, memberID string, g groups.Group) error {
+func (svc service) Unassign(ctx context.Context, token string, memberID, groupID string) error {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Unassign(ctx, memberID, g)
+	return svc.groups.Unassign(ctx, memberID, groupID)
 }
 
-func (svc service) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+func (svc service) UpdateGroup(ctx context.Context, token string, group Group) (Group, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Update(ctx, g)
+	return svc.groups.Update(ctx, group)
 }
 
-func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
+func (svc service) ViewGroup(ctx context.Context, token, id string) (Group, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
-func (svc service) Assign(ctx context.Context, token string, memberID string, g groups.Group) error {
+func (svc service) Assign(ctx context.Context, token string, memberID, groupID string) error {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Assign(ctx, memberID, g)
+	return svc.groups.Assign(ctx, memberID, groupID)
 }
 
-func (svc service) ListMemberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc service) ListMemberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm GroupMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.Memberships(ctx, memberID, offset, limit, gm)
 }

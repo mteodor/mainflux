@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth/groups"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -236,6 +236,6 @@ func findIndex(list []string, val string) int {
 	return -1
 }
 
-func (svc *mainfluxThings) ListMembers(ctx context.Context, token string, g groups.Group, pm things.PageMetadata) (things.Page, error) {
+func (svc *mainfluxThings) ListMembers(ctx context.Context, token string, group auth.Group, pm things.PageMetadata) (things.Page, error) {
 	panic("not implemented")
 }

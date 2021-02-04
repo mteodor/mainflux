@@ -4,7 +4,7 @@
 package api
 
 import (
-	"github.com/mainflux/mainflux/auth/groups"
+	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/users"
 )
 

@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth/groups"
+	groups "github.com/mainflux/mainflux/auth"
 )
 
 var (

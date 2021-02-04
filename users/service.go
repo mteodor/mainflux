@@ -9,7 +9,6 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/auth/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -91,7 +90,7 @@ type Service interface {
 	ViewProfile(ctx context.Context, token string) (User, error)
 
 	// ListUsers retrieves users list for a valid admin token.
-	ListUsers(ctx context.Context, token string, offset, limit uint64, email string, m Metadata) (UserPage, error)
+	ListUsers(ctx context.Context, token string, offset, limit uint64, email string, meta Metadata) (UserPage, error)
 
 	// UpdateUser updates the user metadata.
 	UpdateUser(ctx context.Context, token string, user User) error
@@ -111,7 +110,7 @@ type Service interface {
 	SendPasswordReset(ctx context.Context, host, email, token string) error
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, m Metadata) (UserPage, error)
+	ListMembers(ctx context.Context, token string, group auth.Group, offset, limit uint64, meta Metadata) (UserPage, error)
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -125,7 +124,7 @@ type PageMetadata struct {
 // GroupPage contains a page of groups.
 type GroupPage struct {
 	PageMetadata
-	Groups []groups.Group
+	Groups []auth.Group
 }
 
 // UserPage contains a page of users.
@@ -314,7 +313,7 @@ func (svc usersService) SendPasswordReset(_ context.Context, host, email, token 
 	return svc.email.SendPasswordReset(to, host, token)
 }
 
-func (svc usersService) ListMembers(ctx context.Context, token string, group groups.Group, offset, limit uint64, m Metadata) (UserPage, error) {
+func (svc usersService) ListMembers(ctx context.Context, token string, group auth.Group, offset, limit uint64, m Metadata) (UserPage, error) {
 	if _, err := svc.identify(ctx, token); err != nil {
 		return UserPage{}, err
 	}
@@ -344,7 +343,7 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 	return identity.GetEmail(), nil
 }
 
-func (svc usersService) members(ctx context.Context, token string, group groups.Group, limit, offset uint64) ([]string, error) {
+func (svc usersService) members(ctx context.Context, token string, group auth.Group, limit, offset uint64) ([]string, error) {
 	req := mainflux.MembersReq{
 		Token:   token,
 		GroupID: group.ID,

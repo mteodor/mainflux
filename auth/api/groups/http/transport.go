@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-zoo/bone"
-	"github.com/mainflux/mainflux/auth/groups"
+	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 

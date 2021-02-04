@@ -40,10 +40,6 @@ type User struct {
 	Metadata Metadata
 }
 
-func (u User) GetID() string {
-	return u.ID
-}
-
 // Validate returns an error if user representation is invalid.
 func (u User) Validate() error {
 	if !isEmail(u.Email) {

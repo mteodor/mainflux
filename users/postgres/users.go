@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/mainflux/mainflux/auth/groups"
+	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
@@ -176,7 +176,6 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 	}
 
 	q := fmt.Sprintf(`SELECT id, email, metadata FROM users %s ORDER BY email LIMIT :limit OFFSET :offset;`, emq)
-	fmt.Println(emq)
 	params := map[string]interface{}{
 		"limit":    limit,
 		"offset":   offset,

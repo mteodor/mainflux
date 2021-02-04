@@ -15,7 +15,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
-	groupsAPI "github.com/mainflux/mainflux/auth/groups/api"
+	groupsAPI "github.com/mainflux/mainflux/auth/api/groups/http"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

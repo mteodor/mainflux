@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/auth/groups"
 )
 
 type member struct {
@@ -99,11 +98,7 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 			return emptyRes{}, err
 		}
 
-		g := groups.Group{
-			ID:   req.groupID,
-			Type: req.groupType,
-		}
-		err = svc.Assign(ctx, req.token, req.memberID, g)
+		err = svc.Assign(ctx, req.token, req.memberID, req.groupID)
 		if err != nil {
 			return emptyRes{}, err
 		}
@@ -115,16 +110,11 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(membersReq)
-
 		if err := req.validate(); err != nil {
 			return membersRes{}, err
 		}
-		group := groups.Group{
-			ID:   req.groupID,
-			Type: req.groupType,
-		}
 
-		mp, err := svc.ListMembers(ctx, req.token, group, req.offset, req.limit, nil)
+		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, nil)
 		if err != nil {
 			return membersRes{}, err
 		}

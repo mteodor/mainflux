@@ -3,7 +3,8 @@ package groups
 import (
 	"regexp"
 
-	"github.com/mainflux/mainflux/auth/groups"
+	"github.com/mainflux/mainflux/auth"
+	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -64,7 +65,7 @@ type listGroupsReq struct {
 	id       string
 	level    uint64
 	tree     bool // If `true` result is JSON that represents groups hierarchy, otherwise JSON just holds array of groups.
-	metadata groups.Metadata
+	metadata auth.GroupMetadata
 }
 
 func (req listGroupsReq) validate() error {
@@ -72,7 +73,7 @@ func (req listGroupsReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.level > groups.MaxLevel {
+	if req.level > auth.MaxLevel {
 		return groups.ErrMaxLevelExceeded
 	}
 
@@ -85,7 +86,7 @@ type listMembersReq struct {
 	offset   uint64
 	limit    uint64
 	tree     bool
-	metadata groups.Metadata
+	metadata auth.GroupMetadata
 }
 
 func (req listMembersReq) validate() error {
@@ -106,7 +107,7 @@ type listMembershipReq struct {
 	offset   uint64
 	limit    uint64
 	tree     bool
-	metadata groups.Metadata
+	metadata auth.GroupMetadata
 }
 
 func (req listMembershipReq) validate() error {

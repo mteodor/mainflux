@@ -6,7 +6,7 @@ package things
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/auth/groups"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 
 	"github.com/mainflux/mainflux"
@@ -129,7 +129,7 @@ type Service interface {
 	Identify(ctx context.Context, key string) (string, error)
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token string, group groups.Group, pm PageMetadata) (Page, error)
+	ListMembers(ctx context.Context, token string, group auth.Group, pm PageMetadata) (Page, error)
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -416,7 +416,7 @@ func (ts *thingsService) hasThing(ctx context.Context, chanID, thingKey string) 
 	return thingID, nil
 }
 
-func (ts *thingsService) ListMembers(ctx context.Context, token string, group groups.Group, pm PageMetadata) (Page, error) {
+func (ts *thingsService) ListMembers(ctx context.Context, token string, group auth.Group, pm PageMetadata) (Page, error) {
 	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -429,7 +429,7 @@ func (ts *thingsService) ListMembers(ctx context.Context, token string, group gr
 	return ts.things.RetrieveByIDs(ctx, res, pm)
 }
 
-func (ts *thingsService) members(ctx context.Context, token string, group groups.Group, limit, offset uint64) ([]string, error) {
+func (ts *thingsService) members(ctx context.Context, token string, group auth.Group, limit, offset uint64) ([]string, error) {
 	req := mainflux.MembersReq{
 		Token:   token,
 		GroupID: group.ID,
