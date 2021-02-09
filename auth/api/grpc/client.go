@@ -170,7 +170,6 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 		Type:    mr.groupType,
 		Members: mr.members,
 	}, err
-
 }
 
 func encodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

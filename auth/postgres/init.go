@@ -55,11 +55,6 @@ func migrateDB(db *sqlx.DB) error {
 						PRIMARY KEY (id, issuer_id)
 					)`,
 					`CREATE EXTENSION IF NOT EXISTS LTREE`,
-					`CREATE TABLE IF NOT EXISTS group_type (
-						id SMALLINT UNIQUE NOT NULL,
-						name VARCHAR(254) UNIQUE NOT NULL,
-						PRIMARY KEY (id)
-					)`,
 					`CREATE TABLE IF NOT EXISTS groups ( 
 						id          VARCHAR(254) UNIQUE NOT NULL,
 						parent_id   VARCHAR(254), 
@@ -67,28 +62,23 @@ func migrateDB(db *sqlx.DB) error {
 						name        VARCHAR(254) NOT NULL,
 						description VARCHAR(1024),
 						metadata    JSONB,
-						path        LTREE, 
-						type        SMALLINT NOT NULL,
+						path        LTREE,
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						UNIQUE (id, type),
-						UNIQUE (owner_id, name, parent_id, type),
-						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE,
-						FOREIGN KEY (type) REFERENCES group_type (id)
+						UNIQUE (owner_id, name, parent_id),
+						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE
 				   )`,
 					`CREATE TABLE IF NOT EXISTS group_relations (
-						member_id VARCHAR(254) NOT NULL,
-						group_id VARCHAR(254) NOT NULL,
-						type        SMALLINT NOT NULL,
+						member_id   VARCHAR(254) NOT NULL,
+						group_id    VARCHAR(254) NOT NULL,
+						type        VARCHAR(254),
 						created_at  TIMESTAMPTZ,
 						updated_at  TIMESTAMPTZ,
-						FOREIGN KEY (group_id, type) REFERENCES groups (id, type),
-						PRIMARY KEY (member_id,  group_id)
+						FOREIGN KEY (group_id) REFERENCES groups (id),
+						PRIMARY KEY (member_id, group_id)
 				   )`,
 					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,
-					`INSERT INTO group_type (id, name) VALUES (1, 'things')`,
-					`INSERT INTO group_type (id, name) VALUES (2, 'users')`,
-					`CREATE OR REPLACE FUNCTION inherit_type()
+					`CREATE OR REPLACE FUNCTION inherit_group()
 					 RETURNS trigger 
 					 LANGUAGE PLPGSQL
 					 AS
@@ -100,24 +90,23 @@ func migrateDB(db *sqlx.DB) error {
 					 IF NOT EXISTS (SELECT id FROM groups WHERE id = NEW.parent_id) THEN
 						RAISE EXCEPTION 'wrong parent id';
 					 END IF;
-					 SELECT type, text2ltree(ltree2text(path) || '.' || NEW.id) INTO NEW.type, NEW.path FROM groups WHERE id = NEW.parent_id;
+					 SELECT text2ltree(ltree2text(path) || '.' || NEW.id) INTO NEW.path FROM groups WHERE id = NEW.parent_id;
 					 RETURN NEW;
 					 END;
 					 $$`,
-					`CREATE TRIGGER inherit_type_tr
+					`CREATE TRIGGER inherit_group_tr
 					 BEFORE INSERT
 					 ON groups
 					 FOR EACH ROW
-					 EXECUTE PROCEDURE inherit_type();`,
+					 EXECUTE PROCEDURE inherit_group();`,
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS keys`,
 					`DROP EXTENSION IF EXISTS LTREE`,
 					`DROP TABLE IF EXISTS groups`,
-					`DROP TABLE IF EXISTS group_type`,
 					`DROP TABLE IF EXISTS group_relations`,
-					`DROP FUNCTION IF EXISTS inherit_type`,
-					`DROP TRIGGER IF EXISTS inherit_type_tr ON groups`,
+					`DROP FUNCTION IF EXISTS inherit_group`,
+					`DROP TRIGGER IF EXISTS inherit_group_tr ON groups`,
 				},
 			},
 		},

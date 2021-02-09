@@ -65,44 +65,22 @@ func TestGroupSave(t *testing.T) {
 		err   error
 	}{
 		{
-			desc: "create new thing group",
+			desc: "create new group",
 			group: auth.Group{
 				ID:      grpID,
 				OwnerID: usrID,
 				Name:    "mainflux",
-				Type:    "things",
 			},
 			err: nil,
 		},
 		{
-			desc: "create new thing group with existing name",
+			desc: "create new group with existing name",
 			group: auth.Group{
 				ID:      grpID,
 				OwnerID: usrID,
 				Name:    "mainflux",
-				Type:    "things",
 			},
 			err: auth.ErrGroupConflict,
-		},
-		{
-			desc: "create new users group",
-			group: auth.Group{
-				ID:      generateGroupID(t),
-				OwnerID: usrID,
-				Name:    "mainflux",
-				Type:    "users",
-			},
-			err: nil,
-		},
-		{
-			desc: "create group with wrong type",
-			group: auth.Group{
-				ID:      generateGroupID(t),
-				OwnerID: usrID,
-				Name:    "mainflux",
-				Type:    "wrong",
-			},
-			err: auth.ErrInvalidGroupType,
 		},
 		{
 			desc: "create group with invalid name",
@@ -110,7 +88,6 @@ func TestGroupSave(t *testing.T) {
 				ID:      generateGroupID(t),
 				OwnerID: usrID,
 				Name:    invalidName,
-				Type:    "things",
 			},
 			err: auth.ErrMalformedEntity,
 		},
@@ -120,7 +97,6 @@ func TestGroupSave(t *testing.T) {
 				ID:          generateGroupID(t),
 				OwnerID:     usrID,
 				Name:        "mainflux",
-				Type:        "things",
 				Description: invalidDesc,
 			},
 			err: auth.ErrMalformedEntity,
@@ -132,7 +108,6 @@ func TestGroupSave(t *testing.T) {
 				ParentID: grpID,
 				OwnerID:  usrID,
 				Name:     "withParent",
-				Type:     "things",
 			},
 			err: nil,
 		},
@@ -143,7 +118,6 @@ func TestGroupSave(t *testing.T) {
 				ParentID: grpID,
 				OwnerID:  usrID,
 				Name:     "mainflux",
-				Type:     "things",
 			},
 			err: nil,
 		},
@@ -154,7 +128,6 @@ func TestGroupSave(t *testing.T) {
 				ParentID: wrongID,
 				OwnerID:  usrID,
 				Name:     "wrongParent",
-				Type:     "things",
 			},
 			err: auth.ErrCreateGroup,
 		},
@@ -180,7 +153,6 @@ func TestGroupRetrieveByID(t *testing.T) {
 		ID:      generateGroupID(t),
 		Name:    groupName + "TestGroupRetrieveByID1",
 		OwnerID: uid,
-		Type:    "things",
 	}
 
 	_, err = groupRepo.Save(context.Background(), group1)
@@ -189,7 +161,6 @@ func TestGroupRetrieveByID(t *testing.T) {
 	retrieved, err := groupRepo.RetrieveByID(context.Background(), group1.ID)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.True(t, retrieved.ID == group1.ID, fmt.Sprintf("Save group, ID: expected %s got %s\n", group1.ID, retrieved.ID))
-	assert.True(t, retrieved.Type == group1.Type, fmt.Sprintf("Save group, ID: expected %s got %s\n", group1.Type, retrieved.Type))
 
 	creationTime := time.Now().UTC()
 
@@ -210,8 +181,6 @@ func TestGroupRetrieveByID(t *testing.T) {
 	retrieved, err = groupRepo.RetrieveByID(context.Background(), group2.ID)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.True(t, retrieved.ID == group2.ID, fmt.Sprintf("Save group, ID: expected %s got %s\n", group2.ID, retrieved.ID))
-	// Type for the group is inherited from the parent
-	assert.True(t, retrieved.Type == group1.Type, fmt.Sprintf("Save group, Type: expected %s got %s\n", group1.Type, retrieved.Type))
 	// There is a problem with retrieving time from DB, looks like rounding in DB makes difference.
 	// assert.True(t, retrieved.CreatedAt.Equal(creationTime), fmt.Sprintf("Save group, CreatedAt: expected %s got %s\n", creationTime, retrieved.CreatedAt))
 	// assert.True(t, retrieved.UpdatedAt.Equal(creationTime), fmt.Sprintf("Save group, UpdatedAt: expected %s got %s\n", creationTime, retrieved.UpdatedAt))
@@ -240,7 +209,6 @@ func TestGroupUpdate(t *testing.T) {
 		ID:          groupID,
 		Name:        groupName + "TestGroupUpdate",
 		OwnerID:     uid,
-		Type:        "things",
 		CreatedAt:   creationTime,
 		UpdatedAt:   creationTime,
 		Description: description,
@@ -264,13 +232,11 @@ func TestGroupUpdate(t *testing.T) {
 			groupUpdate: auth.Group{
 				ID:        groupID,
 				Name:      groupName + "Updated",
-				Type:      "users",
 				UpdatedAt: updateTime,
 				Metadata:  auth.GroupMetadata{"admin": "false"},
 			},
 			groupExpected: auth.Group{
 				Name:      groupName + "Updated",
-				Type:      "things",
 				UpdatedAt: updateTime,
 				Metadata:  auth.GroupMetadata{"admin": "false"},
 				CreatedAt: retrieved.CreatedAt,
@@ -313,7 +279,6 @@ func TestGroupUpdate(t *testing.T) {
 		if tc.desc == "update group for existing id" {
 			assert.True(t, updated.Level == tc.groupExpected.Level, fmt.Sprintf("%s:Level: expected %d got %d\n", tc.desc, tc.groupExpected.Level, updated.Level))
 			assert.True(t, updated.Name == tc.groupExpected.Name, fmt.Sprintf("%s:Name: expected %s got %s\n", tc.desc, tc.groupExpected.Name, updated.Name))
-			assert.True(t, updated.Type == tc.groupExpected.Type, fmt.Sprintf("%s:Type: expected %s got %s\n", tc.desc, tc.groupExpected.Type, updated.Type))
 			assert.True(t, updated.Metadata["admin"] == tc.groupExpected.Metadata["admin"], fmt.Sprintf("%s:Level: expected %d got %d\n", tc.desc, tc.groupExpected.Metadata["admin"], updated.Metadata["admin"]))
 		}
 	}
@@ -332,8 +297,6 @@ func TestGroupDelete(t *testing.T) {
 		ID:        generateGroupID(t),
 		Name:      groupName + "Updated",
 		OwnerID:   uid,
-		Type:      "things",
-		Metadata:  auth.GroupMetadata{"admin": "false"},
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 	}
@@ -347,8 +310,6 @@ func TestGroupDelete(t *testing.T) {
 		ParentID:  groupParent.ID,
 		Name:      groupName + "child1",
 		OwnerID:   uid,
-		Type:      "things",
-		Metadata:  auth.GroupMetadata{"admin": "false"},
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 	}
@@ -359,10 +320,12 @@ func TestGroupDelete(t *testing.T) {
 		ParentID:  groupParent.ID,
 		Name:      groupName + "child2",
 		OwnerID:   uid,
-		Type:      "things",
-		Metadata:  auth.GroupMetadata{"admin": "false"},
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
+	}
+
+	meta := auth.PageMetadata{
+		Level: auth.MaxLevel,
 	}
 
 	groupChild1, err = groupRepo.Save(context.Background(), groupChild1)
@@ -371,14 +334,14 @@ func TestGroupDelete(t *testing.T) {
 	groupChild2, err = groupRepo.Save(context.Background(), groupChild2)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
-	gp, err := groupRepo.RetrieveAllChildren(context.Background(), groupParent.ID, 5, nil)
+	gp, err := groupRepo.RetrieveAllChildren(context.Background(), groupParent.ID, meta)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("Retrieve children for parent: expected %v got %v\n", nil, err))
 	assert.True(t, gp.Total == 3, fmt.Sprintf("Number of children + parent: expected %d got %d\n", 3, gp.Total))
 
 	thingID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("thing id create unexpected error: %s", err))
 
-	err = groupRepo.Assign(context.Background(), thingID, groupChild1.ID)
+	err = groupRepo.Assign(context.Background(), thingID, groupChild1.ID, "things")
 	require.Nil(t, err, fmt.Sprintf("thing assign got unexpected error: %s", err))
 
 	err = groupRepo.Delete(context.Background(), groupChild1.ID)
@@ -390,7 +353,7 @@ func TestGroupDelete(t *testing.T) {
 	err = groupRepo.Delete(context.Background(), groupParent.ID)
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotEmpty), fmt.Sprintf("delete parent with children with members: expected %v got %v\n", auth.ErrGroupNotEmpty, err))
 
-	gp, err = groupRepo.RetrieveAllChildren(context.Background(), groupParent.ID, 5, nil)
+	gp, err = groupRepo.RetrieveAllChildren(context.Background(), groupParent.ID, meta)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("retrieve children after one child removed: expected %v got %v\n", nil, err))
 	assert.True(t, gp.Total == 2, fmt.Sprintf("number of children + parent: expected %d got %d\n", 2, gp.Total))
 
@@ -411,16 +374,22 @@ func TestRetrieveAll(t *testing.T) {
 	uid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	metadata := auth.GroupMetadata{
-		"field": "value",
+	metadata := auth.PageMetadata{
+		Metadata: auth.GroupMetadata{
+			"field": "value",
+		},
+		Level: auth.MaxLevel,
 	}
-	wrongMeta := auth.GroupMetadata{
-		"wrong": "wrong",
+	wrongMeta := auth.PageMetadata{
+		Metadata: auth.GroupMetadata{
+			"wrong": "wrong",
+		},
+		Level: auth.MaxLevel,
 	}
 
 	metaNum := uint64(3)
 
-	n := uint64(10)
+	n := uint64(auth.MaxLevel)
 	parentID := ""
 	for i := uint64(0); i < n; i++ {
 		creationTime := time.Now().UTC()
@@ -428,14 +397,13 @@ func TestRetrieveAll(t *testing.T) {
 			ID:        generateGroupID(t),
 			Name:      fmt.Sprintf("%s-%d", groupName, i),
 			OwnerID:   uid,
-			Type:      "things",
 			ParentID:  parentID,
 			CreatedAt: creationTime,
 			UpdatedAt: creationTime,
 		}
 		// Create Groups with metadata.
 		if i < metaNum {
-			group.Metadata = metadata
+			group.Metadata = metadata.Metadata
 		}
 
 		_, err = groupRepo.Save(context.Background(), group)
@@ -444,46 +412,60 @@ func TestRetrieveAll(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		level    uint64
 		Size     uint64
-		Total    uint64
-		Metadata auth.GroupMetadata
+		Metadata auth.PageMetadata
 	}{
 		"retrieve all groups": {
-			Total: n,
-			Size:  n,
-			level: 10,
+			Metadata: auth.PageMetadata{
+				Total: n,
+				Limit: n,
+				Level: auth.MaxLevel,
+			},
+			Size: n,
 		},
 		"retrieve groups with existing metadata": {
-			Total:    metaNum,
-			Size:     metaNum,
-			Metadata: metadata,
-			level:    10,
+			Metadata: auth.PageMetadata{
+				Total:    metaNum,
+				Limit:    n,
+				Level:    auth.MaxLevel,
+				Metadata: metadata.Metadata,
+			},
+			Size: metaNum,
 		},
 		"retrieve groups with non-existing metadata": {
-			Total:    0,
-			Metadata: wrongMeta,
-			Size:     0,
-			level:    10,
+			Metadata: auth.PageMetadata{
+				Total:    uint64(0),
+				Limit:    n,
+				Level:    auth.MaxLevel,
+				Metadata: wrongMeta.Metadata,
+			},
+			Size: uint64(0),
 		},
 		"retrieve groups with hierarchy level depth": {
-			Total: 5,
-			Size:  5,
-			level: 5,
+			Metadata: auth.PageMetadata{
+				Total:    uint64(metaNum),
+				Limit:    n,
+				Level:    auth.MaxLevel,
+				Metadata: metadata.Metadata,
+			},
+			Size: uint64(metaNum),
 		},
 		"retrieve groups with hierarchy level depth and existing metadata": {
-			Total:    metaNum,
-			Size:     metaNum,
-			level:    5,
-			Metadata: metadata,
+			Metadata: auth.PageMetadata{
+				Total:    uint64(metaNum),
+				Limit:    n,
+				Level:    auth.MaxLevel,
+				Metadata: metadata.Metadata,
+			},
+			Size: uint64(metaNum),
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := groupRepo.RetrieveAll(context.Background(), tc.level, tc.Metadata)
+		page, err := groupRepo.RetrieveAll(context.Background(), tc.Metadata)
 		size := len(page.Groups)
 		assert.Equal(t, tc.Size, uint64(size), fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.Size, size))
-		assert.Equal(t, tc.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.Total, page.Total))
+		assert.Equal(t, tc.Metadata.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.Metadata.Total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
@@ -503,7 +485,7 @@ func TestRetrieveAllParents(t *testing.T) {
 		"wrong": "wrong",
 	}
 
-	p, err := groupRepo.RetrieveAll(context.Background(), 5, nil)
+	p, err := groupRepo.RetrieveAll(context.Background(), auth.PageMetadata{Level: auth.MaxLevel})
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.Equal(t, uint64(0), p.Total, fmt.Sprintf("expected total %d got %d\n", 0, p.Total))
 
@@ -518,7 +500,6 @@ func TestRetrieveAllParents(t *testing.T) {
 			ID:        generateGroupID(t),
 			Name:      fmt.Sprintf("%s-%d", groupName, i),
 			OwnerID:   uid,
-			Type:      "things",
 			ParentID:  parentID,
 			CreatedAt: creationTime,
 			UpdatedAt: creationTime,
@@ -584,7 +565,7 @@ func TestRetrieveAllParents(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := groupRepo.RetrieveAllParents(context.Background(), tc.parentID, tc.level, tc.Metadata)
+		page, err := groupRepo.RetrieveAllParents(context.Background(), tc.parentID, auth.PageMetadata{Level: tc.level, Metadata: tc.Metadata})
 		size := len(page.Groups)
 		assert.Equal(t, tc.Size, uint64(size), fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.Size, size))
 		assert.Equal(t, tc.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.Total, page.Total))
@@ -620,7 +601,6 @@ func TestRetrieveAllChildren(t *testing.T) {
 			ID:        groupID,
 			Name:      fmt.Sprintf("%s-%d", groupName, i),
 			OwnerID:   uid,
-			Type:      "things",
 			ParentID:  parentID,
 			CreatedAt: creationTime,
 			UpdatedAt: creationTime,
@@ -638,59 +618,75 @@ func TestRetrieveAllChildren(t *testing.T) {
 		groupID = generateGroupID(t)
 	}
 
+	p, err := groupRepo.RetrieveAll(context.Background(), auth.PageMetadata{Level: auth.MaxLevel})
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Equal(t, n, p.Total, fmt.Sprintf("expected total %d got %d\n", n, p.Total))
+
 	cases := map[string]struct {
-		level    uint64
 		parentID string
-		Size     uint64
-		Total    uint64
-		Metadata auth.GroupMetadata
+		size     uint64
+		total    uint64
+		metadata auth.PageMetadata
 	}{
 		"retrieve all children": {
-			Total:    n,
-			Size:     auth.MaxLevel + 1,
-			level:    auth.MaxLevel,
+			size:  auth.MaxLevel + 1,
+			total: n,
+			metadata: auth.PageMetadata{
+				Level:    auth.MaxLevel,
+				Metadata: metadata,
+			},
 			parentID: firstParentID,
 		},
 		"retrieve groups with existing metadata": {
-			Total:    metaNum,
-			Size:     metaNum,
-			Metadata: metadata,
+			size:  metaNum,
+			total: n,
+			metadata: auth.PageMetadata{
+				Level:    auth.MaxLevel,
+				Metadata: metadata,
+			},
 			parentID: firstParentID,
-			level:    auth.MaxLevel,
 		},
 		"retrieve groups with non-existing metadata": {
-			Total:    0,
-			Metadata: wrongMeta,
-			Size:     0,
-			level:    auth.MaxLevel,
+			total: 0,
+			size:  0,
+			metadata: auth.PageMetadata{
+				Level:    auth.MaxLevel,
+				Metadata: wrongMeta,
+			},
 			parentID: firstParentID,
 		},
 		"retrieve groups with hierarchy level depth": {
-			Total:    n,
-			Size:     2 + 1,
-			level:    2,
+			total: n,
+			size:  2 + 1,
+			metadata: auth.PageMetadata{
+				Level: 2,
+			},
 			parentID: firstParentID,
 		},
 		"retrieve groups with hierarchy level depth and existing metadata": {
-			Total:    metaNum,
-			Size:     metaNum,
-			level:    3,
-			Metadata: metadata,
+			total: metaNum,
+			size:  metaNum,
+			metadata: auth.PageMetadata{
+				Level:    3,
+				Metadata: metadata,
+			},
 			parentID: firstParentID,
 		},
 		"retrieve parent groups from children in the middle": {
-			Total:    n / 2,
-			Size:     n / 2,
-			level:    auth.MaxLevel,
+			total: n / 2,
+			size:  n / 2,
+			metadata: auth.PageMetadata{
+				Level: auth.MaxLevel,
+			},
 			parentID: parentMiddle,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := groupRepo.RetrieveAllChildren(context.Background(), tc.parentID, tc.level, tc.Metadata)
+		page, err := groupRepo.RetrieveAllChildren(context.Background(), tc.parentID, tc.metadata)
 		size := len(page.Groups)
-		assert.Equal(t, tc.Size, uint64(size), fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.Size, size))
-		assert.Equal(t, tc.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.Total, page.Total))
+		assert.Equal(t, tc.size, uint64(size), fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
@@ -708,9 +704,13 @@ func TestAssign(t *testing.T) {
 		ID:        generateGroupID(t),
 		Name:      groupName + "Updated",
 		OwnerID:   uid,
-		Type:      "things",
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
+	}
+
+	pm := auth.PageMetadata{
+		Offset: 0,
+		Limit:  10,
 	}
 
 	group, err = groupRepo.Save(context.Background(), group)
@@ -719,23 +719,16 @@ func TestAssign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = groupRepo.Assign(context.Background(), mid, group.ID)
+	err = groupRepo.Assign(context.Background(), mid, group.ID, "things")
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
-	mp, err := groupRepo.Members(context.Background(), group.ID, 10, 10, nil)
+	mp, err := groupRepo.Members(context.Background(), group.ID, "things", pm)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	group = auth.Group{ID: group.ID, Type: "things"}
-	err = groupRepo.Assign(context.Background(), mid, group.ID)
+	err = groupRepo.Assign(context.Background(), mid, group.ID, "things")
 	assert.True(t, errors.Contains(err, auth.ErrMemberAlreadyAssigned), fmt.Sprintf("assign member again: expected %v got %v\n", nil, err))
 
-	mid, err = idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	group = auth.Group{ID: group.ID, Type: "users"}
-	err = groupRepo.Assign(context.Background(), mid, group.ID)
-	assert.True(t, errors.Contains(err, auth.ErrMalformedEntity), fmt.Sprintf("assign new member with wrong group type: expected %v got %v\n", nil, err))
 }
 
 func TestUnassign(t *testing.T) {
@@ -751,9 +744,13 @@ func TestUnassign(t *testing.T) {
 		ID:        generateGroupID(t),
 		Name:      groupName + "Updated",
 		OwnerID:   uid,
-		Type:      "things",
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
+	}
+
+	pm := auth.PageMetadata{
+		Offset: 0,
+		Limit:  10,
 	}
 
 	group, err = groupRepo.Save(context.Background(), group)
@@ -762,22 +759,22 @@ func TestUnassign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = groupRepo.Assign(context.Background(), mid, group.ID)
+	err = groupRepo.Assign(context.Background(), mid, group.ID, "things")
 	require.Nil(t, err, fmt.Sprintf("member assign unexpected error: %s", err))
 
 	mid, err = idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	err = groupRepo.Assign(context.Background(), mid, group.ID)
+	err = groupRepo.Assign(context.Background(), mid, group.ID, "things")
 	require.Nil(t, err, fmt.Sprintf("member assign unexpected error: %s", err))
 
-	mp, err := groupRepo.Members(context.Background(), group.ID, 10, 10, nil)
+	mp, err := groupRepo.Members(context.Background(), group.ID, "things", pm)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 2, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 2, mp.Total))
 
 	err = groupRepo.Unassign(context.Background(), mid, group.ID)
 	require.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
 
-	mp, err = groupRepo.Members(context.Background(), group.ID, 10, 10, nil)
+	mp, err = groupRepo.Members(context.Background(), group.ID, "things", pm)
 	require.Nil(t, err, fmt.Sprintf("members retrieve unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 }
@@ -787,5 +784,4 @@ func cleanUp(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("clean relations unexpected error: %s", err))
 	_, err = db.Exec("delete from groups")
 	require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
-	fmt.Println("cleaned up")
 }

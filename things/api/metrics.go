@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -202,11 +201,11 @@ func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, 
 	return ms.svc.Identify(ctx, key)
 }
 
-func (ms *metricsMiddleware) ListMembers(ctx context.Context, token string, group auth.Group, pm things.PageMetadata) (tp things.Page, err error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, pm things.PageMetadata) (tp things.Page, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_members").Add(1)
 		ms.latency.With("method", "list_members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListMembers(ctx, token, group, pm)
+	return ms.svc.ListMembers(ctx, token, groupID,  pm)
 }

@@ -81,12 +81,13 @@ func (req listGroupsReq) validate() error {
 }
 
 type listMembersReq struct {
-	token    string
-	id       string
-	offset   uint64
-	limit    uint64
-	tree     bool
-	metadata auth.GroupMetadata
+	token     string
+	id        string
+	groupType string
+	offset    uint64
+	limit     uint64
+	tree      bool
+	metadata  auth.GroupMetadata
 }
 
 func (req listMembersReq) validate() error {
@@ -122,19 +123,19 @@ func (req listMembershipReq) validate() error {
 	return nil
 }
 
-type assignMemberGroupReq struct {
+type assignMembersGroupReq struct {
 	token     string
 	groupID   string
-	memberID  string
 	groupType string
+	Members   []string `json:"members"`
 }
 
-func (req assignMemberGroupReq) validate() error {
-	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
-	}
+func (req assignMembersGroupReq) validate() error {
+	// if req.token == "" {
+	// 	return groups.ErrUnauthorizedAccess
+	// }
 
-	if req.groupID == "" && req.memberID == "" && req.groupType == "" {
+	if req.groupID == "" && len(req.Members) == 0 && req.groupType == "" {
 		return groups.ErrMalformedEntity
 	}
 

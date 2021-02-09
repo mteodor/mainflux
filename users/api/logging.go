@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/mainflux/auth"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
 )
@@ -156,9 +155,9 @@ func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email,
 	return lm.svc.SendPasswordReset(ctx, host, email, token)
 }
 
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, token string, group auth.Group, offset, limit uint64, m users.Metadata) (mp users.UserPage, err error) {
+func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m users.Metadata) (mp users.UserPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_members for group %s took %s to complete", group.ID, time.Since(begin))
+		message := fmt.Sprintf("Method list_members for group %s took %s to complete", groupID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -166,5 +165,5 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token string, grou
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListMembers(ctx, token, group, offset, limit, m)
+	return lm.svc.ListMembers(ctx, token, groupID, offset, limit, m)
 }

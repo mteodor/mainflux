@@ -310,19 +310,17 @@ func TestCreateGroup(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Name:        "Group",
 		Description: "Description",
-		Type:        "things",
 	}
 
-	parentGroup := groups.Group{
+	parentGroup := auth.Group{
 		Name:        "ParentGroup",
 		Description: "Description",
-		Type:        "things",
 	}
 
-	parentID, err := svc.CreateGroup(context.Background(), apiToken, parentGroup)
+	parent, err := svc.CreateGroup(context.Background(), apiToken, parentGroup)
 	assert.Nil(t, err, fmt.Sprintf("Creating parent group expected to succeed: %s", err))
 
 	cases := []struct {
@@ -342,19 +340,19 @@ func TestCreateGroup(t *testing.T) {
 		},
 		{
 			desc: "create group with parent",
-			group: groups.Group{
+			group: auth.Group{
 				Name:     groupName,
-				ParentID: parentID,
+				ParentID: parent.ID,
 			},
 			err: nil,
 		},
 		{
 			desc: "create group with invalid parent",
-			group: groups.Group{
+			group: auth.Group{
 				Name:     groupName,
 				ParentID: "xxxxxxxxxx",
 			},
-			err: groups.ErrCreateGroup,
+			err: auth.ErrCreateGroup,
 		},
 	}
 
@@ -380,16 +378,15 @@ func TestUpdateGroup(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Name:        "Group",
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
 	}
 
-	groupID, err := svc.CreateGroup(context.Background(), apiToken, group)
+	group, err = svc.CreateGroup(context.Background(), apiToken, group)
 	assert.Nil(t, err, fmt.Sprintf("Creating parent group failed: %s", err))
 
 	cases := []struct {
@@ -399,11 +396,10 @@ func TestUpdateGroup(t *testing.T) {
 	}{
 		{
 			desc: "update group",
-			group: groups.Group{
-				ID:          groupID,
+			group: auth.Group{
+				ID:          group.ID,
 				Name:        "NewName",
 				Description: "NewDescription",
-				Type:        "users",
 				Metadata: auth.GroupMetadata{
 					"field": "value2",
 				},
@@ -439,16 +435,15 @@ func TestViewGroup(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Name:        "Group",
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
 	}
 
-	groupID, err := svc.CreateGroup(context.Background(), apiToken, group)
+	group, err = svc.CreateGroup(context.Background(), apiToken, group)
 	assert.Nil(t, err, fmt.Sprintf("Creating parent group failed: %s", err))
 
 	cases := []struct {
@@ -461,13 +456,13 @@ func TestViewGroup(t *testing.T) {
 
 			desc:    "view group",
 			token:   apiToken,
-			groupID: groupID,
+			groupID: group.ID,
 			err:     nil,
 		},
 		{
 			desc:    "view group with unauthorized token",
 			token:   "wrongtoken",
-			groupID: groupID,
+			groupID: group.ID,
 			err:     auth.ErrUnauthorizedAccess,
 		},
 		{
@@ -500,9 +495,8 @@ func TestListGroups(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -514,7 +508,7 @@ func TestListGroups(t *testing.T) {
 		group.ParentID = parentID
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
-		parentID = g
+		parentID = g.ID
 	}
 
 	cases := map[string]struct {
@@ -545,7 +539,7 @@ func TestListGroups(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListGroups(context.Background(), tc.token, tc.level, tc.metadata)
+		page, err := svc.ListGroups(context.Background(), tc.token, auth.PageMetadata{Level: tc.level, Metadata: tc.metadata})
 		size := uint64(len(page.Groups))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -569,9 +563,8 @@ func TestListChildren(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -584,8 +577,8 @@ func TestListChildren(t *testing.T) {
 		group.ParentID = parentID
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
-		parentID = g
-		groupIDs[i] = g
+		parentID = g.ID
+		groupIDs[i] = g.ID
 	}
 
 	cases := map[string]struct {
@@ -612,7 +605,7 @@ func TestListChildren(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChildren(context.Background(), tc.token, tc.id, tc.level, tc.metadata)
+		page, err := svc.ListChildren(context.Background(), tc.token, tc.id, auth.PageMetadata{Level: tc.level, Metadata: tc.metadata})
 		size := uint64(len(page.Groups))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -635,9 +628,8 @@ func TestListParents(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -650,8 +642,8 @@ func TestListParents(t *testing.T) {
 		group.ParentID = parentID
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
-		parentID = g
-		groupIDs[i] = g
+		parentID = g.ID
+		groupIDs[i] = g.ID
 	}
 
 	cases := map[string]struct {
@@ -678,7 +670,7 @@ func TestListParents(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListParents(context.Background(), tc.token, tc.id, tc.level, tc.metadata)
+		page, err := svc.ListParents(context.Background(), tc.token, tc.id, auth.PageMetadata{Level: tc.level, Metadata: tc.metadata})
 		size := uint64(len(page.Groups))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -701,23 +693,22 @@ func TestListMembers(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
 	}
 	g, err := svc.CreateGroup(context.Background(), apiToken, group)
 	assert.Nil(t, err, fmt.Sprintf("Creating group expected to succeed: %s", err))
-	group.ID = g
+	group.ID = g.ID
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		uid, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-		err = svc.Assign(context.Background(), apiToken, uid, group)
+		err = svc.Assign(context.Background(), apiToken, uid, group.ID, "things")
 		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
@@ -726,7 +717,7 @@ func TestListMembers(t *testing.T) {
 		size     uint64
 		offset   uint64
 		limit    uint64
-		group    groups.Group
+		group    auth.Group
 		metadata auth.GroupMetadata
 		err      error
 	}{
@@ -756,7 +747,7 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListMembers(context.Background(), tc.token, tc.group, tc.offset, tc.limit, tc.metadata)
+		page, err := svc.ListMembers(context.Background(), tc.token, tc.group.ID, "things", auth.PageMetadata{Offset: tc.offset, Limit: tc.limit, Metadata: tc.metadata})
 		size := uint64(len(page.Members))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -780,16 +771,12 @@ func TestListMemberships(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	group := groups.Group{
+	group := auth.Group{
 		Description: "Description",
-		Type:        "things",
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
 	}
-	g, err := svc.CreateGroup(context.Background(), apiToken, group)
-	assert.Nil(t, err, fmt.Sprintf("Creating group expected to succeed: %s", err))
-	group.ID = g
 
 	memberID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
@@ -800,8 +787,7 @@ func TestListMemberships(t *testing.T) {
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-		group.ID = g
-		err = svc.Assign(context.Background(), apiToken, memberID, group)
+		err = svc.Assign(context.Background(), apiToken, memberID, g.ID, "things")
 		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
@@ -810,7 +796,7 @@ func TestListMemberships(t *testing.T) {
 		size     uint64
 		offset   uint64
 		limit    uint64
-		group    groups.Group
+		group    auth.Group
 		metadata auth.GroupMetadata
 		err      error
 	}{
@@ -840,7 +826,7 @@ func TestListMemberships(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListMemberships(context.Background(), tc.token, memberID, tc.offset, tc.limit, tc.metadata)
+		page, err := svc.ListMemberships(context.Background(), tc.token, memberID, auth.PageMetadata{Limit: tc.limit, Offset: tc.offset, Metadata: tc.metadata})
 		size := uint64(len(page.Groups))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -867,15 +853,14 @@ func TestRemoveGroup(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	creationTime := time.Now().UTC()
-	group := groups.Group{
+	group := auth.Group{
 		Name:      groupName,
 		OwnerID:   uid,
-		Type:      "things",
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 	}
 
-	group, err := svc.CreateGroup(context.Background(), apiToken, group)
+	group, err = svc.CreateGroup(context.Background(), apiToken, group)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	err = svc.RemoveGroup(context.Background(), "wrongToken", group.ID)
@@ -884,14 +869,14 @@ func TestRemoveGroup(t *testing.T) {
 	err = svc.RemoveGroup(context.Background(), apiToken, "wrongID")
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
-	gp, err := svc.ListGroups(context.Background(), apiToken, 0, nil)
+	gp, err := svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, gp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, gp.Total))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, group.ID)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 
-	gp, err = svc.ListGroups(context.Background(), apiToken, 0, nil)
+	gp, err = svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, gp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, gp.Total))
 
@@ -917,29 +902,27 @@ func TestAssign(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	creationTime := time.Now().UTC()
-	group := groups.Group{
+	group := auth.Group{
 		Name:      groupName + "Updated",
 		OwnerID:   uid,
-		Type:      "things",
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 	}
 
-	groupID, err := svc.CreateGroup(context.Background(), apiToken, group)
+	group, err = svc.CreateGroup(context.Background(), apiToken, group)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
-	group.ID = groupID
 
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = svc.Assign(context.Background(), apiToken, mid, group)
+	err = svc.Assign(context.Background(), apiToken, mid, group.ID, "things")
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
-	mp, err := svc.ListMembers(context.Background(), apiToken, group, 0, 10, nil)
+	mp, err := svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Offset: 0, Limit: 10})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	err = svc.Assign(context.Background(), "wrongToken", mid, group)
+	err = svc.Assign(context.Background(), "wrongToken", mid, group.ID, "things")
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
 }
@@ -964,38 +947,36 @@ func TestUnassign(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	creationTime := time.Now().UTC()
-	group := groups.Group{
+	group := auth.Group{
 		Name:      groupName + "Updated",
 		OwnerID:   uid,
-		Type:      "things",
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 	}
 
-	groupID, err := svc.CreateGroup(context.Background(), apiToken, group)
+	group, err = svc.CreateGroup(context.Background(), apiToken, group)
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
-	group.ID = groupID
 
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = svc.Assign(context.Background(), apiToken, mid, group)
+	err = svc.Assign(context.Background(), apiToken, mid, group.ID, "things")
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
-	mp, err := svc.ListMembers(context.Background(), apiToken, group, 0, 10, nil)
+	mp, err := svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Limit: 10, Offset: 0})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	err = svc.Unassign(context.Background(), apiToken, mid, group)
+	err = svc.Unassign(context.Background(), apiToken, mid, group.ID)
 	require.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
 
-	mp, err = svc.ListMembers(context.Background(), apiToken, group, 0, 10, nil)
+	mp, err = svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Limit: 10, Offset: 0})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, mp.Total))
 
-	err = svc.Unassign(context.Background(), "wrongToken", mid, group)
+	err = svc.Unassign(context.Background(), "wrongToken", mid, group.ID)
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
-	err = svc.Unassign(context.Background(), apiToken, mid, group)
+	err = svc.Unassign(context.Background(), apiToken, mid, group.ID)
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 }

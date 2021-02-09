@@ -107,65 +107,65 @@ func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 	return ms.svc.ViewGroup(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, level uint64, gm auth.GroupMetadata) (gp auth.GroupPage, err error) {
+func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_groups").Add(1)
 		ms.latency.With("method", "list_groups").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListGroups(ctx, token, level, gm)
+	return ms.svc.ListGroups(ctx, token, pm)
 }
 
-func (ms *metricsMiddleware) ListParents(ctx context.Context, token, childID string, level uint64, gm auth.GroupMetadata) (gp auth.GroupPage, err error) {
+func (ms *metricsMiddleware) ListParents(ctx context.Context, token, childID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "parents").Add(1)
 		ms.latency.With("method", "parents").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListParents(ctx, token, childID, level, gm)
+	return ms.svc.ListParents(ctx, token, childID, pm)
 }
 
-func (ms *metricsMiddleware) ListChildren(ctx context.Context, token, parentID string, level uint64, gm auth.GroupMetadata) (gp auth.GroupPage, err error) {
+func (ms *metricsMiddleware) ListChildren(ctx context.Context, token, parentID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_children").Add(1)
 		ms.latency.With("method", "list_children").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListChildren(ctx, token, parentID, level, gm)
+	return ms.svc.ListChildren(ctx, token, parentID, pm)
 }
 
-func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm auth.GroupMetadata) (gp auth.MemberPage, err error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID, groupType string, pm auth.PageMetadata) (gp auth.MemberPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_members").Add(1)
 		ms.latency.With("method", "list_members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListMembers(ctx, token, groupID, offset, limit, gm)
+	return ms.svc.ListMembers(ctx, token, groupID, groupType, pm)
 }
 
-func (ms *metricsMiddleware) ListMemberships(ctx context.Context, token, groupID string, offset, limit uint64, gm auth.GroupMetadata) (gp auth.GroupPage, err error) {
+func (ms *metricsMiddleware) ListMemberships(ctx context.Context, token, groupID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_memberships").Add(1)
 		ms.latency.With("method", "list_memberships").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListMemberships(ctx, token, groupID, offset, limit, gm)
+	return ms.svc.ListMemberships(ctx, token, groupID, pm)
 }
 
-func (ms *metricsMiddleware) Assign(ctx context.Context, token, memberID, groupID string) (err error) {
+func (ms *metricsMiddleware) Assign(ctx context.Context, token, groupID, groupType string, memberIDs ...string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "assign").Add(1)
 		ms.latency.With("method", "assign").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Assign(ctx, token, memberID, groupID)
+	return ms.svc.Assign(ctx, token, groupID, groupType, memberIDs...)
 }
 
-func (ms *metricsMiddleware) Unassign(ctx context.Context, token, memberID, groupID string) (err error) {
+func (ms *metricsMiddleware) Unassign(ctx context.Context, token, groupID string, memberIDs ...string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "unassign").Add(1)
 		ms.latency.With("method", "unassign").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Unassign(ctx, token, memberID, groupID)
+	return ms.svc.Unassign(ctx, token, groupID, memberIDs...)
 }

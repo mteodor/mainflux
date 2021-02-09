@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -119,11 +118,11 @@ func (ms *metricsMiddleware) SendPasswordReset(ctx context.Context, host, email,
 	return ms.svc.SendPasswordReset(ctx, host, email, token)
 }
 
-func (ms *metricsMiddleware) ListMembers(ctx context.Context, token string, group auth.Group, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_members").Add(1)
 		ms.latency.With("method", "list_members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListMembers(ctx, token, group, offset, limit, gm)
+	return ms.svc.ListMembers(ctx, token, groupID, offset, limit, gm)
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const MaxLevel = 5
+const MaxLevel = uint64(5)
 
 type GroupMetadata map[string]interface{}
 
@@ -20,20 +20,23 @@ type Group struct {
 	// Indicates a level in hierarchy from first group node.
 	// For a root node level is 1.
 	Level int
-	// Path is a path in a tree, consisted of group names
-	// parentName.childrenName1.childrenName2 .
+	// Path is a path in a tree, consisted of group ids
+	// parentID1.parentID2.childID1
+	// e.g. 01EXPM5Z8HRGFAEWTETR1X1441.01EXPKW2TVK74S5NWQ979VJ4PJ.01EXPKW2TVK74S5NWQ979VJ4PJ .
 	Path      string
-	Type      string
 	Children  []*Group
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 type PageMetadata struct {
-	Total  uint64
-	Offset uint64
-	Limit  uint64
-	Name   string
+	Total    uint64
+	Offset   uint64
+	Limit    uint64
+	Level    uint64
+	Name     string
+	Type     string
+	Metadata GroupMetadata
 }
 
 type GroupPage struct {
@@ -57,28 +60,28 @@ type GroupService interface {
 	ViewGroup(ctx context.Context, token, id string) (Group, error)
 
 	// ListGroups retrieves groups.
-	ListGroups(ctx context.Context, token string, level uint64, gm GroupMetadata) (GroupPage, error)
+	ListGroups(ctx context.Context, token string, pm PageMetadata) (GroupPage, error)
 
 	// ListChildren retrieves groups that are children to group identified by parentID
-	ListChildren(ctx context.Context, token, parentID string, level uint64, gm GroupMetadata) (GroupPage, error)
+	ListChildren(ctx context.Context, token, parentID string, pm PageMetadata) (GroupPage, error)
 
 	// ListParents retrieves groups that are parent to group identified by childID.
-	ListParents(ctx context.Context, token, childID string, level uint64, gm GroupMetadata) (GroupPage, error)
+	ListParents(ctx context.Context, token, childID string, pm PageMetadata) (GroupPage, error)
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token string, groupID string, offset, limit uint64, gm GroupMetadata) (MemberPage, error)
+	ListMembers(ctx context.Context, token, groupID, groupType string, pm PageMetadata) (MemberPage, error)
 
 	// ListMemberships retrieves all groups for member that is identified with memberID belongs to.
-	ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, gm GroupMetadata) (GroupPage, error)
+	ListMemberships(ctx context.Context, token, memberID string, pm PageMetadata) (GroupPage, error)
 
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
 
 	// Assign adds  member with memberID into the group identified by groupID.
-	Assign(ctx context.Context, token string, memberID string, groupID string) error
+	Assign(ctx context.Context, token, groupID, groupType string, memberIDs ...string) error
 
 	// Unassign removes member with memberID from group identified by groupID.
-	Unassign(ctx context.Context, token string, memberID string, groupID string) error
+	Unassign(ctx context.Context, token, groupID string, memberIDs ...string) error
 }
 
 type GroupRepository interface {
@@ -95,25 +98,25 @@ type GroupRepository interface {
 	RetrieveByID(ctx context.Context, id string) (Group, error)
 
 	// RetrieveAll retrieves all groups.
-	RetrieveAll(ctx context.Context, level uint64, gm GroupMetadata) (GroupPage, error)
+	RetrieveAll(ctx context.Context, pm PageMetadata) (GroupPage, error)
 
 	// RetrieveAllParents retrieves all groups that are ancestors to the group with given groupID.
-	RetrieveAllParents(ctx context.Context, groupID string, level uint64, gm GroupMetadata) (GroupPage, error)
+	RetrieveAllParents(ctx context.Context, groupID string, pm PageMetadata) (GroupPage, error)
 
 	// RetrieveAllChildren retrieves all children from group with given groupID up to the hierarchy level.
-	RetrieveAllChildren(ctx context.Context, groupID string, level uint64, gm GroupMetadata) (GroupPage, error)
+	RetrieveAllChildren(ctx context.Context, groupID string, pm PageMetadata) (GroupPage, error)
 
 	//  Retrieves list of groups that member belongs to
-	Memberships(ctx context.Context, memberID string, offset, limit uint64, gm GroupMetadata) (GroupPage, error)
+	Memberships(ctx context.Context, memberID string, pm PageMetadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.
-	Members(ctx context.Context, groupID string, offset, limit uint64, gm GroupMetadata) (MemberPage, error)
+	Members(ctx context.Context, groupID, groupType string, pm PageMetadata) (MemberPage, error)
 
 	// Assign adds member to group.
-	Assign(ctx context.Context, memberID string, groupID string) error
+	Assign(ctx context.Context, groupID, groupType string, memberIDs ...string) error
 
 	// Unassign removes a member from a group
-	Unassign(ctx context.Context, memberID string, groupID string) error
+	Unassign(ctx context.Context, groupID string, memberIDs ...string) error
 }
 
 var (

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-zoo/bone"
+	"github.com/mainflux/mainflux/auth"
 	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -170,12 +171,15 @@ func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return req, nil
 }
 
-func DecodeAssignMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := assignMemberGroupReq{
+func DecodeAssignMembersGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := assignMembersGroupReq{
 		token:     r.Header.Get("Authorization"),
 		groupID:   bone.GetValue(r, "groupID"),
-		memberID:  bone.GetValue(r, "memberID"),
 		groupType: bone.GetValue(r, "type"),
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(auth.ErrMalformedEntity, err)
 	}
 
 	return req, nil

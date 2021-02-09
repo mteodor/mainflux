@@ -98,7 +98,7 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 			return emptyRes{}, err
 		}
 
-		err = svc.Assign(ctx, req.token, req.memberID, req.groupID)
+		err = svc.Assign(ctx, req.token, req.memberID, req.groupID, req.groupType)
 		if err != nil {
 			return emptyRes{}, err
 		}
@@ -108,25 +108,25 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 }
 
 func membersEndpoint(svc auth.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (i interface{}, e error) {
 		req := request.(membersReq)
 		if err := req.validate(); err != nil {
 			return membersRes{}, err
 		}
 
-		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, nil)
+		pm := auth.PageMetadata{
+			Offset: req.offset,
+			Limit:  req.limit,
+		}
+		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.groupType, pm)
 		if err != nil {
 			return membersRes{}, err
-		}
-		memberIDs := []string{}
-		for _, m := range mp.Members {
-			memberIDs = append(memberIDs, m)
 		}
 		return membersRes{
 			offset:  req.offset,
 			limit:   req.limit,
 			total:   mp.PageMetadata.Total,
-			members: memberIDs,
+			members: mp.Members,
 		}, nil
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/mainflux/auth"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
 )
@@ -280,9 +279,9 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id strin
 	return lm.svc.Identify(ctx, key)
 }
 
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, token string, group auth.Group, pm things.PageMetadata) (tp things.Page, err error) {
+func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID string, pm things.PageMetadata) (tp things.Page, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_members for token %s and group id %s took %s to complete", token, group.ID, time.Since(begin))
+		message := fmt.Sprintf("Method list_members for token %s and group id %s took %s to complete", token, groupID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -290,5 +289,5 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token string, grou
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListMembers(ctx, token, group, pm)
+	return lm.svc.ListMembers(ctx, token, groupID,  pm)
 }

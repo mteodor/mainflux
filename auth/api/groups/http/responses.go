@@ -98,7 +98,8 @@ func (res groupRes) Empty() bool {
 }
 
 type groupPageRes struct {
-	pageRes
+	Total  uint64         `json:"total"`
+	Level  uint64         `json:"level"`
 	Groups []viewGroupRes `json:"groups"`
 }
 

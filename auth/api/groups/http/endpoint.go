@@ -20,7 +20,6 @@ func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Name:        req.Name,
 			Description: req.Description,
 			ParentID:    req.ParentID,
-			Type:        req.Type,
 			Metadata:    req.Metadata,
 		}
 
@@ -106,8 +105,11 @@ func ListGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-
-		page, err := svc.ListGroups(ctx, req.token, req.level, req.metadata)
+		pm := auth.PageMetadata{
+			Level:    req.level,
+			Metadata: req.metadata,
+		}
+		page, err := svc.ListGroups(ctx, req.token, pm)
 		if err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
@@ -127,7 +129,13 @@ func ListMemberships(svc groups.Service) endpoint.Endpoint {
 			return memberPageRes{}, err
 		}
 
-		page, err := svc.ListMemberships(ctx, req.token, req.id, req.offset, req.limit, req.metadata)
+		pm := auth.PageMetadata{
+			Offset:   req.offset,
+			Limit:    req.limit,
+			Metadata: req.metadata,
+		}
+
+		page, err := svc.ListMemberships(ctx, req.token, req.id, pm)
 		if err != nil {
 			return memberPageRes{}, err
 		}
@@ -147,7 +155,11 @@ func ListGroupChildrenEndpoint(svc groups.Service) endpoint.Endpoint {
 			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 
-		page, err := svc.ListChildren(ctx, req.token, req.id, req.level, req.metadata)
+		pm := auth.PageMetadata{
+			Level:    req.level,
+			Metadata: req.metadata,
+		}
+		page, err := svc.ListChildren(ctx, req.token, req.id, pm)
 		if err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
@@ -166,8 +178,12 @@ func ListGroupParentsEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
+		pm := auth.PageMetadata{
+			Level:    req.level,
+			Metadata: req.metadata,
+		}
 
-		page, err := svc.ListParents(ctx, req.token, req.id, req.level, req.metadata)
+		page, err := svc.ListParents(ctx, req.token, req.id, pm)
 		if err != nil {
 			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
 		}
@@ -182,12 +198,15 @@ func ListGroupParentsEndpoint(svc groups.Service) endpoint.Endpoint {
 
 func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignMemberGroupReq)
+		req := request.(assignMembersGroupReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-
-		if err := svc.Assign(ctx, req.token, req.memberID, req.groupID); err != nil {
+		var ids []string
+		for _, id := range req.Members {
+			ids = append(ids, id)
+		}
+		if err := svc.Assign(ctx, req.token, req.groupID, req.groupType, ids...); err != nil {
 			return nil, errors.Wrap(groups.ErrAssignToGroup, err)
 		}
 
@@ -197,12 +216,15 @@ func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 
 func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignMemberGroupReq)
+		req := request.(assignMembersGroupReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-
-		if err := svc.Unassign(ctx, req.token, req.memberID, req.groupID); err != nil {
+		var ids []string
+		for _, id := range req.Members {
+			ids = append(ids, id)
+		}
+		if err := svc.Unassign(ctx, req.token, req.groupID, ids...); err != nil {
 			return nil, errors.Wrap(groups.ErrUnassignFromGroup, err)
 		}
 
@@ -217,7 +239,12 @@ func ListMembersEndpoint(svc groups.Service) endpoint.Endpoint {
 			return memberPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
 
-		page, err := svc.ListMembers(ctx, req.token, req.id, req.offset, req.limit, req.metadata)
+		pm := auth.PageMetadata{
+			Offset:   req.offset,
+			Limit:    req.limit,
+			Metadata: req.metadata,
+		}
+		page, err := svc.ListMembers(ctx, req.token, req.id, req.groupType, pm)
 		if err != nil {
 			return memberPageRes{}, err
 		}
@@ -245,11 +272,8 @@ func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
 	}
 
 	res := groupPageRes{
-		pageRes: pageRes{
-			Total:  page.Total,
-			Offset: page.Offset,
-			Limit:  page.Limit,
-		},
+		Total:  page.Total,
+		Level:  page.Level,
 		Groups: []viewGroupRes{},
 	}
 
@@ -295,11 +319,8 @@ func toViewGroupRes(group auth.Group) viewGroupRes {
 
 func buildGroupsResponse(gp auth.GroupPage) groupPageRes {
 	res := groupPageRes{
-		pageRes: pageRes{
-			Total:  gp.Total,
-			Offset: gp.Offset,
-			Limit:  gp.Limit,
-		},
+		Total:  gp.Total,
+		Level:  gp.Level,
 		Groups: []viewGroupRes{},
 	}
 

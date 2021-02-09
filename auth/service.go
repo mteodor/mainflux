@@ -235,32 +235,32 @@ func (svc service) CreateGroup(ctx context.Context, token string, group Group) (
 	return group, nil
 }
 
-func (svc service) ListGroups(ctx context.Context, token string, level uint64, gm GroupMetadata) (GroupPage, error) {
+func (svc service) ListGroups(ctx context.Context, token string, pm PageMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.RetrieveAll(ctx, level, gm)
+	return svc.groups.RetrieveAll(ctx, pm)
 }
 
-func (svc service) ListParents(ctx context.Context, token string, childID string, level uint64, gm GroupMetadata) (GroupPage, error) {
+func (svc service) ListParents(ctx context.Context, token string, childID string, pm PageMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.RetrieveAllParents(ctx, childID, level, gm)
+	return svc.groups.RetrieveAllParents(ctx, childID, pm)
 }
 
-func (svc service) ListChildren(ctx context.Context, token string, parentID string, level uint64, gm GroupMetadata) (GroupPage, error) {
+func (svc service) ListChildren(ctx context.Context, token string, parentID string, pm PageMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.RetrieveAllChildren(ctx, parentID, level, gm)
+	return svc.groups.RetrieveAllChildren(ctx, parentID, pm)
 }
 
-func (svc service) ListMembers(ctx context.Context, token string, groupID string, offset, limit uint64, gm GroupMetadata) (MemberPage, error) {
+func (svc service) ListMembers(ctx context.Context, token string, groupID, groupType string, pm PageMetadata) (MemberPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	mp, err := svc.groups.Members(ctx, groupID, offset, limit, gm)
+	mp, err := svc.groups.Members(ctx, groupID, groupType, pm)
 	if err != nil {
 		return MemberPage{}, errors.Wrap(ErrFailedToRetrieveMembers, err)
 	}
@@ -272,13 +272,6 @@ func (svc service) RemoveGroup(ctx context.Context, token, id string) error {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.Delete(ctx, id)
-}
-
-func (svc service) Unassign(ctx context.Context, token string, memberID, groupID string) error {
-	if _, err := svc.Identify(ctx, token); err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
-	}
-	return svc.groups.Unassign(ctx, memberID, groupID)
 }
 
 func (svc service) UpdateGroup(ctx context.Context, token string, group Group) (Group, error) {
@@ -295,16 +288,23 @@ func (svc service) ViewGroup(ctx context.Context, token, id string) (Group, erro
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
-func (svc service) Assign(ctx context.Context, token string, memberID, groupID string) error {
+func (svc service) Assign(ctx context.Context, token string, groupID, groupType string, memberIDs ...string) error {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Assign(ctx, memberID, groupID)
+	return svc.groups.Assign(ctx, groupID, groupType, memberIDs...)
 }
 
-func (svc service) ListMemberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm GroupMetadata) (GroupPage, error) {
+func (svc service) Unassign(ctx context.Context, token string, groupID string, memberIDs ...string) error {
+	if _, err := svc.Identify(ctx, token); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.groups.Unassign(ctx, groupID, memberIDs...)
+}
+
+func (svc service) ListMemberships(ctx context.Context, token string, memberID string, pm PageMetadata) (GroupPage, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Memberships(ctx, memberID, offset, limit, gm)
+	return svc.groups.Memberships(ctx, memberID, pm)
 }

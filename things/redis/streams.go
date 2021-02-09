@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/go-redis/redis"
-	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -245,6 +244,6 @@ func (es eventStore) Identify(ctx context.Context, key string) (string, error) {
 	return es.svc.Identify(ctx, key)
 }
 
-func (es eventStore) ListMembers(ctx context.Context, token string, group auth.Group, pm things.PageMetadata) (things.Page, error) {
-	return es.svc.ListMembers(ctx, token, group, pm)
+func (es eventStore) ListMembers(ctx context.Context, token, groupID string, pm things.PageMetadata) (things.Page, error) {
+	return es.svc.ListMembers(ctx, token, groupID, pm)
 }

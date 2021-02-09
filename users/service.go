@@ -110,7 +110,7 @@ type Service interface {
 	SendPasswordReset(ctx context.Context, host, email, token string) error
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token string, group auth.Group, offset, limit uint64, meta Metadata) (UserPage, error)
+	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -313,14 +313,14 @@ func (svc usersService) SendPasswordReset(_ context.Context, host, email, token 
 	return svc.email.SendPasswordReset(to, host, token)
 }
 
-func (svc usersService) ListMembers(ctx context.Context, token string, group auth.Group, offset, limit uint64, m Metadata) (UserPage, error) {
+func (svc usersService) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (UserPage, error) {
 	if _, err := svc.identify(ctx, token); err != nil {
 		return UserPage{}, err
 	}
 
-	res, err := svc.members(ctx, token, group, offset, limit)
+	res, err := svc.members(ctx, token, groupID, offset, limit)
 	if err != nil {
-		return UserPage{}, nil
+		return UserPage{}, err
 	}
 
 	return svc.users.RetrieveAll(ctx, offset, limit, res, "", m)
@@ -343,10 +343,10 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 	return identity.GetEmail(), nil
 }
 
-func (svc usersService) members(ctx context.Context, token string, group auth.Group, limit, offset uint64) ([]string, error) {
+func (svc usersService) members(ctx context.Context, token, groupID string, limit, offset uint64) ([]string, error) {
 	req := mainflux.MembersReq{
 		Token:   token,
-		GroupID: group.ID,
+		GroupID: groupID,
 		Offset:  offset,
 		Limit:   limit,
 		Type:    "users",
@@ -354,7 +354,7 @@ func (svc usersService) members(ctx context.Context, token string, group auth.Gr
 
 	res, err := svc.auth.Members(ctx, &req)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	return res.Members, nil
 }
