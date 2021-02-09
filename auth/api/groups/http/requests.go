@@ -40,7 +40,6 @@ type updateGroupReq struct {
 	id          string
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
-	ParentID    string                 `json:"parent_id,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -51,10 +50,6 @@ func (req updateGroupReq) validate() error {
 
 	if req.id == "" {
 		return groups.ErrMalformedEntity
-	}
-
-	if req.ParentID != "" {
-		return groups.ErrParentInvariant
 	}
 
 	return nil

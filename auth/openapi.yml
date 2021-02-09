@@ -63,7 +63,197 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
-
+  /groups:
+    post:
+      summary: Creates new group
+      description: |
+        Creates new group that can be used for grouping entities - things, users.
+      tags:
+        - auth
+      requestBody:
+        $ref: "#/components/requestBodies/GroupCreateReq"
+      security:
+        - Authorization: []
+      responses:
+        '201':
+          $ref: "#/components/responses/GroupCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '409':
+          description: Failed due to using an existing email address.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    get:
+      summary: Gets all groups.
+      description: |
+        Gets all groups up to a max level of hierarchy that can be fetched in one
+        request ( max level = 5). Result can be filtered by metadata. Groups will 
+        be returned as JSON array or JSON tree.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Level"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Tree"
+      responses:
+        '200':
+          $ref: "#/components/responses/GroupsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Group does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{id}:
+    get:
+      summary: Gets group info.
+      description: |
+        Gets info on a group specified by id.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+      responses:
+        '200':
+          $ref: "#/components/responses/GroupRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Group does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Updates group data.
+      description: |
+        Updates Name, Description or Metadata of a group.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupID"
+      requestBody:
+        $ref: "#/components/requestBodies/GroupUpdateReq"
+      responses:
+        '200':
+          description: Group updated.
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Group does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Deletes group.
+      description: |
+        Deletes group. If group is parent and descendant groups do not have any members
+        child groups will be deleted. Group cannot be deleted if has members or if 
+        any descendant group has members.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Level"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Tree"
+      responses:
+        '204':
+          description: Group removed.
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Group does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{id}/children:
+    get:
+      summary: Gets group children.
+      description: |
+        Gets the whole tree of descendants of group for given id including itself.
+        For performance reason request is limited up to a given level of hierarchy
+        (max. 5).
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Level"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Tree"
+      responses:
+        '200':
+          $ref: "#/components/responses/GroupsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Group does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{id}/parents:
+    get:
+      summary: Gets group info.
+      description: |
+        Gets a direct line of ancestors for a group specified by id.
+        Result is up to a specified hierarchy level or up to a root group.
+        Result can be a JSON array or a JSON tree.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Level"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Tree"
+      responses:
+        '200':
+          $ref: "#/components/responses/GroupsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Group does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{id}/{type}:
+    post:
+      summary: Assigns members to a group.
+      description: |
+        Assigns thing or user id to a group.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/MemberType"
+      requestBody:
+        $ref: "#/components/requestBodies/MemberIDs"
+      responses:
+        '201':
+          $ref: "#/components/responses/GroupCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '409':
+          description: Failed due to using an existing email address.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
 components:
   securitySchemes:
     Authorization:
@@ -114,6 +304,23 @@ components:
         type: string
         format: uuid
       required: true
+    GroupID:
+      name: id
+      description: Group ID.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    MemberType:
+      name: id
+      description: Member type association.
+      in: path
+      schema:
+        type: string
+        format: 
+      required: true
+
 
   requestBodies:
     KeyRequest:
@@ -138,7 +345,10 @@ components:
                 format: integer
                 example: 23456
                 description: Number of seconds issued token is valid for.
-
+    GroupCreateReq:  
+      description: JSON-formatted document describing group create request.
+      required: true
+      content:
   responses:
     ServiceError:
       description: Unexpected server-side error occurred.

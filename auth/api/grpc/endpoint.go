@@ -75,7 +75,6 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 			return authorizeRes{}, err
 		}
 
-		// TODO implement authorization
 		authorized, err := svc.Authorize(ctx, req.token, req.Sub, req.Obj, req.Obj)
 		if err != nil {
 			return authorizeRes{}, err

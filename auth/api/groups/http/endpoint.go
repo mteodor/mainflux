@@ -70,7 +70,6 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			ID:          req.id,
 			Name:        req.Name,
 			Description: req.Description,
-			ParentID:    req.ParentID,
 			Metadata:    req.Metadata,
 		}
 
