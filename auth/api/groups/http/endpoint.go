@@ -271,6 +271,8 @@ func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
 	}
 
 	res := groupPageRes{
+		Limit:  page.Limit,
+		Offset: page.Offset,
 		Total:  page.Total,
 		Level:  page.Level,
 		Groups: []viewGroupRes{},

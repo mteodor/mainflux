@@ -41,19 +41,18 @@ func (res memberPageRes) Empty() bool {
 }
 
 type viewGroupRes struct {
-	ID          string                 `json:"id,omitempty"`
-	Name        string                 `json:"name,omitempty"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
 	ParentID    string                 `json:"parent_id,omitempty"`
-	OwnerID     string                 `json:"owner_id,omitempty"`
-	Description string                 `json:"description,omitempty"`
+	OwnerID     string                 `json:"owner_id"`
+	Description string                 `json:"description"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Type        string                 `json:"type,omitempty"`
-	// Indicates a level in tree hierarchy from first group node.
-	Level int `json:"level,omitempty"`
+	// Indicates a level in tree hierarchy from first group node - root.
+	Level int `json:"level"`
 	// Path is a path in a tree, consisted of group names
 	// parentName.childrenName1.childrenName2 .
 	Path      string          `json:"path"`
-	Children  []*viewGroupRes `json:"children"`
+	Children  []*viewGroupRes `json:"children,omitempty"`
 	CreatedAt time.Time       `json:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at"`
 }
@@ -98,6 +97,8 @@ func (res groupRes) Empty() bool {
 }
 
 type groupPageRes struct {
+	Limit  uint64         `json:"limit,omitempty"`
+	Offset uint64         `json:"offset,omitempty"`
 	Total  uint64         `json:"total"`
 	Level  uint64         `json:"level"`
 	Groups []viewGroupRes `json:"groups"`

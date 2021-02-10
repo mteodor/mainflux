@@ -14,7 +14,6 @@ type createGroupReq struct {
 	token       string
 	Name        string                 `json:"name,omitempty"`
 	ParentID    string                 `json:"parent_id,omitempty"`
-	Type        string                 `json:"type,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -28,7 +27,7 @@ func (req createGroupReq) validate() error {
 	}
 	// If the group is root (i.e. no parent) type must specified
 	// otherwise group inherits type from the parent.
-	if req.Type == "" && req.ParentID == "" {
+	if req.ParentID == "" {
 		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrMissingGroupType)
 	}
 
