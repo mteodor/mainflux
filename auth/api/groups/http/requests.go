@@ -96,7 +96,7 @@ func (req listMembersReq) validate() error {
 	return nil
 }
 
-type listMembershipReq struct {
+type listMembershipsReq struct {
 	token    string
 	id       string
 	offset   uint64
@@ -105,7 +105,7 @@ type listMembershipReq struct {
 	metadata auth.GroupMetadata
 }
 
-func (req listMembershipReq) validate() error {
+func (req listMembershipsReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}
@@ -125,9 +125,9 @@ type assignMembersGroupReq struct {
 }
 
 func (req assignMembersGroupReq) validate() error {
-	// if req.token == "" {
-	// 	return groups.ErrUnauthorizedAccess
-	// }
+	if req.token == "" {
+		return groups.ErrUnauthorizedAccess
+	}
 
 	if req.groupID == "" && len(req.Members) == 0 && req.groupType == "" {
 		return groups.ErrMalformedEntity

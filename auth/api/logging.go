@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/auth"
-	groups "github.com/mainflux/mainflux/auth"
 	log "github.com/mainflux/mainflux/logger"
 )
 
@@ -109,7 +108,7 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return lm.svc.CreateGroup(ctx, token, group)
 }
 
-func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, group auth.Group) (gr groups.Group, err error) {
+func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, group auth.Group) (gr auth.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_group for token %s and name %s took %s to complete", token, group.Name, time.Since(begin))
 		if err != nil {

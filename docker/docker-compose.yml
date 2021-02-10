@@ -67,8 +67,6 @@ services:
       - mainflux-base-net
     volumes:
       - mainflux-auth-db-volume:/var/lib/postgresql/data
-    ports:
-      - 6002:5432
 
   auth:
     image: mainflux/auth:${MF_RELEASE_TAG}
@@ -155,8 +153,6 @@ services:
       - mainflux-base-net
     volumes:
       - mainflux-things-db-volume:/var/lib/postgresql/data
-    ports:
-      - 6001:5432
 
   auth-redis:
     image: redis:5.0-alpine
@@ -172,7 +168,7 @@ services:
     container_name: mainflux-things
     depends_on:
       - things-db
-      # - auth
+      - auth
     restart: on-failure
     environment:
       MF_THINGS_LOG_LEVEL: ${MF_THINGS_LOG_LEVEL}

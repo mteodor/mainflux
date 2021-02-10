@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/mainflux/mainflux/auth"
-	groups "github.com/mainflux/mainflux/auth"
 )
 
 var _ auth.Service = (*metricsMiddleware)(nil)
@@ -82,7 +81,7 @@ func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, grou
 	return ms.svc.CreateGroup(ctx, token, group)
 }
 
-func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group auth.Group) (gr groups.Group, err error) {
+func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, token string, group auth.Group) (gr auth.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_group").Add(1)
 		ms.latency.With("method", "update_group").Observe(time.Since(begin).Seconds())

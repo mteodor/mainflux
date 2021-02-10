@@ -156,7 +156,7 @@ func (client grpcClient) Members(ctx context.Context, req *mainflux.MembersReq, 
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.members(ctx, membersReq{token: req.GetToken(), groupID: req.GetGroupID(), groupType: req.GetType()})
+	res, err := client.members(ctx, membersReq{token: req.GetToken(), groupID: req.GetGroupID(), memberType: req.GetType()})
 	if err != nil {
 		return &mainflux.MembersRes{}, err
 	}
@@ -179,7 +179,7 @@ func encodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, 
 		Offset:  req.offset,
 		Limit:   req.limit,
 		GroupID: req.groupID,
-		Type:    req.groupType,
+		Type:    req.memberType,
 	}, nil
 }
 

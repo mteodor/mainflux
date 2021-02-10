@@ -319,7 +319,7 @@ components:
           description: Id of parent group, it must be existing group.
         metadata:
           type: object
-          description: Arbitrary, object-encoded thing's data.
+          description: Arbitrary, object-encoded group's data.
     GroupUpdateSchema:
       type: object
       properties:
@@ -332,7 +332,7 @@ components:
           description: Group description, free form text. 
         metadata:
           type: object
-          description: Arbitrary, object-encoded thing's data.
+          description: Arbitrary, object-encoded group's data.
     GroupResSchema:
       type: object
       properties:

@@ -145,12 +145,12 @@ type usersService struct {
 }
 
 // New instantiates the users service implementation
-func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, m Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp) Service {
+func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, e Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp) Service {
 	return &usersService{
 		users:      users,
 		hasher:     hasher,
 		auth:       auth,
-		email:      m,
+		email:      e,
 		idProvider: idp,
 		passRegex:  passRegex,
 	}

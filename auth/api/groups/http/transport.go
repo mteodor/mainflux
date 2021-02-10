@@ -121,7 +121,7 @@ func DecodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 		return nil, err
 	}
 
-	req := listMembershipReq{
+	req := listMembershipsReq{
 		token:    r.Header.Get("Authorization"),
 		id:       bone.GetValue(r, "memberID"),
 		offset:   o,

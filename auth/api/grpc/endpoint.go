@@ -109,7 +109,7 @@ func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 			Offset: req.offset,
 			Limit:  req.limit,
 		}
-		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.groupType, pm)
+		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.memberType, pm)
 		if err != nil {
 			return membersRes{}, err
 		}

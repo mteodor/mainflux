@@ -62,11 +62,11 @@ func (req assignReq) validate() error {
 }
 
 type membersReq struct {
-	token     string
-	groupID   string
-	offset    uint64
-	limit     uint64
-	groupType string
+	token      string
+	groupID    string
+	offset     uint64
+	limit      uint64
+	memberType string
 }
 
 func (req membersReq) validate() error {
@@ -76,7 +76,7 @@ func (req membersReq) validate() error {
 	if req.groupID == "" {
 		return auth.ErrMalformedEntity
 	}
-	if req.groupType == "" {
+	if req.memberType == "" {
 		return auth.ErrMalformedEntity
 	}
 	return nil
