@@ -89,7 +89,7 @@ func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	defer grm.mu.Unlock()
 	_, ok := grm.groups[GroupID(id)]
 	if !ok {
-		return auth.ErrNotFound
+		return auth.ErrGroupNotFound
 	}
 
 	if len(grm.members[GroupID(id)]) > 0 {
@@ -121,7 +121,7 @@ func (grm *groupRepositoryMock) RetrieveByID(ctx context.Context, id string) (au
 
 	val, ok := grm.groups[GroupID(id)]
 	if !ok {
-		return auth.Group{}, auth.ErrNotFound
+		return auth.Group{}, auth.ErrGroupNotFound
 	}
 	return val, nil
 }

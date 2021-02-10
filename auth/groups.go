@@ -33,6 +33,7 @@ type PageMetadata struct {
 	Total    uint64
 	Offset   uint64
 	Limit    uint64
+	Size     uint64
 	Level    uint64
 	Name     string
 	Type     string

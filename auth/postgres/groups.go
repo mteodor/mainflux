@@ -17,7 +17,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -54,7 +53,7 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 	if g.ParentID != "" {
 		// Path is constructed in insert_group_tr - init.go
 		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, created_at, updated_at) 
-			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, :created_at, :updated_at FROM groups pg WHERE id = :parent_id 
+			 VALUES ( :name, :description, :id, :owner_id, :parent_id, :metadata, :created_at, :updated_at) 
 			 RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 	}
 
@@ -229,11 +228,12 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
-
+	sz := uint64(len(items))
 	page := auth.GroupPage{
 		Groups: items,
 		PageMetadata: auth.PageMetadata{
 			Total: total,
+			Size:  sz,
 		},
 	}
 
@@ -332,6 +332,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	page := auth.GroupPage{
 		Groups: items,
 		PageMetadata: auth.PageMetadata{
+			Level: pm.Level,
 			Total: total,
 		},
 	}
@@ -476,9 +477,11 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return errors.Wrap(things.ErrMalformedEntity, err)
+					return errors.Wrap(auth.ErrMalformedEntity, err)
+				case errFK:
+					return errors.Wrap(auth.ErrConflict, errors.New(pqErr.Detail))
 				case errDuplicate:
-					return errors.Wrap(auth.ErrConflict, err)
+					return errors.Wrap(auth.ErrMemberAlreadyAssigned, errors.New(pqErr.Detail))
 				}
 			}
 
@@ -499,17 +502,13 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 		return errors.Wrap(auth.ErrAssignToGroup, err)
 	}
 
-	created := time.Now()
-
-	qDel := `DELETE from group_relations WHERE group_id = :group_id, member_id = :member_id`
+	qDel := `DELETE from group_relations WHERE group_id = :group_id AND member_id = :member_id`
 
 	for _, id := range ids {
 		dbgr, err := gr.toDBGroupRelation(id, groupID, "")
 		if err != nil {
 			return errors.Wrap(auth.ErrAssignToGroup, err)
 		}
-		dbgr.CreatedAt = created
-		dbgr.UpdatedAt = created
 
 		if _, err := tx.NamedExecContext(ctx, qDel, dbgr); err != nil {
 			tx.Rollback()
@@ -517,7 +516,7 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return errors.Wrap(things.ErrMalformedEntity, err)
+					return errors.Wrap(auth.ErrMalformedEntity, err)
 				case errDuplicate:
 					return errors.Wrap(auth.ErrConflict, err)
 				}
@@ -682,7 +681,7 @@ func (gr groupRepository) toGroup(dbu dbGroup) (auth.Group, error) {
 
 type dbGroupRelation struct {
 	GroupID   sql.NullString `db:"group_id"`
-	MemberID  uuid.UUID      `db:"member_id"`
+	MemberID  sql.NullString `db:"member_id"`
 	CreatedAt time.Time      `db:"created_at"`
 	UpdatedAt time.Time      `db:"updated_at"`
 	Type      string         `db:"type"`
@@ -694,10 +693,11 @@ func (gr groupRepository) toDBGroupRelation(memberID, groupID, groupType string)
 		grID = sql.NullString{String: groupID, Valid: true}
 	}
 
-	mID, err := uuid.FromString(memberID)
-	if err != nil {
-		return dbGroupRelation{}, err
+	var mID sql.NullString
+	if memberID != "" {
+		mID = sql.NullString{String: memberID, Valid: true}
 	}
+
 	return dbGroupRelation{
 		GroupID:  grID,
 		MemberID: mID,

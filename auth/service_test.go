@@ -708,7 +708,7 @@ func TestListMembers(t *testing.T) {
 		uid, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-		err = svc.Assign(context.Background(), apiToken, uid, group.ID, "things")
+		err = svc.Assign(context.Background(), apiToken, group.ID, "things", uid)
 		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
@@ -787,7 +787,7 @@ func TestListMemberships(t *testing.T) {
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-		err = svc.Assign(context.Background(), apiToken, memberID, g.ID, "things")
+		err = svc.Assign(context.Background(), apiToken, g.ID, "things", memberID)
 		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
@@ -867,17 +867,17 @@ func TestRemoveGroup(t *testing.T) {
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, "wrongID")
-	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", auth.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", auth.ErrGroupNotFound, err))
 
 	gp, err := svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("list groups unexpected error: %s", err))
 	assert.True(t, gp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, gp.Total))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, group.ID)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 
 	gp, err = svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("list groups save unexpected error: %s", err))
 	assert.True(t, gp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, gp.Total))
 
 }
@@ -915,14 +915,14 @@ func TestAssign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = svc.Assign(context.Background(), apiToken, mid, group.ID, "things")
+	err = svc.Assign(context.Background(), apiToken, group.ID, "things", mid)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	mp, err := svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Offset: 0, Limit: 10})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	err = svc.Assign(context.Background(), "wrongToken", mid, group.ID, "things")
+	err = svc.Assign(context.Background(), "wrongToken", group.ID, "things", mid)
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
 }
@@ -960,23 +960,23 @@ func TestUnassign(t *testing.T) {
 	mid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	err = svc.Assign(context.Background(), apiToken, mid, group.ID, "things")
+	err = svc.Assign(context.Background(), apiToken, group.ID, "things", mid)
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	mp, err := svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Limit: 10, Offset: 0})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
-	err = svc.Unassign(context.Background(), apiToken, mid, group.ID)
+	err = svc.Unassign(context.Background(), apiToken, group.ID, mid)
 	require.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
 
 	mp, err = svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Limit: 10, Offset: 0})
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, mp.Total))
 
-	err = svc.Unassign(context.Background(), "wrongToken", mid, group.ID)
+	err = svc.Unassign(context.Background(), "wrongToken", group.ID, mid)
 	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
 
-	err = svc.Unassign(context.Background(), apiToken, mid, group.ID)
+	err = svc.Unassign(context.Background(), apiToken, group.ID, mid)
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 }
