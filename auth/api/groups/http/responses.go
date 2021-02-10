@@ -11,17 +11,10 @@ import (
 var (
 	_ mainflux.Response = (*memberPageRes)(nil)
 	_ mainflux.Response = (*groupRes)(nil)
-	_ mainflux.Response = (*groupDeleteRes)(nil)
-	_ mainflux.Response = (*assignMemberToGroupRes)(nil)
-	_ mainflux.Response = (*removeMemberFromGroupRes)(nil)
+	_ mainflux.Response = (*deleteRes)(nil)
+	_ mainflux.Response = (*assignRes)(nil)
+	_ mainflux.Response = (*unassignRes)(nil)
 )
-
-type pageRes struct {
-	Total  uint64 `json:"total"`
-	Offset uint64 `json:"offset"`
-	Limit  uint64 `json:"limit"`
-	Name   string `json:"name"`
-}
 
 type memberPageRes struct {
 	pageRes
@@ -97,11 +90,16 @@ func (res groupRes) Empty() bool {
 }
 
 type groupPageRes struct {
-	Limit  uint64         `json:"limit,omitempty"`
-	Offset uint64         `json:"offset,omitempty"`
-	Total  uint64         `json:"total"`
-	Level  uint64         `json:"level"`
+	pageRes
 	Groups []viewGroupRes `json:"groups"`
+}
+
+type pageRes struct {
+	Limit  uint64 `json:"limit,omitempty"`
+	Offset uint64 `json:"offset,omitempty"`
+	Total  uint64 `json:"total"`
+	Level  uint64 `json:"level"`
+	Name   string `json:"name"`
 }
 
 func (res groupPageRes) Code() int {
@@ -116,44 +114,44 @@ func (res groupPageRes) Empty() bool {
 	return false
 }
 
-type groupDeleteRes struct{}
+type deleteRes struct{}
 
-func (res groupDeleteRes) Code() int {
+func (res deleteRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res groupDeleteRes) Headers() map[string]string {
+func (res deleteRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res groupDeleteRes) Empty() bool {
+func (res deleteRes) Empty() bool {
 	return true
 }
 
-type assignMemberToGroupRes struct{}
+type assignRes struct{}
 
-func (res assignMemberToGroupRes) Code() int {
+func (res assignRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res assignMemberToGroupRes) Headers() map[string]string {
+func (res assignRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res assignMemberToGroupRes) Empty() bool {
+func (res assignRes) Empty() bool {
 	return true
 }
 
-type removeMemberFromGroupRes struct{}
+type unassignRes struct{}
 
-func (res removeMemberFromGroupRes) Code() int {
+func (res unassignRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res removeMemberFromGroupRes) Headers() map[string]string {
+func (res unassignRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res removeMemberFromGroupRes) Empty() bool {
+func (res unassignRes) Empty() bool {
 	return true
 }

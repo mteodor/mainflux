@@ -15,63 +15,67 @@ import (
 
 var _ auth.GroupRepository = (*groupRepositoryMock)(nil)
 
-type ParentID string
-type MemberID string
-type ChildID string
-type GroupID string
-
 type groupRepositoryMock struct {
 	mu          sync.Mutex
-	groups      map[GroupID]auth.Group
-	children    map[ParentID]map[GroupID]auth.Group
-	parents     map[ChildID]ParentID
-	memberships map[MemberID]map[GroupID]auth.Group
-	members     map[GroupID]map[MemberID]MemberID
+	// Map of groups
+	groups      map[string]auth.Group
+	// Map of children map with parent id as key, 
+	// each parent has several children
+	children    map[string]map[string]auth.Group
+	// Map of parents with child group id as key
+	// each child has one parent
+	parents     map[string]string
+	// Map of memberships wher member id is a key,
+	// each member can belong to several groups.
+	memberships map[string]map[string]auth.Group
+	// Map of members where group id is a key
+	// each group can have several members.
+	members     map[string]map[string]string
 }
 
 // NewGroupRepository creates in-memory user repository
 func NewGroupRepository() auth.GroupRepository {
 	return &groupRepositoryMock{
-		groups:      make(map[GroupID]auth.Group),
-		children:    make(map[ParentID]map[GroupID]auth.Group),
-		parents:     make(map[ChildID]ParentID),
-		memberships: make(map[MemberID]map[GroupID]auth.Group),
-		members:     make(map[GroupID]map[MemberID]MemberID),
+		groups:      make(map[string]auth.Group),
+		children:    make(map[string]map[string]auth.Group),
+		parents:     make(map[string]string),
+		memberships: make(map[string]map[string]auth.Group),
+		members:     make(map[string]map[string]string),
 	}
 }
 
 func (grm *groupRepositoryMock) Save(ctx context.Context, group auth.Group) (auth.Group, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[GroupID(group.ID)]; ok {
+	if _, ok := grm.groups[group.ID]; ok {
 		return auth.Group{}, auth.ErrGroupConflict
 	}
 	path := group.ID
 
 	if group.ParentID != "" {
-		parent, ok := grm.groups[GroupID(group.ParentID)]
+		parent, ok := grm.groups[group.ParentID]
 		if !ok {
 			return auth.Group{}, auth.ErrCreateGroup
 		}
-		if _, ok := grm.children[ParentID(group.ParentID)]; !ok {
-			grm.children[ParentID(group.ParentID)] = make(map[GroupID]auth.Group)
+		if _, ok := grm.children[group.ParentID]; !ok {
+			grm.children[group.ParentID] = make(map[string]auth.Group)
 		}
-		grm.children[ParentID(group.ParentID)][GroupID(group.ID)] = group
-		grm.parents[ChildID(group.ID)] = ParentID(group.ParentID)
+		grm.children[group.ParentID][group.ID] = group
+		grm.parents[group.ID] = group.ParentID
 		path = fmt.Sprintf("%s.%s", parent.Path, path)
 	}
 
 	group.Path = path
 	group.Level = len(strings.Split(path, "."))
 
-	grm.groups[GroupID(group.ID)] = group
+	grm.groups[group.ID] = group
 	return group, nil
 }
 
 func (grm *groupRepositoryMock) Update(ctx context.Context, group auth.Group) (auth.Group, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	up, ok := grm.groups[GroupID(group.ID)]
+	up, ok := grm.groups[group.ID]
 	if !ok {
 		return auth.Group{}, auth.ErrNotFound
 	}
@@ -80,36 +84,36 @@ func (grm *groupRepositoryMock) Update(ctx context.Context, group auth.Group) (a
 	up.Metadata = group.Metadata
 	up.UpdatedAt = time.Now()
 
-	grm.groups[GroupID(group.ID)] = up
+	grm.groups[group.ID] = up
 	return up, nil
 }
 
 func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	_, ok := grm.groups[GroupID(id)]
+	_, ok := grm.groups[id]
 	if !ok {
 		return auth.ErrGroupNotFound
 	}
 
-	if len(grm.members[GroupID(id)]) > 0 {
+	if len(grm.members[id]) > 0 {
 		return auth.ErrGroupNotEmpty
 	}
 
 	// This is not quite exact, it should go in depth
-	for _, ch := range grm.children[ParentID(id)] {
-		if len(grm.members[GroupID(ch.ID)]) > 0 {
+	for _, ch := range grm.children[id] {
+		if len(grm.members[ch.ID]) > 0 {
 			return auth.ErrGroupNotEmpty
 		}
 	}
 
 	// This is not quite exact, it should go in depth
-	delete(grm.groups, GroupID(id))
-	for _, ch := range grm.children[ParentID(id)] {
-		delete(grm.members, GroupID(ch.ID))
+	delete(grm.groups, id)
+	for _, ch := range grm.children[id] {
+		delete(grm.members, ch.ID)
 	}
 
-	delete(grm.children, ParentID(id))
+	delete(grm.children, id)
 
 	return nil
 
@@ -119,7 +123,7 @@ func (grm *groupRepositoryMock) RetrieveByID(ctx context.Context, id string) (au
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 
-	val, ok := grm.groups[GroupID(id)]
+	val, ok := grm.groups[id]
 	if !ok {
 		return auth.Group{}, auth.ErrGroupNotFound
 	}
@@ -144,15 +148,15 @@ func (grm *groupRepositoryMock) RetrieveAll(ctx context.Context, pm auth.PageMet
 func (grm *groupRepositoryMock) Unassign(ctx context.Context, groupID string, memberIDs ...string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[GroupID(groupID)]; !ok {
+	if _, ok := grm.groups[groupID]; !ok {
 		return auth.ErrGroupNotFound
 	}
 	for _, memberID := range memberIDs {
-		if _, ok := grm.members[GroupID(groupID)][MemberID(memberID)]; !ok {
+		if _, ok := grm.members[groupID][memberID]; !ok {
 			return auth.ErrGroupNotFound
 		}
-		delete(grm.members[GroupID(groupID)], MemberID(memberID))
-		delete(grm.memberships[MemberID(memberID)], GroupID(groupID))
+		delete(grm.members[groupID], memberID)
+		delete(grm.memberships[memberID], groupID)
 	}
 	return nil
 }
@@ -160,19 +164,19 @@ func (grm *groupRepositoryMock) Unassign(ctx context.Context, groupID string, me
 func (grm *groupRepositoryMock) Assign(ctx context.Context, groupID, groupType string, memberIDs ...string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	if _, ok := grm.groups[GroupID(groupID)]; !ok {
+	if _, ok := grm.groups[groupID]; !ok {
 		return auth.ErrGroupNotFound
 	}
 	for _, memberID := range memberIDs {
-		if _, ok := grm.members[GroupID(groupID)]; !ok {
-			grm.members[GroupID(groupID)] = make(map[MemberID]MemberID)
+		if _, ok := grm.members[groupID]; !ok {
+			grm.members[groupID] = make(map[string]string)
 		}
-		if _, ok := grm.memberships[MemberID(memberID)]; !ok {
-			grm.memberships[MemberID(memberID)] = make(map[GroupID]auth.Group)
+		if _, ok := grm.memberships[memberID]; !ok {
+			grm.memberships[memberID] = make(map[string]auth.Group)
 		}
 
-		grm.members[GroupID(groupID)][MemberID(memberID)] = MemberID(memberID)
-		grm.memberships[MemberID(memberID)][GroupID(groupID)] = grm.groups[GroupID(groupID)]
+		grm.members[groupID][memberID] = memberID
+		grm.memberships[memberID][groupID] = grm.groups[groupID]
 	}
 	return nil
 
@@ -187,7 +191,7 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, memberID string
 	last := first + uint64(pm.Limit)
 
 	i := uint64(0)
-	for _, g := range grm.memberships[MemberID(memberID)] {
+	for _, g := range grm.memberships[memberID] {
 		if i >= first && i < last {
 			items = append(items, g)
 		}
@@ -208,7 +212,7 @@ func (grm *groupRepositoryMock) Members(ctx context.Context, groupID, groupType 
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []string
-	members, ok := grm.members[GroupID(groupID)]
+	members, ok := grm.members[groupID]
 	if !ok {
 		return auth.MemberPage{}, auth.ErrGroupNotFound
 	}
@@ -238,7 +242,7 @@ func (grm *groupRepositoryMock) RetrieveAllParents(ctx context.Context, groupID 
 		return auth.GroupPage{}, nil
 	}
 
-	group, ok := grm.groups[GroupID(groupID)]
+	group, ok := grm.groups[groupID]
 	if !ok {
 		return auth.GroupPage{}, auth.ErrGroupNotFound
 	}
@@ -259,11 +263,11 @@ func (grm *groupRepositoryMock) RetrieveAllParents(ctx context.Context, groupID 
 
 func (grm *groupRepositoryMock) getParents(grps []auth.Group, group auth.Group) ([]auth.Group, error) {
 	grps = append(grps, group)
-	parentID, ok := grm.parents[ChildID(group.ID)]
+	parentID, ok := grm.parents[group.ID]
 	if !ok && parentID == "" {
 		return grps, nil
 	}
-	parent, ok := grm.groups[GroupID(parentID)]
+	parent, ok := grm.groups[parentID]
 	if !ok {
 		panic(fmt.Sprintf("parent with id: %s not found", parentID))
 	}
@@ -273,7 +277,7 @@ func (grm *groupRepositoryMock) getParents(grps []auth.Group, group auth.Group) 
 func (grm *groupRepositoryMock) RetrieveAllChildren(ctx context.Context, groupID string, pm auth.PageMetadata) (auth.GroupPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	group, ok := grm.groups[GroupID(groupID)]
+	group, ok := grm.groups[groupID]
 	if !ok {
 		return auth.GroupPage{}, nil
 	}
@@ -281,7 +285,7 @@ func (grm *groupRepositoryMock) RetrieveAllChildren(ctx context.Context, groupID
 	grps := make([]auth.Group, 0)
 	grps = append(grps, group)
 	for ch := range grm.parents {
-		g, ok := grm.groups[GroupID(ch)]
+		g, ok := grm.groups[ch]
 		if !ok {
 			panic(fmt.Sprintf("child with id %s not found", ch))
 		}

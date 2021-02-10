@@ -19,7 +19,7 @@ var (
 	_ mainflux.Response = (*viewGroupRes)(nil)
 	_ mainflux.Response = (*createGroupRes)(nil)
 	_ mainflux.Response = (*createUserRes)(nil)
-	_ mainflux.Response = (*groupDeleteRes)(nil)
+	_ mainflux.Response = (*deleteRes)(nil)
 	_ mainflux.Response = (*assignUserToGroupRes)(nil)
 	_ mainflux.Response = (*removeUserFromGroupRes)(nil)
 )
@@ -228,17 +228,17 @@ func (res groupPageRes) Empty() bool {
 	return false
 }
 
-type groupDeleteRes struct{}
+type deleteRes struct{}
 
-func (res groupDeleteRes) Code() int {
+func (res deleteRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res groupDeleteRes) Headers() map[string]string {
+func (res deleteRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res groupDeleteRes) Empty() bool {
+func (res deleteRes) Empty() bool {
 	return true
 }
 

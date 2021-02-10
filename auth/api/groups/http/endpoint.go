@@ -93,7 +93,7 @@ func DeleteGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(auth.ErrDeleteGroup, err)
 		}
 
-		return groupDeleteRes{}, nil
+		return deleteRes{}, nil
 	}
 }
 
@@ -201,11 +201,11 @@ func AssignEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(auth.ErrMalformedEntity, err)
 		}
 
-		if err := svc.Assign(ctx, req.token, req.groupID, req.groupType, req.Members...); err != nil {
+		if err := svc.Assign(ctx, req.token, req.groupID, req.Type, req.Members...); err != nil {
 			return nil, errors.Wrap(auth.ErrAssignToGroup, err)
 		}
 
-		return assignMemberToGroupRes{}, nil
+		return assignRes{}, nil
 	}
 }
 
@@ -220,7 +220,7 @@ func UnassignEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(auth.ErrUnassignFromGroup, err)
 		}
 
-		return removeMemberFromGroupRes{}, nil
+		return unassignRes{}, nil
 	}
 }
 
@@ -264,10 +264,12 @@ func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
 	}
 
 	res := groupPageRes{
-		Limit:  page.Limit,
-		Offset: page.Offset,
-		Total:  page.Total,
-		Level:  page.Level,
+		pageRes: pageRes{
+			Limit:  page.Limit,
+			Offset: page.Offset,
+			Total:  page.Total,
+			Level:  page.Level,
+		},
 		Groups: []viewGroupRes{},
 	}
 
@@ -313,8 +315,10 @@ func toViewGroupRes(group auth.Group) viewGroupRes {
 
 func buildGroupsResponse(gp auth.GroupPage) groupPageRes {
 	res := groupPageRes{
-		Total:  gp.Total,
-		Level:  gp.Level,
+		pageRes: pageRes{
+			Total: gp.Total,
+			Level: gp.Level,
+		},
 		Groups: []viewGroupRes{},
 	}
 

@@ -103,16 +103,16 @@ func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Post("/groups/:groupID/:type", kithttp.NewServer(
+	mux.Post("/groups/:groupID/members", kithttp.NewServer(
 		kitot.TraceServer(tracer, "assign")(groupsAPI.AssignEndpoint(svc)),
-		groupsAPI.DecodeAssignMembersGroupRequest,
+		groupsAPI.DecodeAssignRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Delete("/groups/:groupID/:type", kithttp.NewServer(
+	mux.Delete("/groups/:groupID/members", kithttp.NewServer(
 		kitot.TraceServer(tracer, "unassign")(groupsAPI.UnassignEndpoint(svc)),
-		groupsAPI.DecodeAssignMembersGroupRequest,
+		groupsAPI.DecodeAssignRequest,
 		encodeResponse,
 		opts...,
 	))

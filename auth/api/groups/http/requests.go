@@ -25,8 +25,6 @@ func (req createGroupReq) validate() error {
 	if len(req.Name) > maxNameSize || req.Name == "" || !groupRegexp.MatchString(req.Name) {
 		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrBadGroupName)
 	}
-	// If the group is root (i.e. no parent) type must specified
-	// otherwise group inherits type from the parent.
 	if req.ParentID == "" {
 		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrMissingGroupType)
 	}
@@ -118,10 +116,10 @@ func (req listMembershipsReq) validate() error {
 }
 
 type assignReq struct {
-	token     string
-	groupID   string
-	groupType string
-	Members   []string `json:"members"`
+	token   string
+	groupID string
+	Type    string   `json:"type,omitempty"`
+	Members []string `json:"members"`
 }
 
 func (req assignReq) validate() error {
@@ -129,7 +127,7 @@ func (req assignReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && len(req.Members) == 0 && req.groupType == "" {
+	if req.groupID == "" && len(req.Members) == 0 {
 		return groups.ErrMalformedEntity
 	}
 

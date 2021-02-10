@@ -44,10 +44,6 @@ type Thing struct {
 	Metadata Metadata
 }
 
-func (th Thing) GetID() string {
-	return th.ID
-}
-
 // Page contains page related metadata as well as list of things that
 // belong to this page.
 type Page struct {
