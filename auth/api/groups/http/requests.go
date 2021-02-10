@@ -117,14 +117,14 @@ func (req listMembershipsReq) validate() error {
 	return nil
 }
 
-type assignMembersGroupReq struct {
+type assignReq struct {
 	token     string
 	groupID   string
 	groupType string
 	Members   []string `json:"members"`
 }
 
-func (req assignMembersGroupReq) validate() error {
+func (req assignReq) validate() error {
 	if req.token == "" {
 		return groups.ErrUnauthorizedAccess
 	}

@@ -196,7 +196,7 @@ func ListGroupParentsEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func AssignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignMembersGroupReq)
+		req := request.(assignReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(auth.ErrMalformedEntity, err)
 		}
@@ -211,7 +211,7 @@ func AssignEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func UnassignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignMembersGroupReq)
+		req := request.(assignReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(auth.ErrMalformedEntity, err)
 		}
