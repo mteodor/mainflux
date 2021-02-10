@@ -11,14 +11,6 @@ import (
 	"github.com/mainflux/mainflux/auth"
 )
 
-type member struct {
-	id string
-}
-
-func (m member) GetID() string {
-	return m.id
-}
-
 func issueEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(issueReq)

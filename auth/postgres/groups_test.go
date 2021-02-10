@@ -32,13 +32,6 @@ var (
 	}
 )
 
-type member struct {
-	ID string
-}
-
-func (m member) GetID() string {
-	return m.ID
-}
 
 func generateGroupID(t *testing.T) string {
 	grpID, err := ulidProvider.ID()

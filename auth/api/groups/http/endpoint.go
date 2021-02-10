@@ -201,11 +201,8 @@ func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-		var ids []string
-		for _, id := range req.Members {
-			ids = append(ids, id)
-		}
-		if err := svc.Assign(ctx, req.token, req.groupID, req.groupType, ids...); err != nil {
+
+		if err := svc.Assign(ctx, req.token, req.groupID, req.groupType, req.Members...); err != nil {
 			return nil, errors.Wrap(groups.ErrAssignToGroup, err)
 		}
 
@@ -219,11 +216,8 @@ func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
 		}
-		var ids []string
-		for _, id := range req.Members {
-			ids = append(ids, id)
-		}
-		if err := svc.Unassign(ctx, req.token, req.groupID, ids...); err != nil {
+
+		if err := svc.Unassign(ctx, req.token, req.groupID, req.Members...); err != nil {
 			return nil, errors.Wrap(groups.ErrUnassignFromGroup, err)
 		}
 

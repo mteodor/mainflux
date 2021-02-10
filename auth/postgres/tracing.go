@@ -53,14 +53,14 @@ func (d database) QueryxContext(ctx context.Context, query string, args ...inter
 	return d.db.QueryxContext(ctx, query, args...)
 }
 
-func (dm database) BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
+func (d database) BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
 		span.SetTag("span.kind", "client")
 		span.SetTag("peer.service", "postgres")
 		span.SetTag("db.type", "sql")
 	}
-	return dm.db.BeginTxx(ctx, opts)
+	return d.db.BeginTxx(ctx, opts)
 }
 
 func addSpanTags(ctx context.Context, query string) {
