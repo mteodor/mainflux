@@ -16,21 +16,23 @@ import (
 var _ auth.GroupRepository = (*groupRepositoryMock)(nil)
 
 type groupRepositoryMock struct {
-	mu          sync.Mutex
-	// Map of groups
-	groups      map[string]auth.Group
-	// Map of children map with parent id as key, 
-	// each parent has several children
-	children    map[string]map[string]auth.Group
-	// Map of parents with child group id as key
-	// each child has one parent
-	parents     map[string]string
-	// Map of memberships wher member id is a key,
-	// each member can belong to several groups.
+	mu sync.Mutex
+	// Map of groups, group id as a key.
+	groups map[string]auth.Group
+	// Map of groups with group id as key that are
+	// children (i.e. has same parent id) is element
+	// in children map where parent id is key.
+	children map[string]map[string]auth.Group
+	// Map of parents' id with child group id as key.
+	// Each child has one parent
+	parents map[string]string
+	// Map of groups with group id as key which
+	// represent memberships, is element in
+	// memberships map where member id is a key.
 	memberships map[string]map[string]auth.Group
-	// Map of members where group id is a key
-	// each group can have several members.
-	members     map[string]map[string]string
+	// Map of members of a group where member id is a key
+	// is an element in the map members where group id is a key.
+	members map[string]map[string]string
 }
 
 // NewGroupRepository creates in-memory user repository

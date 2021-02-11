@@ -53,10 +53,12 @@ func (req updateGroupReq) validate() error {
 }
 
 type listGroupsReq struct {
-	token    string
-	id       string
-	level    uint64
-	tree     bool // If `true` result is JSON that represents groups hierarchy, otherwise JSON just holds array of groups.
+	token string
+	id    string
+	level uint64
+	tree  bool
+	// - `true`  - result is JSON tree representing groups hierarchy,
+	// - `false` - result is JSON array of groups.
 	metadata auth.GroupMetadata
 }
 
@@ -65,7 +67,7 @@ func (req listGroupsReq) validate() error {
 		return groups.ErrUnauthorizedAccess
 	}
 
-	if req.level > auth.MaxLevel {
+	if req.level > auth.MaxLevel && req.level < auth.MinLevel {
 		return groups.ErrMaxLevelExceeded
 	}
 

@@ -175,7 +175,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/groups/:groupID", kithttp.NewServer(
+	r.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_things")(listMembersEndpoint(svc)),
 		decodeListThingsGroupRequest,
 		encodeResponse,
@@ -426,7 +426,7 @@ func decodeListThingsGroupRequest(_ context.Context, r *http.Request) (interface
 
 	req := listThingsGroupReq{
 		token:   r.Header.Get("Authorization"),
-		groupID: bone.GetValue(r, "groupID"),
+		groupID: bone.GetValue(r, "groupId"),
 		pageMetadata: things.PageMetadata{
 			Offset:   o,
 			Limit:    l,

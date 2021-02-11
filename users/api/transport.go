@@ -109,7 +109,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Get("/groups/:groupID", kithttp.NewServer(
+	mux.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
 		decodeListMemberGroupRequest,
 		encodeResponse,
@@ -259,7 +259,7 @@ func decodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface
 
 	req := listMemberGroupReq{
 		token:    r.Header.Get("Authorization"),
-		groupID:  bone.GetValue(r, "groupID"),
+		groupID:  bone.GetValue(r, "groupId"),
 		offset:   o,
 		limit:    l,
 		metadata: m,

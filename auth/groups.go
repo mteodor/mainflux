@@ -7,6 +7,7 @@ import (
 )
 
 const MaxLevel = uint64(5)
+const MinLevel = uint64(1)
 
 type GroupMetadata map[string]interface{}
 

@@ -32,7 +32,6 @@ var (
 	}
 )
 
-
 func generateGroupID(t *testing.T) string {
 	grpID, err := ulidProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -622,7 +621,7 @@ func TestRetrieveAllChildren(t *testing.T) {
 		metadata auth.PageMetadata
 	}{
 		"retrieve all children": {
-			size:  auth.MaxLevel + 1,
+			size:  auth.MaxLevel,
 			total: n,
 			metadata: auth.PageMetadata{
 				Level: auth.MaxLevel,
@@ -649,7 +648,7 @@ func TestRetrieveAllChildren(t *testing.T) {
 		},
 		"retrieve groups with hierarchy level depth": {
 			total: n,
-			size:  2 + 1,
+			size:  2,
 			metadata: auth.PageMetadata{
 				Level: 2,
 			},

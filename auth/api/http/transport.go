@@ -90,14 +90,14 @@ func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 	))
 
 	mux.Get("/groups/:groupID/children", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_children_groups")(groupsAPI.ListGroupChildrenEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_children_groups")(groupsAPI.ListChildrenEndpoint(svc)),
 		groupsAPI.DecodeListGroupsRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Get("/groups/:groupID/parents", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_parent_groups")(groupsAPI.ListGroupParentsEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_parent_groups")(groupsAPI.ListParentsEndpoint(svc)),
 		groupsAPI.DecodeListGroupsRequest,
 		encodeResponse,
 		opts...,

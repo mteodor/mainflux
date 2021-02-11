@@ -146,7 +146,7 @@ func ListMemberships(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
+func ListChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
@@ -170,7 +170,7 @@ func ListGroupChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupParentsEndpoint(svc auth.Service) endpoint.Endpoint {
+func ListParentsEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
@@ -247,7 +247,7 @@ func ListMembersEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
 	groupsMap := map[string]*auth.Group{}
-	// Parents map keeps its array of children.
+	// Parents' map keeps its array of children.
 	parentsMap := map[string][]*auth.Group{}
 	for i := range page.Groups {
 		if _, ok := groupsMap[page.Groups[i].ID]; !ok {
