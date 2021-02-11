@@ -55,9 +55,9 @@ type listGroupsReq struct {
 	token string
 	id    string
 	level uint64
-	tree  bool
 	// - `true`  - result is JSON tree representing groups hierarchy,
 	// - `false` - result is JSON array of groups.
+	tree     bool
 	metadata auth.GroupMetadata
 }
 
