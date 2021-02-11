@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux/auth"
-	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -19,7 +18,6 @@ const (
 	maxNameSize = 254
 	offsetKey   = "offset"
 	limitKey    = "limit"
-	nameKey     = "name"
 	levelKey    = "level"
 	metadataKey = "metadata"
 	treeKey     = "tree"
@@ -32,7 +30,7 @@ const (
 
 func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, groups.ErrUnsupportedContentType
+		return nil, auth.ErrUnsupportedContentType
 	}
 
 	l, err := readUintQuery(r, levelKey, defLevel)
@@ -62,7 +60,7 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 
 func DecodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, groups.ErrUnsupportedContentType
+		return nil, auth.ErrUnsupportedContentType
 	}
 
 	o, err := readUintQuery(r, offsetKey, defOffset)
@@ -98,7 +96,7 @@ func DecodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 
 func DecodeListMembershipsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, groups.ErrUnsupportedContentType
+		return nil, auth.ErrUnsupportedContentType
 	}
 
 	o, err := readUintQuery(r, offsetKey, defOffset)
@@ -135,12 +133,12 @@ func DecodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 
 func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, groups.ErrUnsupportedContentType
+		return nil, auth.ErrUnsupportedContentType
 	}
 
 	var req createGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(groups.ErrFailedDecode, err)
+		return nil, errors.Wrap(auth.ErrFailedDecode, err)
 	}
 
 	req.token = r.Header.Get("Authorization")
@@ -149,12 +147,12 @@ func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 
 func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, groups.ErrUnsupportedContentType
+		return nil, auth.ErrUnsupportedContentType
 	}
 
 	var req updateGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(groups.ErrFailedDecode, err)
+		return nil, errors.Wrap(auth.ErrFailedDecode, err)
 	}
 
 	req.id = bone.GetValue(r, "groupID")

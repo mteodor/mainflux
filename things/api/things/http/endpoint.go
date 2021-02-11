@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	groups "github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
@@ -496,10 +496,10 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listThingsGroupReq)
 		if err := req.validate(); err != nil {
-			return thingsPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return thingsPageRes{}, errors.Wrap(auth.ErrMalformedEntity, err)
 		}
 
-		page, err := svc.ListMembers(ctx, req.token, req.groupID,  req.pageMetadata)
+		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.pageMetadata)
 		if err != nil {
 			return thingsPageRes{}, err
 		}

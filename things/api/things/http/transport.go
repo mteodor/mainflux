@@ -15,7 +15,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	groups "github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -485,7 +485,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			errors.Contains(errorVal, things.ErrRemoveEntity),
 			errors.Contains(errorVal, things.ErrConnect),
 			errors.Contains(errorVal, things.ErrDisconnect),
-			errors.Contains(errorVal, groups.ErrCreateGroup):
+			errors.Contains(errorVal, auth.ErrCreateGroup):
 			w.WriteHeader(http.StatusBadRequest)
 
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF),

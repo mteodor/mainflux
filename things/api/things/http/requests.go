@@ -4,7 +4,7 @@
 package http
 
 import (
-	groups "github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -297,11 +297,11 @@ type listThingsGroupReq struct {
 
 func (req listThingsGroupReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.groupID == "" {
-		return groups.ErrMalformedEntity
+		return auth.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Limit == 0 || req.pageMetadata.Limit > maxLimitSize {

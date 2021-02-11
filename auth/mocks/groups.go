@@ -21,16 +21,16 @@ type groupRepositoryMock struct {
 	groups map[string]auth.Group
 	// Map of groups with group id as key that are
 	// children (i.e. has same parent id) is element
-	// in children map where parent id is key.
+	// in children's map where parent id is key.
 	children map[string]map[string]auth.Group
 	// Map of parents' id with child group id as key.
-	// Each child has one parent
+	// Each child has one parent.
 	parents map[string]string
-	// Map of groups with group id as key which
-	// represent memberships, is element in
-	// memberships map where member id is a key.
+	// Map of groups (with group id as key) which
+	// represent memberships is element in
+	// memberships' map where member id is a key.
 	memberships map[string]map[string]auth.Group
-	// Map of members of a group where member id is a key
+	// Map of group members where member id is a key
 	// is an element in the map members where group id is a key.
 	members map[string]map[string]string
 }

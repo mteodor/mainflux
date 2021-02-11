@@ -4,7 +4,6 @@ import (
 	"regexp"
 
 	"github.com/mainflux/mainflux/auth"
-	groups "github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -20,13 +19,13 @@ type createGroupReq struct {
 
 func (req createGroupReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 	if len(req.Name) > maxNameSize || req.Name == "" || !groupRegexp.MatchString(req.Name) {
-		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrBadGroupName)
+		return errors.Wrap(auth.ErrMalformedEntity, auth.ErrBadGroupName)
 	}
 	if req.ParentID == "" {
-		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrMissingGroupType)
+		return errors.Wrap(auth.ErrMalformedEntity, auth.ErrMissingGroupType)
 	}
 
 	return nil
@@ -42,11 +41,11 @@ type updateGroupReq struct {
 
 func (req updateGroupReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return groups.ErrMalformedEntity
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
@@ -64,11 +63,11 @@ type listGroupsReq struct {
 
 func (req listGroupsReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.level > auth.MaxLevel && req.level < auth.MinLevel {
-		return groups.ErrMaxLevelExceeded
+		return auth.ErrMaxLevelExceeded
 	}
 
 	return nil
@@ -86,11 +85,11 @@ type listMembersReq struct {
 
 func (req listMembersReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return groups.ErrMalformedEntity
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
@@ -107,11 +106,11 @@ type listMembershipsReq struct {
 
 func (req listMembershipsReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return groups.ErrMalformedEntity
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
@@ -126,11 +125,11 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.groupID == "" && len(req.Members) == 0 {
-		return groups.ErrMalformedEntity
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
@@ -143,11 +142,11 @@ type groupReq struct {
 
 func (req groupReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return auth.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return groups.ErrMalformedEntity
+		return auth.ErrMalformedEntity
 	}
 
 	return nil
