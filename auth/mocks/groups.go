@@ -93,8 +93,7 @@ func (grm *groupRepositoryMock) Update(ctx context.Context, group auth.Group) (a
 func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
-	_, ok := grm.groups[id]
-	if !ok {
+	if _, ok := grm.groups[id]; !ok {
 		return auth.ErrGroupNotFound
 	}
 
