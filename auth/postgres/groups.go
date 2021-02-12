@@ -35,7 +35,7 @@ var (
 
 	errTruncation = "string_data_right_truncation"
 	errFK         = "foreign_key_violation"
-	groupIdFkey   = "group_relations_group_id_fkey"
+	groupIDFkeyy  = "group_relations_group_id_fkey"
 )
 
 var _ auth.GroupRepository = (*groupRepository)(nil)
@@ -164,7 +164,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 				return errors.Wrap(auth.ErrMalformedEntity, err)
 			case errFK:
 				switch pqErr.Constraint {
-				case groupIdFkey:
+				case groupIDFkeyy:
 					return errors.Wrap(auth.ErrGroupNotEmpty, err)
 				}
 			case errDuplicate:
