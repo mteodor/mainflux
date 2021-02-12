@@ -11,6 +11,11 @@ const MinLevel = uint64(1)
 
 type GroupMetadata map[string]interface{}
 
+type Member struct {
+	ID   string
+	Type string
+}
+
 type Group struct {
 	ID          string
 	OwnerID     string
@@ -48,7 +53,7 @@ type GroupPage struct {
 
 type MemberPage struct {
 	PageMetadata
-	Members []string
+	Members []Member
 }
 
 type GroupService interface {
