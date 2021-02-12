@@ -35,6 +35,7 @@ var (
 
 	errTruncation = "string_data_right_truncation"
 	errFK         = "foreign_key_violation"
+	groupIdFkey   = "group_relations_group_id_fkey"
 )
 
 var _ auth.GroupRepository = (*groupRepository)(nil)
@@ -163,7 +164,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 				return errors.Wrap(auth.ErrMalformedEntity, err)
 			case errFK:
 				switch pqErr.Constraint {
-				case "group_relations_group_id_fkey":
+				case groupIdFkey:
 					return errors.Wrap(auth.ErrGroupNotEmpty, err)
 				}
 			case errDuplicate:
@@ -356,6 +357,11 @@ func (gr groupRepository) Members(ctx context.Context, groupID, groupType string
 	q := fmt.Sprintf(`SELECT gr.member_id, gr.group_id, gr.type, gr.created_at, gr.updated_at FROM group_relations gr
 					  WHERE gr.group_id = :group_id AND gr.type = :type %s`, mq)
 
+	if groupType == "" {
+		q = fmt.Sprintf(`SELECT gr.member_id, gr.group_id, gr.type, gr.created_at, gr.updated_at FROM group_relations gr
+		WHERE gr.group_id = :group_id %s`, mq)
+	}
+
 	params, err := gr.toDBMemberPage("", groupID, groupType, pm)
 	if err != nil {
 		return auth.MemberPage{}, err
@@ -367,7 +373,7 @@ func (gr groupRepository) Members(ctx context.Context, groupID, groupType string
 	}
 	defer rows.Close()
 
-	var items []string
+	var items []auth.Member
 	for rows.Next() {
 		member := dbMember{}
 		if err := rows.StructScan(&member); err != nil {
@@ -378,7 +384,7 @@ func (gr groupRepository) Members(ctx context.Context, groupID, groupType string
 			return auth.MemberPage{}, err
 		}
 
-		items = append(items, member.MemberID)
+		items = append(items, auth.Member{ID: member.MemberID, Type: member.Type})
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups g, group_relations gr
