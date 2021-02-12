@@ -113,11 +113,15 @@ func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err != nil {
 			return membersRes{}, err
 		}
+		var members []string
+		for _, m := range mp.Members {
+			members = append(members, m.ID)
+		}
 		return membersRes{
 			offset:  req.offset,
 			limit:   req.limit,
 			total:   mp.PageMetadata.Total,
-			members: mp.Members,
+			members: members,
 		}, nil
 	}
 }
