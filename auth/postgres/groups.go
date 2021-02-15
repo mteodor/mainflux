@@ -214,7 +214,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM groups 
 					  WHERE nlevel(path) <= :level %s ORDER BY path`, mq)
 
-	dbPage, err := toDBGroupPage("", "", "", "", pm)
+	dbPage, err := toDBGroupPage("", "", pm)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errRetrieveAll, err)
 	}
@@ -247,57 +247,23 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 }
 
 func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string, pm auth.PageMetadata) (auth.GroupPage, error) {
-	if groupID == "" {
-		return auth.GroupPage{}, nil
-	}
-
-	_, mq, err := getGroupsMetadataQuery("g", pm.Metadata)
-	if err != nil {
-		return auth.GroupPage{}, errors.Wrap(errRetrieveParents, err)
-	}
-	if mq != "" {
-		mq = fmt.Sprintf("AND %s", mq)
-	}
-
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level, g.created_at, g.updated_at
-					  FROM groups parent, groups g
-					  WHERE parent.id = :parent_id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level %s`, mq)
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :parent_id AND g.path @> parent.path %s`, mq)
-
-	dbPage, err := toDBGroupPage("", "", groupID, "", pm)
-	if err != nil {
-		return auth.GroupPage{}, errors.Wrap(errRetrieveParents, err)
-	}
-
-	rows, err := gr.db.NamedQueryContext(ctx, q, dbPage)
-	if err != nil {
-		return auth.GroupPage{}, errors.Wrap(errRetrieveParents, err)
-	}
-	defer rows.Close()
-
-	items, err := gr.processRows(rows)
-	if err != nil {
-		return auth.GroupPage{}, err
-	}
-
-	total, err := total(ctx, gr.db, cq, dbPage)
-	if err != nil {
-		return auth.GroupPage{}, errors.Wrap(errGetTotal, err)
-	}
-
-	page := auth.GroupPage{
-		Groups: items,
-		PageMetadata: auth.PageMetadata{
-			Total: total,
-			Size:  uint64(len(items)),
-		},
-	}
-
-	return page, nil
+	q := `SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level, g.created_at, g.updated_at
+		  FROM groups parent, groups g
+	      WHERE parent.id = :id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level `
+	cq := `SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path @> parent.path `
+	return gr.retrieve(ctx, groupID, q, cq, pm)
 }
 
 func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID string, pm auth.PageMetadata) (auth.GroupPage, error) {
+	q := `SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path,  nlevel(g.path) as level, g.created_at, g.updated_at 
+	FROM groups parent, groups g
+	WHERE parent.id = :id AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) < :level`
+
+	cq := `SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path <@ parent.path `
+	return gr.retrieve(ctx, groupID, q, cq, pm)
+}
+
+func (gr groupRepository) retrieve(ctx context.Context, groupID, retQuery, cntQuery string, pm auth.PageMetadata) (auth.GroupPage, error) {
 	if groupID == "" {
 		return auth.GroupPage{}, nil
 	}
@@ -309,18 +275,15 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path,  nlevel(g.path) as level, g.created_at, g.updated_at 
-					  FROM groups parent, groups g
-					  WHERE parent.id = :id AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) < :level %s`, mq)
+	retQuery = fmt.Sprintf(`%s %s`, retQuery, mq)
+	cntQuery = fmt.Sprintf(`%s %s`, cntQuery, mq)
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path <@ parent.path %s`, mq)
-
-	dbPage, err := toDBGroupPage("", groupID, "", "", pm)
+	dbPage, err := toDBGroupPage(groupID, "", pm)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errRetrieveChildren, err)
 	}
 
-	rows, err := gr.db.NamedQueryContext(ctx, q, dbPage)
+	rows, err := gr.db.NamedQueryContext(ctx, retQuery, dbPage)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errRetrieveChildren, err)
 	}
@@ -331,7 +294,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 		return auth.GroupPage{}, err
 	}
 
-	total, err := total(ctx, gr.db, cq, dbPage)
+	total, err := total(ctx, gr.db, cntQuery, dbPage)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errGetTotal, err)
 	}
@@ -346,6 +309,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	}
 
 	return page, nil
+
 }
 
 func (gr groupRepository) Members(ctx context.Context, groupID, groupType string, pm auth.PageMetadata) (auth.MemberPage, error) {
@@ -636,26 +600,15 @@ func (gr groupRepository) toDBGroup(g auth.Group) (dbGroup, error) {
 	}, nil
 }
 
-func toDBGroupPage(ownerID, id, parentID, path string, pm auth.PageMetadata) (dbGroupPage, error) {
-	owner, err := toUUID(ownerID)
-	if err != nil {
-		return dbGroupPage{}, err
-	}
-
-	if err != nil {
-		return dbGroupPage{}, err
-	}
+func toDBGroupPage(id, path string, pm auth.PageMetadata) (dbGroupPage, error) {
 	level := auth.MaxLevel
 	if pm.Level < auth.MaxLevel {
 		level = pm.Level
 	}
-
 	return dbGroupPage{
 		Metadata: dbMetadata(pm.Metadata),
 		ID:       id,
 		Path:     path,
-		ParentID: parentID,
-		OwnerID:  owner,
 		Level:    level,
 		Total:    pm.Total,
 		Offset:   pm.Offset,
