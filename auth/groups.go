@@ -128,7 +128,7 @@ type GroupRepository interface {
 
 var (
 	// ErrMaxLevelExceeded malformed entity.
-	ErrMaxLevelExceeded = errors.New("level must be <=5")
+	ErrMaxLevelExceeded = errors.New("level must be less than or equal 5")
 
 	// ErrBadGroupName malformed entity.
 	ErrBadGroupName = errors.New("incorrect group name")
