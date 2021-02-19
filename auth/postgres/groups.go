@@ -252,7 +252,7 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 	      WHERE parent.id = :id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level `
 	cq := `SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path @> parent.path `
 	
-	gp, err := r.retrieve(ctx, groupID, q, cq, pm)
+	gp, err := gr.retrieve(ctx, groupID, q, cq, pm)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errRetrieveParents, err)
 	}
@@ -265,7 +265,7 @@ func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID strin
 	WHERE parent.id = :id AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) < :level`
 
 	cq := `SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path <@ parent.path `
-	gp, err := r.retrieve(ctx, groupID, q, cq, pm)
+	gp, err := gr.retrieve(ctx, groupID, q, cq, pm)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(errRetrieveChildren, err)
 	}
