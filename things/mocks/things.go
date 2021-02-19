@@ -172,11 +172,9 @@ func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, ids []string, p
 				items = append(items, v)
 			}
 		}
-	}
+	}	
 
-	sort.SliceStable(items, func(i, j int) bool {
-		return items[i].ID < items[j].ID
-	})
+	items = sortThings(pm, items)
 
 	page := things.Page{
 		Things: items,
