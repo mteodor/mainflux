@@ -23,7 +23,7 @@ default values.
 | MF_PROVISION_PASS                   | Mainflux password                                 | user123                          |
 | MF_PROVISION_API_KEY                | Mainflux authentication token                     |                                  |
 | MF_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                      |
-| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 8091                             |
+| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 8190                             |
 | MF_PROVISION_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     | false                            |
 | MF_PROVISION_SERVER_CERT            | Mainflux gRPC secure server cert                  |                                  |
 | MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                  |
@@ -32,7 +32,6 @@ default values.
 | MF_PROVISION_USERS_LOCATION         | Users service URL                                 | http://locahost                  |
 | MF_PROVISION_THINGS_LOCATION        | Things service URL                                | http://localhost                 |
 | MF_PROVISION_LOG_LEVEL              | Service log level                                 | http://localhost                 |
-| MF_PROVISION_HTTP_PORT              | Service listening port                            | 8091                             |
 | MF_PROVISION_USER                   | Mainflux user username                            | test@example.com                 |
 | MF_PROVISION_PASS                   | Mainflux user password                            | password                         |
 | MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://localhost/things/configs  |
@@ -115,12 +114,12 @@ docker-compose -f docker/addons/provision/docker-compose.yml up
 
 For the case that credentials or API token is passed in configuration file or environment variables, call to `/mapping` endpoint doesn't require `Authentication` header:
 ```bash
-curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
+curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
 ```
 
 In the case that provision service is not deployed with credentials or API key or you want to use user other than one being set in environment (or config file):
 ```bash
-curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
+curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
 ```
 
 Or if you want to specify a name for thing different than in `config.toml` you can specify post data as:
