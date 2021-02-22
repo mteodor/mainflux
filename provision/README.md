@@ -36,7 +36,7 @@ default values.
 | MF_PROVISION_PASS                   | Mainflux user password                            | password                         |
 | MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://localhost/things/configs  |
 | MF_PROVISION_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | http://localhost/things/state    |
-| MF_PROVISION_CERTS_SVC_URL          | Certificats service URL                           | http://localhost/certs           |
+| MF_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | http://localhost/certs           |
 | MF_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                            |
 | MF_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                             |
 | MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                             |
