@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 set -euo pipefail
 
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -17,12 +17,12 @@ vault() {
 }
 
 vaultEnablePKI() {
-    vault secrets enable -path pki_${MF_VAULT_CA_NAME} pki
-    vault secrets tune -max-lease-ttl=87600h pki_${MF_VAULT_CA_NAME}
+    vault secrets enable -path ${NAME_PKI_PATH} pki
+    vault secrets tune -max-lease-ttl=87600h ${NAME_PKI_PATH}
 }
 
 vaultAddRoleToSecret() {
-    vault write pki_${MF_VAULT_CA_NAME}/roles/${MF_VAULT_CA_NAME} \
+    vault write ${NAME_PKI_PATH}/roles/${MF_VAULT_CA_NAME} \
         allow_any_name=true \
         max_ttl="4300h" \
         default_ttl="4300h" \
@@ -31,7 +31,7 @@ vaultAddRoleToSecret() {
 
 vaultGenerateRootCACertificate() {
     echo "Generate root CA certificate"
-    vault write -format=json pki_${MF_VAULT_CA_NAME}/root/generate/exported \
+    vault write -format=json ${NAME_PKI_PATH}/root/generate/exported \
         common_name="\"$MF_VAULT_CA_DOMAIN_NAME CA Root\"" \
         ou="\"$MF_VAULT_CA_OU\""\
         organization="\"$MF_VAULT_CA_ORG\"" \
@@ -44,7 +44,6 @@ vaultGenerateRootCACertificate() {
 
 vaultGenerateIntermediateCAPKI() {
     echo "Generate Intermediate CA PKI"
-    export NAME_PKI_INT_PATH="pki_int_$MF_VAULT_CA_NAME"
     vault secrets enable -path=${NAME_PKI_INT_PATH} pki
     vault secrets tune -max-lease-ttl=43800h ${NAME_PKI_INT_PATH}
 }
@@ -60,7 +59,7 @@ vaultGenerateIntermediateCSR() {
 vaultSignIntermediateCSR() {
     echo "Sign intermediate CSR"
     docker cp data/${MF_VAULT_CA_NAME}_int.csr mainflux-vault:/vault/${MF_VAULT_CA_NAME}_int.csr
-    vault write -format=json pki_${MF_VAULT_CA_NAME}/root/sign-intermediate \
+    vault write -format=json ${NAME_PKI_PATH}/root/sign-intermediate \
         csr=@/vault/${MF_VAULT_CA_NAME}_int.csr \
         | tee >(jq -r .data.certificate >data/${MF_VAULT_CA_NAME}_int.crt) \
               >(jq -r .data.issuing_ca >data/${MF_VAULT_CA_NAME}_int_issuing_ca.crt)
@@ -113,6 +112,11 @@ then
 fi
 
 readDotEnv
+
+export NAME_PKI_PATH="$MF_VAULT_PKI_PATH_$MF_VAULT_CA_NAME"
+echo $NAME_PKI_INT_PATH
+export NAME_PKI_INT_PATH="$MF_VAULT_PKI_INT_PATH_$MF_VAULT_CA_NAME"
+echo $NAME_PKI_INT_PATH
 
 mkdir -p data
 
