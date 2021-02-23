@@ -42,10 +42,11 @@ Use 3 out of five keys presented and put it into .env file and than start the co
 
 2. `vault-unseal.sh`
 
-This can be run after the initialization to unseal Vault, which is necessary for it to be used to store and/or get
-secrets.
+This can be run after the initialization to unseal Vault, which is necessary for it to be used to store and/or get secrets.
+This can be used if you don't want to restart the service.
 
-The unseal environment variables need to be set in `.env` for the script to work.
+The unseal environment variables need to be set in `.env` for the script to work (`MF_VAULT_TOKEN`, `MF_VAULT_UNSEAL_KEY_1`,
+`MF_VAULT_UNSEAL_KEY_2`, `MF_VAULT_UNSEAL_KEY_3`).
 
 This script should not be necessary to run after the initial setup, since the Vault service unseals itself when
 starting the container.
@@ -53,7 +54,7 @@ starting the container.
 3. `vault-set-pki.sh`
 
 This script is used to generate the root certificate, intermediate certificate and HTTPS server certificate.
-After it runs, it copes the necessary certificates and keys to the `docker/ssl/certs` folder.
+After it runs, it copies the necessary certificates and keys to the `docker/ssl/certs` folder.
 
 The CA parameters are obtained from the environment variables starting with `MF_VAULT_CA` in `.env` file.
 
