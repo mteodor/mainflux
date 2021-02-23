@@ -64,9 +64,9 @@ const (
 	defSignHoursValid = "2048h"
 	defSignRSABits    = ""
 
-	defVaultHost    = ""
-	defVaultRole    = "mainflux"
-	defVaultToken   = ""
+	defVaultHost       = ""
+	defVaultRole       = "mainflux"
+	defVaultToken      = ""
 	defVaultPKIIntPath = "pki_int"
 
 	envPort          = "MF_CERTS_HTTP_PORT"
@@ -96,10 +96,10 @@ const (
 	envSignHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
 	envSignRSABits    = "MF_CERTS_SIGN_RSA_BITS"
 
-	envVaultHost    = "MF_CERTS_VAULT_HOST"
+	envVaultHost       = "MF_CERTS_VAULT_HOST"
 	envVaultPKIIntPath = "MF_VAULT_PKI_INT_PATH"
-	envVaultRole    = "MF_VAULT_CA_ROLE_NAME"
-	envVaultToken   = "MF_VAULT_TOKEN"
+	envVaultRole       = "MF_VAULT_CA_ROLE_NAME"
+	envVaultToken      = "MF_VAULT_TOKEN"
 )
 
 var (
