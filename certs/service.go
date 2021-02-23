@@ -57,7 +57,7 @@ type Service interface {
 	IssueCert(ctx context.Context, token, thingID, daysValid string, keyBits int, keyType string) (Cert, error)
 
 	// ListCerts lists all certificates issued for given owner
-	ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error)
+	ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error)
 
 	// RevokeCert revokes certificate for given thing
 	RevokeCert(ctx context.Context, token, thingID string) (Revoke, error)
@@ -135,16 +135,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 		return c, errors.Wrap(errFailedCertCreation, err)
 	}
 
-	// If PKIHost is not set we don't use 3rd party PKI service.
-	if cs.conf.PKIHost == "" {
-		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, keyBits)
-		if err != nil {
-			return c, errors.Wrap(errFailedCertCreation, err)
-		}
-		return c, err
-	}
-
-	cert, err := cs.pki.IssueCert(thingID, daysValid, keyType, keyBits)
+	cert, err := cs.pki.IssueCert(thing.ID, daysValid, keyType, keyBits)
 	if err != nil {
 		return c, errors.Wrap(errFailedCertCreation, err)
 	}
@@ -190,26 +181,26 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 	return revoke, nil
 }
 
-func (cs *certsService) ListCerts(ctx context.Context, token string, offset, limit uint64) (Page, error) {
+func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return cs.certsRepo.RetrieveAll(ctx, u.GetEmail(), offset, limit)
+	return cs.certsRepo.RetrieveAll(ctx, u.GetEmail(), thingID, offset, limit)
 }
 
-func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, string, error) {
+func (cs *certsService) certs(thingID, thingKey, daysValid string, keyBits int) (Cert, error) {
 	if cs.conf.SignX509Cert == nil {
-		return "", "", errors.Wrap(errFailedCertCreation, errMissingCACertificate)
+		return Cert{}, errors.Wrap(errFailedCertCreation, errMissingCACertificate)
 	}
 	if keyBits == 0 {
-		return "", "", errors.Wrap(errFailedCertCreation, errKeyBitsValueWrong)
+		return Cert{}, errors.Wrap(errFailedCertCreation, errKeyBitsValueWrong)
 	}
 	var priv interface{}
 	priv, err := rsa.GenerateKey(rand.Reader, keyBits)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedKeyCreation, err)
+		return Cert{}, errors.Wrap(errFailedKeyCreation, err)
 	}
 
 	if daysValid == "" {
@@ -219,14 +210,14 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 	notBefore := time.Now()
 	validFor, err := time.ParseDuration(daysValid)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedDateSetting, err)
+		return Cert{}, errors.Wrap(errFailedDateSetting, err)
 	}
 	notAfter := notBefore.Add(validFor)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedSerialGeneration, err)
+		return Cert{}, errors.Wrap(errFailedSerialGeneration, err)
 	}
 
 	tmpl := x509.Certificate{
@@ -246,11 +237,16 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 
 	pubKey, err := publicKey(priv)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedCertCreation, err)
+		return Cert{}, errors.Wrap(errFailedCertCreation, err)
 	}
 	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, cs.conf.SignX509Cert, pubKey, cs.conf.SignTLSCert.PrivateKey)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedCertCreation, err)
+		return Cert{}, errors.Wrap(errFailedCertCreation, err)
+	}
+
+	x509cert, err := x509.ParseCertificate(derBytes)
+	if err != nil {
+		return Cert{}, errors.Wrap(errFailedCertCreation, err)
 	}
 
 	var bw, keyOut bytes.Buffer
@@ -258,22 +254,30 @@ func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, 
 	buffKeyOut := bufio.NewWriter(&keyOut)
 
 	if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-		return "", "", errors.Wrap(errFailedPemDataWrite, err)
+		return Cert{}, errors.Wrap(errFailedPemDataWrite, err)
 	}
 	buffWriter.Flush()
 	cert := bw.String()
 
 	block, err := pemBlockForKey(priv)
 	if err != nil {
-		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
+		return Cert{}, errors.Wrap(errFailedPemKeyWrite, err)
 	}
 	if err := pem.Encode(buffKeyOut, block); err != nil {
-		return "", "", errors.Wrap(errFailedPemKeyWrite, err)
+		return Cert{}, errors.Wrap(errFailedPemKeyWrite, err)
 	}
 	buffKeyOut.Flush()
 	key := keyOut.String()
 
-	return cert, key, nil
+	return Cert{
+		ThingID:    thingID,
+		ClientCert: cert,
+		ClientKey:  key,
+		Serial:     x509cert.Subject.SerialNumber,
+		Expire:     x509cert.NotAfter,
+		IssuingCA:  x509cert.Issuer.String(),
+	}, nil
+
 }
 
 func publicKey(priv interface{}) (interface{}, error) {

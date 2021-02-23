@@ -15,17 +15,17 @@ type pageRes struct {
 
 type certsPageRes struct {
 	pageRes
-	Certs []certsResponse `json:"certs"`
+	Certs []thingCertsRes `json:"certs"`
 	Error string          `json:"error,omitempty"`
 }
 
-type certsResponse struct {
-	ClientCert map[string]string `json:"client_cert"`
-	ClientKey  map[string]string `json:"client_key"`
-	Serial     string            `json:"serial"`
-	ThingID    string            `json:"thing_id"`
-	CACert     string            `json:"ca_cert"`
-	Error      string            `json:"error"`
+type thingCertsRes struct {
+	ID     string            `json:"thing_id"`
+	Cert   map[string]string `json:"thing_cert"`
+	Key    map[string]string `json:"thing_key"`
+	Serial string            `json:"serial"`
+	CACert string            `json:"ca_cert"`
+	Error  string            `json:"error"`
 }
 
 func (res certsPageRes) Code() int {
@@ -40,14 +40,14 @@ func (res certsPageRes) Empty() bool {
 	return false
 }
 
-func (res certsResponse) Code() int {
+func (res thingCertsRes) Code() int {
 	return http.StatusCreated
 }
 
-func (res certsResponse) Headers() map[string]string {
+func (res thingCertsRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res certsResponse) Empty() bool {
+func (res thingCertsRes) Empty() bool {
 	return false
 }

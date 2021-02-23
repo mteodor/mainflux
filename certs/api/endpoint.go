@@ -18,9 +18,15 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		}
 		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Valid, req.KeyBits, req.KeyType)
 		if err != nil {
-			return certsResponse{Error: err.Error()}, nil
+			return thingCertsRes{Error: err.Error()}, nil
 		}
-		return res, nil
+		return thingCertsRes{
+			Serial: res.Serial,
+			ID:     res.ThingID,
+			Key:    map[string]string{res.Serial: res.ClientKey},
+			Cert:   map[string]string{res.Serial: res.ClientCert},
+			CACert: res.IssuingCA,
+		}, nil
 	}
 }
 
@@ -31,7 +37,7 @@ func listCerts(svc certs.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListCerts(ctx, req.token, req.offset, req.limit)
+		page, err := svc.ListCerts(ctx, req.token, req.thingID, req.offset, req.limit)
 		if err != nil {
 			return certsPageRes{
 				Error: err.Error(),
@@ -43,13 +49,16 @@ func listCerts(svc certs.Service) endpoint.Endpoint {
 				Offset: page.Offset,
 				Limit:  page.Limit,
 			},
-			Certs: []certsResponse{},
+			Certs: []thingCertsRes{},
 		}
 
 		for _, cert := range page.Certs {
-			view := certsResponse{
-				Serial:  cert.Serial,
-				ThingID: cert.ThingID,
+			view := thingCertsRes{
+				Serial: cert.Serial,
+				ID:     cert.ThingID,
+				Key:    map[string]string{cert.Serial: cert.ClientKey},
+				Cert:   map[string]string{cert.Serial: cert.ClientCert},
+				CACert: cert.IssuingCA,
 			}
 			res.Certs = append(res.Certs, view)
 		}
@@ -63,6 +72,6 @@ func revokeCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		return svc.RevokeCert(ctx, req.token, req.ThingID)
+		return svc.RevokeCert(ctx, req.token, req.thingID)
 	}
 }
