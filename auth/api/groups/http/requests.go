@@ -1,13 +1,9 @@
 package groups
 
 import (
-	"regexp"
-
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
-
-var groupRegexp = regexp.MustCompile("^[A-Za-z0-9]+[A-Za-z0-9_-]*$")
 
 type createGroupReq struct {
 	token       string
@@ -21,7 +17,7 @@ func (req createGroupReq) validate() error {
 	if req.token == "" {
 		return auth.ErrUnauthorizedAccess
 	}
-	if len(req.Name) > maxNameSize || req.Name == "" || !groupRegexp.MatchString(req.Name) {
+	if len(req.Name) > maxNameSize || req.Name == "" {
 		return errors.Wrap(auth.ErrMalformedEntity, auth.ErrBadGroupName)
 	}
 	if req.ParentID == "" {
