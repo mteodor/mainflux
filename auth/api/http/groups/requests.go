@@ -20,9 +20,6 @@ func (req createGroupReq) validate() error {
 	if len(req.Name) > maxNameSize || req.Name == "" {
 		return errors.Wrap(auth.ErrMalformedEntity, auth.ErrBadGroupName)
 	}
-	if req.ParentID == "" {
-		return errors.Wrap(auth.ErrMalformedEntity, auth.ErrMissingGroupType)
-	}
 
 	return nil
 }
