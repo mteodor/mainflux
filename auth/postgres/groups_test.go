@@ -154,8 +154,9 @@ func TestGroupRetrieveByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.True(t, retrieved.ID == group1.ID, fmt.Sprintf("Save group, ID: expected %s got %s\n", group1.ID, retrieved.ID))
 
-	creationTime := time.Now().UTC()
-
+	// Round to milliseconds as otherwise saving and retriving from DB
+	// adds rounding error.
+	creationTime := time.Now().UTC().Round(time.Millisecond)
 	group2 := auth.Group{
 		ID:          generateGroupID(t),
 		Name:        groupName + "TestGroupRetrieveByID",
@@ -173,9 +174,8 @@ func TestGroupRetrieveByID(t *testing.T) {
 	retrieved, err = groupRepo.RetrieveByID(context.Background(), group2.ID)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.True(t, retrieved.ID == group2.ID, fmt.Sprintf("Save group, ID: expected %s got %s\n", group2.ID, retrieved.ID))
-	// There is a problem with retrieving time from DB, looks like rounding in DB makes difference.
-	// assert.True(t, retrieved.CreatedAt.Equal(creationTime), fmt.Sprintf("Save group, CreatedAt: expected %s got %s\n", creationTime, retrieved.CreatedAt))
-	// assert.True(t, retrieved.UpdatedAt.Equal(creationTime), fmt.Sprintf("Save group, UpdatedAt: expected %s got %s\n", creationTime, retrieved.UpdatedAt))
+	assert.True(t, retrieved.CreatedAt.Equal(creationTime), fmt.Sprintf("Save group, CreatedAt: expected %s got %s\n", creationTime, retrieved.CreatedAt))
+	assert.True(t, retrieved.UpdatedAt.Equal(creationTime), fmt.Sprintf("Save group, UpdatedAt: expected %s got %s\n", creationTime, retrieved.UpdatedAt))
 	assert.True(t, retrieved.Level == 2, fmt.Sprintf("Save group, Level: expected %d got %d\n", retrieved.Level, 2))
 	assert.True(t, retrieved.ParentID == group1.ID, fmt.Sprintf("Save group, Level: expected %s got %s\n", group1.ID, retrieved.ParentID))
 	assert.True(t, retrieved.Description == description, fmt.Sprintf("Save group, Description: expected %v got %v\n", retrieved.Description, description))
