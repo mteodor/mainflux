@@ -190,6 +190,7 @@ func TestMembers(t *testing.T) {
 		Name:        "Mainflux",
 		Description: "Description",
 	}
+
 	var things []string
 	for i := 0; i < numOfThings; i++ {
 		id, err := uuid.New().ID()

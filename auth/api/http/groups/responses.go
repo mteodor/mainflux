@@ -36,9 +36,9 @@ func (res memberPageRes) Empty() bool {
 type viewGroupRes struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
-	ParentID    string                 `json:"parent_id,omitempty"`
 	OwnerID     string                 `json:"owner_id"`
-	Description string                 `json:"description"`
+	ParentID    string                 `json:"parent_id,omitempty"`
+	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	// Indicates a level in tree hierarchy from first group node - root.
 	Level int `json:"level"`
@@ -154,4 +154,8 @@ func (res unassignRes) Headers() map[string]string {
 
 func (res unassignRes) Empty() bool {
 	return true
+}
+
+type errorRes struct {
+	Err string `json:"error"`
 }

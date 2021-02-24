@@ -8,7 +8,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-func CreateGroupEndpoint(svc auth.Service) endpoint.Endpoint {
+func createGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
 		if err := req.validate(); err != nil {
@@ -31,7 +31,7 @@ func CreateGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ViewGroupEndpoint(svc auth.Service) endpoint.Endpoint {
+func viewGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
@@ -58,7 +58,7 @@ func ViewGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func UpdateGroupEndpoint(svc auth.Service) endpoint.Endpoint {
+func updateGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
 		if err := req.validate(); err != nil {
@@ -82,7 +82,7 @@ func UpdateGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func DeleteGroupEndpoint(svc auth.Service) endpoint.Endpoint {
+func deleteGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
@@ -97,7 +97,7 @@ func DeleteGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupsEndpoint(svc auth.Service) endpoint.Endpoint {
+func listGroupsEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
@@ -120,7 +120,7 @@ func ListGroupsEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListMemberships(svc auth.Service) endpoint.Endpoint {
+func listMemberships(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembershipsReq)
 		if err := req.validate(); err != nil {
@@ -146,7 +146,7 @@ func ListMemberships(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
+func listChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
@@ -170,7 +170,7 @@ func ListChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListParentsEndpoint(svc auth.Service) endpoint.Endpoint {
+func listParentsEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
@@ -194,7 +194,7 @@ func ListParentsEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func AssignEndpoint(svc auth.Service) endpoint.Endpoint {
+func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignReq)
 		if err := req.validate(); err != nil {
@@ -209,7 +209,7 @@ func AssignEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func UnassignEndpoint(svc auth.Service) endpoint.Endpoint {
+func unassignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignReq)
 		if err := req.validate(); err != nil {
@@ -224,7 +224,7 @@ func UnassignEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func ListMembersEndpoint(svc auth.Service) endpoint.Endpoint {
+func listMembersEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersReq)
 		if err := req.validate(); err != nil {
