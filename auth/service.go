@@ -37,6 +37,18 @@ var (
 	// ErrFailedToRetrieveMembers failed to retrieve group members.
 	ErrFailedToRetrieveMembers = errors.New("failed to retrieve group members")
 
+	// ErrFailedToRetrieveMembership failed to retrieve memberships
+	ErrFailedToRetrieveMembership = errors.New("failed to retrieve memberships")
+
+	// ErrFailedToRetrieveAll failed to retrieve groups.
+	ErrFailedToRetrieveAll = errors.New("failed to retrieve all groups")
+
+	// ErrFailedToRetrieveParents failed to retrieve groups.
+	ErrFailedToRetrieveParents = errors.New("failed to retrieve all groups")
+
+	// ErrFailedToRetrieveChildren failed to retrieve groups.
+	ErrFailedToRetrieveChildren = errors.New("failed to retrieve all groups")
+
 	errIssueUser = errors.New("failed to issue new user key")
 	errIssueTmp  = errors.New("failed to issue new temporary key")
 	errRevoke    = errors.New("failed to remove key")
@@ -225,8 +237,13 @@ func (svc service) CreateGroup(ctx context.Context, token string, group Group) (
 		return Group{}, errors.Wrap(ErrGenerateGroupID, err)
 	}
 
+	timestamp := getTimestmap()
+	group.UpdatedAt = timestamp
+	group.CreatedAt = timestamp
+
 	group.ID = ulid
 	group.OwnerID = user.ID
+
 	group, err = svc.groups.Save(ctx, group)
 	if err != nil {
 		return Group{}, err
@@ -278,6 +295,8 @@ func (svc service) UpdateGroup(ctx context.Context, token string, group Group) (
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
+
+	group.UpdatedAt = getTimestmap()
 	return svc.groups.Update(ctx, group)
 }
 
@@ -307,4 +326,8 @@ func (svc service) ListMemberships(ctx context.Context, token string, memberID s
 		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.groups.Memberships(ctx, memberID, pm)
+}
+
+func getTimestmap() time.Time {
+	return time.Now().UTC().Round(time.Millisecond)
 }

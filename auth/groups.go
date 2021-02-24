@@ -23,10 +23,10 @@ type Group struct {
 	Name        string
 	Description string
 	Metadata    GroupMetadata
-	// Indicates a level in hierarchy from first group node.
-	// For a root node level is 1.
+	// Indicates a level in tree hierarchy.
+	// Root node is level 1.
 	Level int
-	// Path is a path in a tree, consisted of group ids
+	// Path in a tree consisting of group ids
 	// parentID1.parentID2.childID1
 	// e.g. 01EXPM5Z8HRGFAEWTETR1X1441.01EXPKW2TVK74S5NWQ979VJ4PJ.01EXPKW2TVK74S5NWQ979VJ4PJ .
 	Path      string
@@ -180,4 +180,7 @@ var (
 
 	// ErrMemberAlreadyAssigned indicates that members is already assigned.
 	ErrMemberAlreadyAssigned = errors.New("member is already assigned")
+
+	// ErrSelectEntity indicates error while reading entity from database
+	ErrSelectEntity = errors.New("select entity from db error")
 )
