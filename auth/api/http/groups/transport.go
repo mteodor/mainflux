@@ -41,7 +41,7 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 	mux.Post("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "add_group")(createGroupEndpoint(svc)),
+		kitot.TraceServer(tracer, "create_group")(createGroupEndpoint(svc)),
 		decodeGroupCreate,
 		encodeResponse,
 		opts...,
