@@ -2,6 +2,27 @@ This is Vault service deployment to be used with Mainflux.
 
 When the Vault service is started, some initialization steps need to be done to set things up.
 
+## Configuration
+
+| Variable                  | Description                                                             | Default        |
+| ------------------------- | ----------------------------------------------------------------------- | -------------- |
+| MF_VAULT_HOST             | Vault service address                                                   | vault          |
+| MF_VAULT_PORT             | Vault service port                                                      | 8200           |
+| MF_VAULT_UNSEAL_KEY_1     | Vault unseal key                                                        | ""             |
+| MF_VAULT_UNSEAL_KEY_2     | Vault unseal key                                                        | ""             |
+| MF_VAULT_UNSEAL_KEY_3     | Vault unseal key                                                        | ""             |
+| MF_VAULT_TOKEN            | Vault cli access token                                                  | ""             |
+| MF_VAULT_PKI_PATH         | Vault secrets engine path for CA                                        | pki            |
+| MF_VAULT_PKI_INT_PATH     | Vault secrets engine path for intermediate CA                           | pki_int        |
+| MF_VAULT_CA_ROLE_NAME     | Vault secrets engine role                                               | mainflux       |
+| MF_VAULT_CA_NAME          | Certificates name used by `vault-set-pki.sh`                            | mainflux       |
+| MF_VAULT_CA_DOMAIN_NAME   | Domain name used for CA creation by `vault-set-pki.sh`                  | mainflux.com   |
+| MF_VAULT_CA_OU            | Org unit used for CA creation by `vault-set-pki.sh`                     | Mainflux Cloud |
+| MF_VAULT_CA_ORG           | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Co.   |
+| MF_VAULT_CA_COUNTRY       | Country used for CA creation by `vault-set-pki.sh`                      | Serbia         |
+| MF_VAULT_CA_LOC           | Location used for CA creation by `vault-set-pki.sh`                     | BG             |
+
+
 ## Setup
 
 The following scripts are provided, which work on the running Vault service in Docker.
