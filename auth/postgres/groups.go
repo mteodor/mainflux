@@ -181,7 +181,8 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 	}
 	cq := "SELECT COUNT(*) FROM groups"
 	if mq != "" {
-		mq = fmt.Sprintf("AND %s", mq)
+		cq = fmt.Sprintf(" %s WHERE %s", cq, mq)
+		mq = fmt.Sprintf(" AND %s", mq)
 	}
 
 	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM groups 
@@ -656,9 +657,9 @@ func toDBGroupRelation(memberID, groupID, groupType string) (dbGroupRelation, er
 
 func getGroupsMetadataQuery(db string, m auth.GroupMetadata) (mb []byte, mq string, err error) {
 	if len(m) > 0 {
-		mq = db + `.metadata @> :metadata`
-		if db == "" {
-			mq = `metadata @> :metadata`
+		mq = `metadata @> :metadata`
+		if db != "" {
+			mq = db + "." + mq
 		}
 
 		b, err := json.Marshal(m)
