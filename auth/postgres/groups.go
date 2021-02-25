@@ -181,7 +181,6 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 	}
 	cq := "SELECT COUNT(*) FROM groups"
 	if mq != "" {
-		getGroupsMetadataQuery
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
@@ -420,16 +419,15 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 		return errors.Wrap(auth.ErrAssignToGroup, err)
 	}
 
-	created := time.Now()
-
 	qIns := `INSERT INTO group_relations (group_id, member_id, type, created_at, updated_at) 
-			 VALUES( :group_id, :member_id, :type, :created_at, :updated_at)`
+			 VALUES(:group_id, :member_id, :type, :created_at, :updated_at)`
 
 	for _, id := range ids {
 		dbg, err := toDBGroupRelation(id, groupID, groupType)
 		if err != nil {
 			return errors.Wrap(auth.ErrAssignToGroup, err)
 		}
+		created := time.Now()
 		dbg.CreatedAt = created
 		dbg.UpdatedAt = created
 
