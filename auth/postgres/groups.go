@@ -84,7 +84,7 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 		return auth.Group{}, err
 	}
 
-	return gr.toGroup(dbg)
+	return toGroup(dbg)
 }
 
 func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group, error) {
@@ -117,7 +117,7 @@ func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group,
 		return g, errors.Wrap(auth.ErrUpdateGroup, err)
 	}
 
-	return gr.toGroup(dbu)
+	return toGroup(dbu)
 }
 
 func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
@@ -171,7 +171,7 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (auth.Gro
 		}
 		return auth.Group{}, errors.Wrap(auth.ErrSelectEntity, err)
 	}
-	return gr.toGroup(dbu)
+	return toGroup(dbu)
 }
 
 func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata) (auth.GroupPage, error) {
@@ -386,7 +386,7 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, pm a
 		if err := rows.StructScan(&dbg); err != nil {
 			return auth.GroupPage{}, errors.Wrap(auth.ErrFailedToRetrieveMembership, err)
 		}
-		gr, err := gr.toGroup(dbg)
+		gr, err := toGroup(dbg)
 		if err != nil {
 			return auth.GroupPage{}, err
 		}
@@ -426,7 +426,7 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 			 VALUES( :group_id, :member_id, :type, :created_at, :updated_at)`
 
 	for _, id := range ids {
-		dbg, err := gr.toDBGroupRelation(id, groupID, groupType)
+		dbg, err := toDBGroupRelation(id, groupID, groupType)
 		if err != nil {
 			return errors.Wrap(auth.ErrAssignToGroup, err)
 		}
@@ -467,7 +467,7 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 	qDel := `DELETE from group_relations WHERE group_id = :group_id AND member_id = :member_id`
 
 	for _, id := range ids {
-		dbg, err := gr.toDBGroupRelation(id, groupID, "")
+		dbg, err := toDBGroupRelation(id, groupID, "")
 		if err != nil {
 			return errors.Wrap(auth.ErrAssignToGroup, err)
 		}
@@ -610,7 +610,7 @@ func (gr groupRepository) toDBMemberPage(memberID, groupID, groupType string, pm
 	}, nil
 }
 
-func (gr groupRepository) toGroup(dbu dbGroup) (auth.Group, error) {
+func toGroup(dbu dbGroup) (auth.Group, error) {
 	ownerID, err := toString(dbu.OwnerID)
 	if err != nil {
 		return auth.Group{}, err
@@ -638,7 +638,7 @@ type dbGroupRelation struct {
 	Type      string         `db:"type"`
 }
 
-func (gr groupRepository) toDBGroupRelation(memberID, groupID, groupType string) (dbGroupRelation, error) {
+func toDBGroupRelation(memberID, groupID, groupType string) (dbGroupRelation, error) {
 	var grID sql.NullString
 	if groupID != "" {
 		grID = sql.NullString{String: groupID, Valid: true}
@@ -679,7 +679,7 @@ func (gr groupRepository) processRows(rows *sqlx.Rows) ([]auth.Group, error) {
 		if err := rows.StructScan(&dbg); err != nil {
 			return items, err
 		}
-		group, err := gr.toGroup(dbg)
+		group, err := toGroup(dbg)
 		if err != nil {
 			return items, err
 		}

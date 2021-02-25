@@ -9,6 +9,56 @@ import (
 const MaxLevel = uint64(5)
 const MinLevel = uint64(1)
 
+var (
+	// ErrMaxLevelExceeded malformed entity.
+	ErrMaxLevelExceeded = errors.New("level must be less than or equal 5")
+
+	// ErrBadGroupName malformed entity.
+	ErrBadGroupName = errors.New("incorrect group name")
+
+	// ErrGroupConflict group conflict.
+	ErrGroupConflict = errors.New("group already exists")
+
+	// ErrCreateGroup indicates failure to create group.
+	ErrCreateGroup = errors.New("failed to create group")
+
+	// ErrFetchGroups indicates failure to fetch groups.
+	ErrFetchGroups = errors.New("failed to fetch groups")
+
+	// ErrUpdateGroup indicates failure to update group.
+	ErrUpdateGroup = errors.New("failed to update group")
+
+	// ErrDeleteGroup indicates failure to delete group.
+	ErrDeleteGroup = errors.New("failed to delete group")
+
+	// ErrGroupNotFound indicates failure to find group.
+	ErrGroupNotFound = errors.New("failed to find group")
+
+	// ErrAssignToGroup indicates failure to assign member to a group.
+	ErrAssignToGroup = errors.New("failed to assign member to a group")
+
+	// ErrUnassignFromGroup indicates failure to unassign member from a group.
+	ErrUnassignFromGroup = errors.New("failed to unassign member from a group")
+
+	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
+	ErrUnsupportedContentType = errors.New("unsupported content type")
+
+	// ErrFailedDecode indicates failed to decode request body
+	ErrFailedDecode = errors.New("failed to decode request body")
+
+	// ErrMissingParent indicates that parent can't be found
+	ErrMissingParent = errors.New("failed to retrieve parent")
+
+	// ErrGroupNotEmpty indicates group is not empty, can't be deleted.
+	ErrGroupNotEmpty = errors.New("group is not empty")
+
+	// ErrMemberAlreadyAssigned indicates that members is already assigned.
+	ErrMemberAlreadyAssigned = errors.New("member is already assigned")
+
+	// ErrSelectEntity indicates error while reading entity from database
+	ErrSelectEntity = errors.New("select entity from db error")
+)
+
 type GroupMetadata map[string]interface{}
 
 type Member struct {
@@ -84,7 +134,7 @@ type GroupService interface {
 	// RemoveGroup removes the group identified with the provided ID.
 	RemoveGroup(ctx context.Context, token, id string) error
 
-	// Assign adds  member with memberID into the group identified by groupID.
+	// Assign adds a member with memberID into the group identified by groupID.
 	Assign(ctx context.Context, token, groupID, groupType string, memberIDs ...string) error
 
 	// Unassign removes member with memberID from group identified by groupID.
@@ -119,59 +169,9 @@ type GroupRepository interface {
 	// Members retrieves everything that is assigned to a group identified by groupID.
 	Members(ctx context.Context, groupID, groupType string, pm PageMetadata) (MemberPage, error)
 
-	// Assign adds member to group.
+	// Assign adds a member to group.
 	Assign(ctx context.Context, groupID, groupType string, memberIDs ...string) error
 
 	// Unassign removes a member from a group
 	Unassign(ctx context.Context, groupID string, memberIDs ...string) error
 }
-
-var (
-	// ErrMaxLevelExceeded malformed entity.
-	ErrMaxLevelExceeded = errors.New("level must be less than or equal 5")
-
-	// ErrBadGroupName malformed entity.
-	ErrBadGroupName = errors.New("incorrect group name")
-
-	// ErrGroupConflict group conflict.
-	ErrGroupConflict = errors.New("group already exists")
-
-	// ErrCreateGroup indicates failure to create group.
-	ErrCreateGroup = errors.New("failed to create group")
-
-	// ErrFetchGroups indicates failure to fetch groups.
-	ErrFetchGroups = errors.New("failed to fetch groups")
-
-	// ErrUpdateGroup indicates failure to update group.
-	ErrUpdateGroup = errors.New("failed to update group")
-
-	// ErrDeleteGroup indicates failure to delete group.
-	ErrDeleteGroup = errors.New("failed to delete group")
-
-	// ErrGroupNotFound indicates failure to find group.
-	ErrGroupNotFound = errors.New("failed to find group")
-
-	// ErrAssignToGroup indicates failure to assign member to a group.
-	ErrAssignToGroup = errors.New("failed to assign member to a group")
-
-	// ErrUnassignFromGroup indicates failure to unassign member from a group.
-	ErrUnassignFromGroup = errors.New("failed to unassign member from a group")
-
-	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
-	ErrUnsupportedContentType = errors.New("unsupported content type")
-
-	// ErrFailedDecode indicates failed to decode request body
-	ErrFailedDecode = errors.New("failed to decode request body")
-
-	// ErrMissingParent indicates that parent can't be found
-	ErrMissingParent = errors.New("failed to retrieve parent")
-
-	// ErrGroupNotEmpty indicates group is not empty, can't be deleted.
-	ErrGroupNotEmpty = errors.New("group is not empty")
-
-	// ErrMemberAlreadyAssigned indicates that members is already assigned.
-	ErrMemberAlreadyAssigned = errors.New("member is already assigned")
-
-	// ErrSelectEntity indicates error while reading entity from database
-	ErrSelectEntity = errors.New("select entity from db error")
-)

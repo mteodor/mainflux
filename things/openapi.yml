@@ -526,6 +526,8 @@ paths:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Direction"
         - $ref: "#/components/parameters/Metadata"
       responses:
         '200':
