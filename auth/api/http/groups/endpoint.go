@@ -256,9 +256,9 @@ func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
 	}
 
 	for _, group := range groupsMap {
-		if ch, ok := parentsMap[group.ParentID]; ok {
-			ch = append(ch, group)
-			parentsMap[group.ParentID] = ch
+		if children, ok := parentsMap[group.ParentID]; ok {
+			children = append(children, group)
+			parentsMap[group.ParentID] = children
 		}
 	}
 

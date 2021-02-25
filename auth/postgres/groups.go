@@ -181,7 +181,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 	}
 	cq := "SELECT COUNT(*) FROM groups"
 	if mq != "" {
-		cq = fmt.Sprintf("%s WHERE %s", cq, mq)
+		getGroupsMetadataQuery
 		mq = fmt.Sprintf("AND %s", mq)
 	}
 
@@ -382,11 +382,11 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, pm a
 
 	var items []auth.Group
 	for rows.Next() {
-		dbgr := dbGroup{}
-		if err := rows.StructScan(&dbgr); err != nil {
+		dbg := dbGroup{}
+		if err := rows.StructScan(&dbg); err != nil {
 			return auth.GroupPage{}, errors.Wrap(auth.ErrFailedToRetrieveMembership, err)
 		}
-		gr, err := gr.toGroup(dbgr)
+		gr, err := gr.toGroup(dbg)
 		if err != nil {
 			return auth.GroupPage{}, err
 		}
@@ -426,14 +426,14 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 			 VALUES( :group_id, :member_id, :type, :created_at, :updated_at)`
 
 	for _, id := range ids {
-		dbgr, err := gr.toDBGroupRelation(id, groupID, groupType)
+		dbg, err := gr.toDBGroupRelation(id, groupID, groupType)
 		if err != nil {
 			return errors.Wrap(auth.ErrAssignToGroup, err)
 		}
-		dbgr.CreatedAt = created
-		dbgr.UpdatedAt = created
+		dbg.CreatedAt = created
+		dbg.UpdatedAt = created
 
-		if _, err := tx.NamedExecContext(ctx, qIns, dbgr); err != nil {
+		if _, err := tx.NamedExecContext(ctx, qIns, dbg); err != nil {
 			tx.Rollback()
 			pqErr, ok := err.(*pq.Error)
 			if ok {
@@ -467,12 +467,12 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 	qDel := `DELETE from group_relations WHERE group_id = :group_id AND member_id = :member_id`
 
 	for _, id := range ids {
-		dbgr, err := gr.toDBGroupRelation(id, groupID, "")
+		dbg, err := gr.toDBGroupRelation(id, groupID, "")
 		if err != nil {
 			return errors.Wrap(auth.ErrAssignToGroup, err)
 		}
 
-		if _, err := tx.NamedExecContext(ctx, qDel, dbgr); err != nil {
+		if _, err := tx.NamedExecContext(ctx, qDel, dbg); err != nil {
 			tx.Rollback()
 			pqErr, ok := err.(*pq.Error)
 			if ok {
@@ -656,9 +656,7 @@ func (gr groupRepository) toDBGroupRelation(memberID, groupID, groupType string)
 	}, nil
 }
 
-func getGroupsMetadataQuery(db string, m auth.GroupMetadata) ([]byte, string, error) {
-	mq := ""
-	mb := []byte("{}")
+func getGroupsMetadataQuery(db string, m auth.GroupMetadata) (mb []byte, mq string, err error) {
 	if len(m) > 0 {
 		mq = db + `.metadata @> :metadata`
 		if db == "" {
@@ -677,15 +675,15 @@ func getGroupsMetadataQuery(db string, m auth.GroupMetadata) ([]byte, string, er
 func (gr groupRepository) processRows(rows *sqlx.Rows) ([]auth.Group, error) {
 	var items []auth.Group
 	for rows.Next() {
-		dbgr := dbGroup{}
-		if err := rows.StructScan(&dbgr); err != nil {
+		dbg := dbGroup{}
+		if err := rows.StructScan(&dbg); err != nil {
 			return items, err
 		}
-		gr, err := gr.toGroup(dbgr)
+		group, err := gr.toGroup(dbg)
 		if err != nil {
 			return items, err
 		}
-		items = append(items, gr)
+		items = append(items, group)
 	}
 	return items, nil
 }
