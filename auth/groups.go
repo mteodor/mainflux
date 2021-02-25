@@ -166,15 +166,6 @@ var (
 	// ErrMissingParent indicates that parent can't be found
 	ErrMissingParent = errors.New("failed to retrieve parent")
 
-	// ErrParentInvariant indicates that parent can't be changed
-	ErrParentInvariant = errors.New("parent can't be changed")
-
-	// ErrMissingGroupType indicates missing group type
-	ErrMissingGroupType = errors.New("specifying group type is mandatory")
-
-	// ErrInvalidGroupType Invalid group type
-	ErrInvalidGroupType = errors.New("invalid group type")
-
 	// ErrGroupNotEmpty indicates group is not empty, can't be deleted.
 	ErrGroupNotEmpty = errors.New("group is not empty")
 
