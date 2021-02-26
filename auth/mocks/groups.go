@@ -210,7 +210,7 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, memberID string
 		if i >= first && i < last {
 			items = append(items, g)
 		}
-		i = i + 1
+		i++
 	}
 
 	return auth.GroupPage{
@@ -240,7 +240,7 @@ func (grm *groupRepositoryMock) Members(ctx context.Context, groupID, groupType 
 		if i >= first && i < last {
 			items = append(items, auth.Member{ID: g, Type: groupType})
 		}
-		i = i + 1
+		i++
 	}
 	return auth.MemberPage{
 		Members: items,
