@@ -18,7 +18,7 @@ When the Vault service is started, some initialization steps need to be done to 
 | MF_VAULT_CA_NAME          | Certificates name used by `vault-set-pki.sh`                            | mainflux       |
 | MF_VAULT_CA_CN            | Common name used for CA creation by `vault-set-pki.sh`                  | mainflux.com   |
 | MF_VAULT_CA_OU            | Org unit used for CA creation by `vault-set-pki.sh`                     | Mainflux Cloud |
-| MF_VAULT_CA_O             | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Co.   |
+| MF_VAULT_CA_O             | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Labs  |
 | MF_VAULT_CA_C             | Country used for CA creation by `vault-set-pki.sh`                      | Serbia         |
 | MF_VAULT_CA_L             | Location used for CA creation by `vault-set-pki.sh`                     | BG             |
 
