@@ -32,11 +32,11 @@ vaultAddRoleToSecret() {
 vaultGenerateRootCACertificate() {
     echo "Generate root CA certificate"
     vault write -format=json ${NAME_PKI_PATH}/root/generate/exported \
-        common_name="\"$MF_VAULT_CA_DOMAIN_NAME CA Root\"" \
+        common_name="\"$MF_VAULT_CA_CN CA Root\"" \
         ou="\"$MF_VAULT_CA_OU\""\
-        organization="\"$MF_VAULT_CA_ORG\"" \
-        country="\"$MF_VAULT_CA_COUNTRY\"" \
-        locality="\"$MF_VAULT_CA_LOC\"" \
+        organization="\"$MF_VAULT_CA_O\"" \
+        country="\"$MF_VAULT_CA_C\"" \
+        locality="\"$MF_VAULT_CA_L\"" \
         ttl=87600h | tee >(jq -r .data.certificate >data/${MF_VAULT_CA_NAME}_ca.crt) \
                          >(jq -r .data.issuing_ca  >data/${MF_VAULT_CA_NAME}_issuing_ca.crt) \
                          >(jq -r .data.private_key >data/${MF_VAULT_CA_NAME}_ca.key)
@@ -51,7 +51,7 @@ vaultGenerateIntermediateCAPKI() {
 vaultGenerateIntermediateCSR() {
     echo "Generate intermediate CSR"
     vault write -format=json ${NAME_PKI_INT_PATH}/intermediate/generate/exported \
-        common_name="$MF_VAULT_CA_DOMAIN_NAME Intermediate Authority" \
+        common_name="$MF_VAULT_CA_CN Intermediate Authority" \
         | tee >(jq -r .data.csr         >data/${MF_VAULT_CA_NAME}_int.csr) \
               >(jq -r .data.private_key >data/${MF_VAULT_CA_NAME}_int.key)
 }
@@ -96,9 +96,9 @@ vaultSetupCARole() {
 vaultGenerateServerCertificate() {
     echo "Generate server certificate"
     vault write -format=json ${NAME_PKI_INT_PATH}/issue/${MF_VAULT_CA_ROLE_NAME} \
-        common_name="$MF_VAULT_CA_DOMAIN_NAME" ttl="8670h" \
-        | tee >(jq -r .data.certificate >data/${MF_VAULT_CA_DOMAIN_NAME}.crt) \
-              >(jq -r .data.private_key >data/${MF_VAULT_CA_DOMAIN_NAME}.key)
+        common_name="$MF_VAULT_CA_CN" ttl="8670h" \
+        | tee >(jq -r .data.certificate >data/${MF_VAULT_CA_CN}.crt) \
+              >(jq -r .data.private_key >data/${MF_VAULT_CA_CN}.key)
 }
 
 vaultCleanupFiles() {
@@ -135,8 +135,8 @@ vaultCleanupFiles
 
 echo "Copying certificate files"
 
-cp -v data/${MF_VAULT_CA_DOMAIN_NAME}.crt     ${MAINFLUX_DIR}/docker/ssl/certs/mainflux-server.crt
-cp -v data/${MF_VAULT_CA_DOMAIN_NAME}.key     ${MAINFLUX_DIR}/docker/ssl/certs/mainflux-server.key
+cp -v data/${MF_VAULT_CA_CN}.crt     ${MAINFLUX_DIR}/docker/ssl/certs/mainflux-server.crt
+cp -v data/${MF_VAULT_CA_CN}.key     ${MAINFLUX_DIR}/docker/ssl/certs/mainflux-server.key
 cp -v data/${MF_VAULT_CA_NAME}_int.key        ${MAINFLUX_DIR}/docker/ssl/certs/ca.key
 cp -v data/${MF_VAULT_CA_NAME}_int.crt        ${MAINFLUX_DIR}/docker/ssl/certs/ca.crt
 cp -v data/${MF_VAULT_CA_NAME}_int_bundle.crt ${MAINFLUX_DIR}/docker/ssl/bundle.pem

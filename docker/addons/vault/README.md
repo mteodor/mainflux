@@ -16,11 +16,11 @@ When the Vault service is started, some initialization steps need to be done to 
 | MF_VAULT_PKI_INT_PATH     | Vault secrets engine path for intermediate CA                           | pki_int        |
 | MF_VAULT_CA_ROLE_NAME     | Vault secrets engine role                                               | mainflux       |
 | MF_VAULT_CA_NAME          | Certificates name used by `vault-set-pki.sh`                            | mainflux       |
-| MF_VAULT_CA_DOMAIN_NAME   | Domain name used for CA creation by `vault-set-pki.sh`                  | mainflux.com   |
+| MF_VAULT_CA_CN            | Common name used for CA creation by `vault-set-pki.sh`                  | mainflux.com   |
 | MF_VAULT_CA_OU            | Org unit used for CA creation by `vault-set-pki.sh`                     | Mainflux Cloud |
-| MF_VAULT_CA_ORG           | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Co.   |
-| MF_VAULT_CA_COUNTRY       | Country used for CA creation by `vault-set-pki.sh`                      | Serbia         |
-| MF_VAULT_CA_LOC           | Location used for CA creation by `vault-set-pki.sh`                     | BG             |
+| MF_VAULT_CA_O             | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Co.   |
+| MF_VAULT_CA_C             | Country used for CA creation by `vault-set-pki.sh`                      | Serbia         |
+| MF_VAULT_CA_L             | Location used for CA creation by `vault-set-pki.sh`                     | BG             |
 
 
 ## Setup
