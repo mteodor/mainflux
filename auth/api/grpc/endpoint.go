@@ -99,7 +99,7 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 }
 
 func membersEndpoint(svc auth.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (i interface{}, e error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(membersReq)
 		if err := req.validate(); err != nil {
 			return membersRes{}, err

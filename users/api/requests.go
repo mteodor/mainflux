@@ -10,8 +10,7 @@ import (
 
 const (
 	maxNameSize = 1024
-	minPassLen  = 8
-)
+)	
 
 type userReq struct {
 	user users.User
