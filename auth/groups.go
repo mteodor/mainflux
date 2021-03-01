@@ -78,7 +78,7 @@ type Group struct {
 	Level int
 	// Path in a tree consisting of group ids
 	// parentID1.parentID2.childID1
-	// e.g. 01EXPM5Z8HRGFAEWTETR1X1441.01EXPKW2TVK74S5NWQ979VJ4PJ.01EXPKW2TVK74S5NWQ979VJ4PJ .
+	// e.g. 01EXPM5Z8HRGFAEWTETR1X1441.01EXPKW2TVK74S5NWQ979VJ4PJ.01EXPKW2TVK74S5NWQ979VJ4PJ
 	Path      string
 	Children  []*Group
 	CreatedAt time.Time

@@ -140,7 +140,8 @@ func decodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, 
 		groupID:    req.GetGroupID(),
 		memberType: req.GetType(),
 		offset:     req.Offset,
-		limit:      req.Limit}, nil
+		limit:      req.Limit,
+	}, nil
 }
 
 func encodeMembersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
