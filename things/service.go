@@ -40,12 +40,6 @@ var (
 	// ErrDisconnect indicates error in removing connection
 	ErrDisconnect = errors.New("remove connection failed")
 
-	// ErrCreateGroup indicates error in creating group.
-	ErrCreateGroup = errors.New("failed to create group")
-
-	// ErrGenerateGroupID indicates error in creating group.
-	ErrGenerateGroupID = errors.New("failed to generate group id")
-
 	// ErrFailedToRetrieveThings failed to retrieve things.
 	ErrFailedToRetrieveThings = errors.New("failed to retrieve group members")
 )
