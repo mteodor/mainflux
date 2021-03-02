@@ -61,7 +61,7 @@ func TestGroupSave(t *testing.T) {
 			group: auth.Group{
 				ID:      grpID,
 				OwnerID: usrID,
-				Name:    "mainflux",
+				Name:    groupName,
 			},
 			err: nil,
 		},
@@ -70,7 +70,7 @@ func TestGroupSave(t *testing.T) {
 			group: auth.Group{
 				ID:      grpID,
 				OwnerID: usrID,
-				Name:    "mainflux",
+				Name:    groupName,
 			},
 			err: auth.ErrGroupConflict,
 		},
@@ -88,7 +88,7 @@ func TestGroupSave(t *testing.T) {
 			group: auth.Group{
 				ID:          generateGroupID(t),
 				OwnerID:     usrID,
-				Name:        "mainflux",
+				Name:        groupName,
 				Description: invalidDesc,
 			},
 			err: auth.ErrMalformedEntity,
@@ -109,7 +109,7 @@ func TestGroupSave(t *testing.T) {
 				ID:       generateGroupID(t),
 				ParentID: grpID,
 				OwnerID:  usrID,
-				Name:     "mainflux",
+				Name:     groupName,
 			},
 			err: nil,
 		},

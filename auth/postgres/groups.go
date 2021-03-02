@@ -46,7 +46,7 @@ func NewGroupRepo(db Database) auth.GroupRepository {
 
 func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, error) {
 	q := `INSERT INTO groups (name, description, id, path, owner_id, metadata, created_at, updated_at) 
-		  VALUES (:name, :description, :id, :id, :owner_id, :metadata, :created_at, :updated_at) 
+		  VALUES (:name, :description, :id, :owner_id, :metadata, :created_at, :updated_at) 
 		  RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 	if g.ParentID != "" {
 		// Path is constructed in insert_group_tr - init.go
@@ -306,7 +306,7 @@ func (gr groupRepository) Members(ctx context.Context, groupID, groupType string
 
 	if groupType == "" {
 		q = fmt.Sprintf(`SELECT gr.member_id, gr.group_id, gr.type, gr.created_at, gr.updated_at FROM group_relations gr
-		WHERE gr.group_id = :group_id %s`, mq)
+		                 WHERE gr.group_id = :group_id %s`, mq)
 	}
 
 	params, err := gr.toDBMemberPage("", groupID, groupType, pm)

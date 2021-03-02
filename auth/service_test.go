@@ -25,6 +25,7 @@ const (
 	email     = "test@example.com"
 	id        = "testID"
 	groupName = "mfx"
+	description= "Description"
 )
 
 func newService() auth.Service {
@@ -312,12 +313,12 @@ func TestCreateGroup(t *testing.T) {
 
 	group := auth.Group{
 		Name:        "Group",
-		Description: "Description",
+		Description: description,
 	}
 
 	parentGroup := auth.Group{
 		Name:        "ParentGroup",
-		Description: "Description",
+		Description: description,
 	}
 
 	parent, err := svc.CreateGroup(context.Background(), apiToken, parentGroup)
@@ -380,7 +381,7 @@ func TestUpdateGroup(t *testing.T) {
 
 	group := auth.Group{
 		Name:        "Group",
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -437,7 +438,7 @@ func TestViewGroup(t *testing.T) {
 
 	group := auth.Group{
 		Name:        "Group",
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -496,7 +497,7 @@ func TestListGroups(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	group := auth.Group{
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -564,7 +565,7 @@ func TestListChildren(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	group := auth.Group{
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -629,7 +630,7 @@ func TestListParents(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	group := auth.Group{
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -694,7 +695,7 @@ func TestListMembers(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	group := auth.Group{
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},
@@ -760,7 +761,7 @@ func TestListMemberships(t *testing.T) {
 	_, secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
-	key := auth.Key{
+	Description: description
 		ID:       "id",
 		Type:     auth.APIKey,
 		IssuerID: id,
@@ -772,7 +773,7 @@ func TestListMemberships(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	group := auth.Group{
-		Description: "Description",
+		Description: description,
 		Metadata: auth.GroupMetadata{
 			"field": "value",
 		},

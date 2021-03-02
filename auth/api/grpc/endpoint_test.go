@@ -24,10 +24,12 @@ import (
 )
 
 const (
-	port   = 8081
-	secret = "secret"
-	email  = "test@example.com"
-	id     = "testID"
+	port       = 8081
+	secret     = "secret"
+	email      = "test@example.com"
+	id         = "testID"
+	thingsType = "things"
+	usersType  = "users"
 
 	numOfThings = 5
 	numOfUsers  = 5
@@ -210,10 +212,10 @@ func TestMembers(t *testing.T) {
 	group, err = svc.CreateGroup(context.Background(), token, group)
 	assert.Nil(t, err, fmt.Sprintf("Creating group expected to succeed: %s", err))
 
-	err = svc.Assign(context.Background(), token, group.ID, "things", things...)
+	err = svc.Assign(context.Background(), token, group.ID, thingsType, things...)
 	assert.Nil(t, err, fmt.Sprintf("Assign members to  expected to succeed: %s", err))
 
-	err = svc.Assign(context.Background(), token, group.ID, "users", users...)
+	err = svc.Assign(context.Background(), token, group.ID, usersType, users...)
 	assert.Nil(t, err, fmt.Sprintf("Assign members to group expected to succeed: %s", err))
 
 	cases := []struct {
@@ -229,7 +231,7 @@ func TestMembers(t *testing.T) {
 			desc:      "get all things with user token",
 			groupID:   group.ID,
 			token:     token,
-			groupType: "things",
+			groupType: thingsType,
 			size:      numOfThings,
 			err:       nil,
 			code:      codes.OK,
@@ -238,7 +240,7 @@ func TestMembers(t *testing.T) {
 			desc:      "get all users with user token",
 			groupID:   group.ID,
 			token:     token,
-			groupType: "users",
+			groupType: usersType,
 			size:      numOfUsers,
 			err:       nil,
 			code:      codes.OK,

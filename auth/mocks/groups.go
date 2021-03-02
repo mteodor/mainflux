@@ -262,31 +262,31 @@ func (grm *groupRepositoryMock) RetrieveAllParents(ctx context.Context, groupID 
 		return auth.GroupPage{}, auth.ErrGroupNotFound
 	}
 
-	grps := make([]auth.Group, 0)
-	grps, err := grm.getParents(grps, group)
+	groups := make([]auth.Group, 0)
+	groups, err := grm.getParents(groups, group)
 	if err != nil {
 		return auth.GroupPage{}, err
 	}
 
 	return auth.GroupPage{
-		Groups: grps,
+		Groups: groups,
 		PageMetadata: auth.PageMetadata{
-			Total: uint64(len(grps)),
+			Total: uint64(len(groups)),
 		},
 	}, nil
 }
 
-func (grm *groupRepositoryMock) getParents(grps []auth.Group, group auth.Group) ([]auth.Group, error) {
-	grps = append(grps, group)
+func (grm *groupRepositoryMock) getParents(groups []auth.Group, group auth.Group) ([]auth.Group, error) {
+	groups = append(groups, group)
 	parentID, ok := grm.parents[group.ID]
 	if !ok && parentID == "" {
-		return grps, nil
+		return groups, nil
 	}
 	parent, ok := grm.groups[parentID]
 	if !ok {
 		panic(fmt.Sprintf("parent with id: %s not found", parentID))
 	}
-	return grm.getParents(grps, parent)
+	return grm.getParents(groups, parent)
 }
 
 func (grm *groupRepositoryMock) RetrieveAllChildren(ctx context.Context, groupID string, pm auth.PageMetadata) (auth.GroupPage, error) {
@@ -297,20 +297,20 @@ func (grm *groupRepositoryMock) RetrieveAllChildren(ctx context.Context, groupID
 		return auth.GroupPage{}, nil
 	}
 
-	grps := make([]auth.Group, 0)
-	grps = append(grps, group)
+	groups := make([]auth.Group, 0)
+	groups = append(groups, group)
 	for ch := range grm.parents {
 		g, ok := grm.groups[ch]
 		if !ok {
 			panic(fmt.Sprintf("child with id %s not found", ch))
 		}
-		grps = append(grps, g)
+		groups = append(groups, g)
 	}
 
 	return auth.GroupPage{
-		Groups: grps,
+		Groups: groups,
 		PageMetadata: auth.PageMetadata{
-			Total:  uint64(len(grps)),
+			Total:  uint64(len(groups)),
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 		},

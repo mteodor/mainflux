@@ -43,8 +43,8 @@ Group consists of the following fields:
 - Name - name of the group, name of the group is unique at the same level of tree hierarchy for a given tree.
 - ParentID - id of the parent group
 - OwnerID - id of the user that created a group
-- Description - free form text, up to 1024 characters.
-- Metadata - Arbitrary, object-encoded group's data.
+- Description - free form text, up to 1024 characters
+- Metadata - Arbitrary, object-encoded group's data
 - Path - tree path consisting of group ids
 - CreatedAt - timestamp at which the group is created
 - UpdatedAt - timestamp at which the group is updated

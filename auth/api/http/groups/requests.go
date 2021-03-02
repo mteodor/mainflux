@@ -121,7 +121,7 @@ func (req assignReq) validate() error {
 		return auth.ErrUnauthorizedAccess
 	}
 
-	if req.groupID == "" && len(req.Members) == 0 {
+	if req.Type == "" && req.groupID == "" && len(req.Members) == 0 {
 		return auth.ErrMalformedEntity
 	}
 

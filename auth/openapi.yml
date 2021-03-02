@@ -542,7 +542,7 @@ components:
           schema:
            $ref: "#/components/schemas/GroupUpdateSchema"
     MembersReq:
-      description: JSON array of member ids.
+      description: JSON array of member IDs.
       required: true
       content:
         application/json:
