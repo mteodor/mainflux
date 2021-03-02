@@ -211,23 +211,6 @@ func (res passwChangeRes) Empty() bool {
 	return false
 }
 
-type groupPageRes struct {
-	pageRes
-	Groups []viewGroupRes
-}
-
-func (res groupPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res groupPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res groupPageRes) Empty() bool {
-	return false
-}
-
 type deleteRes struct{}
 
 func (res deleteRes) Code() int {

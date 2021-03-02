@@ -23,11 +23,6 @@ const (
 	errTruncation = "string_data_right_truncation"
 )
 
-var (
-	errUpdateDB   = errors.New("failed to update db")
-	errRetrieveDB = errors.New("failed retrieving from db")
-)
-
 var _ things.ThingRepository = (*thingRepository)(nil)
 
 type thingRepository struct {

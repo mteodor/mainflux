@@ -13,8 +13,6 @@ import (
 )
 
 var (
-	groupRegexp = regexp.MustCompile("^[a-zA-Z0-9]+$")
-
 	// ErrConflict indicates usage of the existing email during account
 	// registration.
 	ErrConflict = errors.New("email already taken")

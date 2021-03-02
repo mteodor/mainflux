@@ -25,7 +25,6 @@ var (
 	user            = users.User{Email: "user@example.com", Password: "password", Metadata: map[string]interface{}{"role": "user"}}
 	nonExistingUser = users.User{Email: "non-ex-user@example.com", Password: "password", Metadata: map[string]interface{}{"role": "user"}}
 	host            = "example.com"
-	groupName       = "Mainflux"
 
 	idProvider = uuid.New()
 	passRegex  = regexp.MustCompile("^.{8,}$")

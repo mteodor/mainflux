@@ -28,7 +28,6 @@ const (
 	email       = "user@example.com"
 	token       = "token"
 	wrong       = "wrong_value"
-	wrongID     = "0"
 )
 
 var (

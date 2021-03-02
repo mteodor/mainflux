@@ -12,8 +12,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/ulid"
 )
 
-const things = "things"
-
 var (
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.

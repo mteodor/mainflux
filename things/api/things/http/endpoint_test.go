@@ -2313,11 +2313,6 @@ type thingRes struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
-type thingsRes struct {
-	Things  []things.Thing
-	created bool
-}
-
 type channelRes struct {
 	ID       string                 `json:"id"`
 	Name     string                 `json:"name,omitempty"`

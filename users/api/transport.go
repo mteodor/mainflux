@@ -27,7 +27,6 @@ const (
 
 	offsetKey   = "offset"
 	limitKey    = "limit"
-	nameKey     = "name"
 	emailKey    = "email"
 	metadataKey = "metadata"
 

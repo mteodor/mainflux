@@ -8,10 +8,6 @@ import (
 	"github.com/mainflux/mainflux/users"
 )
 
-const (
-	maxNameSize = 1024
-)	
-
 type userReq struct {
 	user users.User
 }

@@ -42,7 +42,6 @@ var (
 	weakPassword   = toJSON(errorRes{users.ErrPasswordFormat.Error()})
 	unsupportedRes = toJSON(errorRes{api.ErrUnsupportedContentType.Error()})
 	failDecodeRes  = toJSON(errorRes{api.ErrFailedDecode.Error()})
-	groupExists    = toJSON(errorRes{users.ErrGroupConflict.Error()})
 	passRegex      = regexp.MustCompile("^.{8,}$")
 )
 

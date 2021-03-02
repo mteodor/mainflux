@@ -155,7 +155,7 @@ func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, ids []string, p
 
 	items := make([]things.Thing, 0)
 
-	if pm.Offset < 0 || pm.Limit <= 0 {
+	if pm.Offset == 0 || pm.Limit == 0 {
 		return things.Page{}, nil
 	}
 
@@ -172,7 +172,7 @@ func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, ids []string, p
 				items = append(items, v)
 			}
 		}
-	}	
+	}
 
 	items = sortThings(pm, items)
 

@@ -11,10 +11,6 @@ import (
 const maxLimitSize = 100
 const maxNameSize = 1024
 
-type apiReq interface {
-	validate() error
-}
-
 type createThingReq struct {
 	token    string
 	Name     string                 `json:"name,omitempty"`
