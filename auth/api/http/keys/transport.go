@@ -49,7 +49,6 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 	))
 
 	return mux
-
 }
 
 func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {

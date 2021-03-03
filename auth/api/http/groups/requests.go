@@ -59,7 +59,7 @@ func (req listGroupsReq) validate() error {
 		return auth.ErrUnauthorizedAccess
 	}
 
-	if req.level > auth.MaxLevel && req.level < auth.MinLevel {
+	if req.level > auth.MaxLevel || req.level < auth.MinLevel {
 		return auth.ErrMaxLevelExceeded
 	}
 
@@ -121,7 +121,7 @@ func (req assignReq) validate() error {
 		return auth.ErrUnauthorizedAccess
 	}
 
-	if req.Type == "" && req.groupID == "" && len(req.Members) == 0 {
+	if req.Type == "" || req.groupID == "" || len(req.Members) == 0 {
 		return auth.ErrMalformedEntity
 	}
 

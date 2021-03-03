@@ -20,5 +20,5 @@ func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 	mux = groups.MakeHandler(svc, mux, tracer)
 	mux.GetFunc("/version", mainflux.Version("auth"))
 	mux.Handle("/metrics", promhttp.Handler())
-	return mux
+		
 }
