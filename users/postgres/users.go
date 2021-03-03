@@ -149,7 +149,7 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.Use
 	return toUser(dbu)
 }
 
-func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, ids []string, email string, um users.Metadata) (users.UserPage, error) {
+func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, userIDs []string, email string, um users.Metadata) (users.UserPage, error) {
 	eq, ep, err := createEmailQuery("", email)
 	if err != nil {
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
@@ -168,8 +168,8 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 	if mq != "" {
 		query = append(query, mq)
 	}
-	if len(ids) > 0 {
-		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(ids, "','")))
+	if len(userIDs) > 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(userIDs, "','")))
 	}
 	if len(query) > 0 {
 		emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))

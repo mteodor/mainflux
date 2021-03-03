@@ -177,15 +177,15 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveByIDs(ctx context.Context, ids []string, pm things.PageMetadata) (things.Page, error) {
-	if len(ids) == 0 {
+func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, pm things.PageMetadata) (things.Page, error) {
+	if len(thingIDs) == 0 {
 		return things.Page{}, nil
 	}
 
 	nq, name := getNameQuery(pm.Name)
 	oq := getOrderQuery(pm.Order)
 	dq := getDirQuery(pm.Dir)
-	idq := fmt.Sprintf("WHERE id IN ('%s') ", strings.Join(ids, "','"))
+	idq := fmt.Sprintf("WHERE id IN ('%s') ", strings.Join(thingIDs, "','"))
 
 	m, mq, err := getMetadataQuery(pm.Metadata)
 	if err != nil {

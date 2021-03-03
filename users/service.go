@@ -304,12 +304,12 @@ func (svc usersService) ListMembers(ctx context.Context, token, groupID string, 
 		return UserPage{}, err
 	}
 
-	res, err := svc.members(ctx, token, groupID, offset, limit)
+	userIDs, err := svc.members(ctx, token, groupID, offset, limit)
 	if err != nil {
 		return UserPage{}, err
 	}
 
-	return svc.users.RetrieveAll(ctx, offset, limit, res, "", m)
+	return svc.users.RetrieveAll(ctx, offset, limit, userIDs, "", m)
 }
 
 // Auth helpers

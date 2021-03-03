@@ -149,7 +149,7 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	return page, nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, ids []string, pm things.PageMetadata) (things.Page, error) {
+func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, thingIDs []string, pm things.PageMetadata) (things.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 

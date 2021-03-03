@@ -24,12 +24,13 @@ import (
 )
 
 const (
-	port       = 8081
-	secret     = "secret"
-	email      = "test@example.com"
-	id         = "testID"
-	thingsType = "things"
-	usersType  = "users"
+	port        = 8081
+	secret      = "secret"
+	email       = "test@example.com"
+	id          = "testID"
+	thingsType  = "things"
+	usersType   = "users"
+	description = "Description"
 
 	numOfThings = 5
 	numOfUsers  = 5
@@ -190,7 +191,7 @@ func TestMembers(t *testing.T) {
 
 	group := auth.Group{
 		Name:        "Mainflux",
-		Description: "Description",
+		Description: description,
 	}
 
 	var things []string
