@@ -42,8 +42,9 @@ type viewGroupRes struct {
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	// Indicates a level in tree hierarchy from first group node - root.
 	Level int `json:"level"`
-	// Path is a path in a tree, consisted of group names
-	// parentName.childrenName1.childrenName2 .
+	// Path in a tree consisting of group ids
+	// parentID1.parentID2.childID1
+	// e.g. 01EXPM5Z8HRGFAEWTETR1X1441.01EXPKW2TVK74S5NWQ979VJ4PJ.01EXPKW2TVK74S5NWQ979VJ4PJ
 	Path      string          `json:"path"`
 	Children  []*viewGroupRes `json:"children,omitempty"`
 	CreatedAt time.Time       `json:"created_at"`
@@ -131,7 +132,7 @@ func (res deleteRes) Empty() bool {
 type assignRes struct{}
 
 func (res assignRes) Code() int {
-	return http.StatusNoContent
+	return http.StatusOK
 }
 
 func (res assignRes) Headers() map[string]string {

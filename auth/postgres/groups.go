@@ -88,7 +88,7 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 }
 
 func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group, error) {
-	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = :updated_at  WHERE id = :id 
+	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = :updated_at WHERE id = :id 
 		  RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 
 	dbu, err := gr.toDBGroup(g)
@@ -175,14 +175,14 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (auth.Gro
 }
 
 func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata) (auth.GroupPage, error) {
-	_, mq, err := getGroupsMetadataQuery("groups", pm.Metadata)
+	_, metaQuery, err := getGroupsMetadataQuery("groups", pm.Metadata)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(auth.ErrFailedToRetrieveAll, err)
 	}
-	cq := "SELECT COUNT(*) FROM groups"
-	if mq != "" {
-		cq = fmt.Sprintf(" %s WHERE %s", cq, mq)
-		mq = fmt.Sprintf(" AND %s", mq)
+
+	var mq string
+	if metaQuery != "" {
+		mq = fmt.Sprintf(" AND %s", metaQuery)
 	}
 
 	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM groups 
@@ -204,6 +204,11 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 		return auth.GroupPage{}, errors.Wrap(auth.ErrFailedToRetrieveAll, err)
 	}
 
+	cq := "SELECT COUNT(*) FROM groups"
+	if metaQuery != "" {
+		cq = fmt.Sprintf(" %s WHERE %s", cq, metaQuery)
+	}
+
 	total, err := total(ctx, gr.db, cq, dbPage)
 	if err != nil {
 		return auth.GroupPage{}, errors.Wrap(auth.ErrFailedToRetrieveAll, err)
@@ -223,8 +228,8 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string, pm auth.PageMetadata) (auth.GroupPage, error) {
 	q := `SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path, nlevel(g.path) as level, g.created_at, g.updated_at
 		  FROM groups parent, groups g
-	      WHERE parent.id = :id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level `
-	cq := `SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path @> parent.path `
+	      WHERE parent.id = :id AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= :level`
+	cq := `SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = :id AND g.path @> parent.path`
 
 	gp, err := gr.retrieve(ctx, groupID, q, cq, pm)
 	if err != nil {

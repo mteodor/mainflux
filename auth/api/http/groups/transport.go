@@ -29,6 +29,7 @@ const (
 	levelKey    = "level"
 	metadataKey = "metadata"
 	treeKey     = "tree"
+	groupType   = "type"
 	contentType = "application/json"
 
 	defOffset = 0
@@ -171,18 +172,24 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, err
 	}
 
-	t, err := readBoolQuery(r, treeKey)
+	tree, err := readBoolQuery(r, treeKey)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := readStringQuery(r, groupType)
 	if err != nil {
 		return nil, err
 	}
 
 	req := listMembersReq{
-		token:    r.Header.Get("Authorization"),
-		id:       bone.GetValue(r, "groupID"),
-		offset:   o,
-		limit:    l,
-		metadata: m,
-		tree:     t,
+		token:     r.Header.Get("Authorization"),
+		id:        bone.GetValue(r, "groupID"),
+		groupType: t,
+		offset:    o,
+		limit:     l,
+		metadata:  m,
+		tree:      tree,
 	}
 	return req, nil
 }
@@ -207,7 +214,7 @@ func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 		return nil, err
 	}
 
-	t, err := readBoolQuery(r, treeKey)
+	tree, err := readBoolQuery(r, treeKey)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +225,7 @@ func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 		offset:   o,
 		limit:    l,
 		metadata: m,
-		tree:     t,
+		tree:     tree,
 	}
 
 	return req, nil
@@ -331,6 +338,19 @@ func readBoolQuery(r *http.Request, key string) (bool, error) {
 	return b, nil
 }
 
+func readStringQuery(r *http.Request, key string) (string, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return "", errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return "", nil
+	}
+
+	return vals[0], nil
+}
+
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
@@ -358,6 +378,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Contains(err, auth.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
 	case errors.Contains(err, auth.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+	case errors.Contains(err, auth.ErrMemberAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, io.EOF):
 		w.WriteHeader(http.StatusBadRequest)

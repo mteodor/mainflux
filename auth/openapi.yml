@@ -253,9 +253,10 @@ paths:
     get:
       summary: Gets members of a group.
       description: |
-        Array of ids that are in the group specified with groupID.
+        Array of member ids that are in the group specified with groupID.
       parameters:
         - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/MemberType"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
