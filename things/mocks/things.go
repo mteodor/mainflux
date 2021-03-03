@@ -164,7 +164,7 @@ func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, thingIDs []stri
 
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
-	for _, id := range ids {
+	for _, id := range thingIDs {
 		suffix := fmt.Sprintf("-%s", id)
 		for k, v := range trm.things {
 			id, _ := strconv.ParseUint(v.ID, 10, 64)
