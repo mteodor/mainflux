@@ -40,7 +40,7 @@ func newService(tokens map[string]string, url string) certs.Service {
 	config := mfsdk.Config{
 		BaseURL: url,
 	}
-
+	pki = mocks.NewPkiAgent()
 	sdk := mfsdk.NewSDK(config)
 	return certs.New(auth, sdk, pki)
 }
