@@ -155,6 +155,7 @@ func main() {
 	}
 
 	// If PKIHost is not set we don't use 3rd party PKI service.
+	// Certificate generation is done using `crypto/x509`.
 	var pkiClient pki.Agent
 	if cfg.pkiHost == "" {
 		pkiClient = pki.NewAgent()
