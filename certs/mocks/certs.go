@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux/certs"
-	"github.com/mainflux/mainflux/things"
 )
 
 var _ certs.Repository = (*certsRepoMock)(nil)
@@ -40,44 +39,39 @@ func (c *certsRepoMock) RetrieveAll(ctx context.Context, ownerID, thingID string
 		return certs.Page{}, nil
 	}
 
-	first := uint64(offset) + 1
-	last := first + uint64(limit)
-
-	var certs []certs.Cert
-	for k, v := range.certs {
-		certs = append(certs, v)
+	var crts []certs.Cert
+	for _, v := range c.certs {
+		crts = append(crts, v)
 	}
 
-	page := certs.Page {
-		Certs: certs,
-		Total: c.counter,
+	page := certs.Page{
+		Certs:  crts,
+		Total:  c.counter,
 		Offset: offset,
-		Limit: limit,
+		Limit:  limit,
 	}
+	return page, nil
 
 }
 
 func (c *certsRepoMock) Remove(ctx context.Context, thingID string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c, ok := c.certsByThingID[thingID]
+	crt, ok := c.certsByThingID[thingID]
 	if !ok {
 		return certs.ErrNotFound
 	}
-	c := c.certsByThingID[thingID]
-	delete(c.certs, c.Serial)
+	delete(c.certs, crt.Serial)
 	delete(c.certsByThingID, thingID)
 	return nil
-}
-
 }
 
 func (c *certsRepoMock) RetrieveByThing(ctx context.Context, thingID string) (certs.Cert, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c, ok := c.certsByThingID[thingID]
+	crt, ok := c.certsByThingID[thingID]
 	if !ok {
-		return certs.ErrNotFound
+		return certs.Cert{}, certs.ErrNotFound
 	}
-	return c, nil
+	return crt, nil
 }
