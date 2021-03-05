@@ -5,6 +5,8 @@
 package pki
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -22,9 +24,54 @@ const (
 )
 
 var (
-	errFailedVaultCertIssue = errors.New("failed to issue vault certificate")
-	errFailedCertDecoding   = errors.New("failed to decode response from vault service")
+	//Indicate that method called is not implemented
+	ErrNotImplemented = errors.New("method not implemented for certs")
+
+	// ErrMissingCACertificate indicates missing CA certificate.
+	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
+
+	// ErrFailedCertCreation indicates failed to certificate creation
+	ErrFailedCertCreation = errors.New("failed to create client certificate")
+
+	// ErrFailedCertRevocation indicates failed certificate revocation
+	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
+
+	errFailedSerialGeneration    = errors.New("failed to generate certificate serial")
+	errFailedPemKeyWrite         = errors.New("failed to write PEM key")
+	errFailedPemDataWrite        = errors.New("failed to write pem data for certificate")
+	errFailedToRemoveCertFromDB  = errors.New("failed to remove cert serial from db")
+	errFailedVaultCertIssue      = errors.New("failed to issue vault certificate")
+	errFailedCertDecoding        = errors.New("failed to decode response from vault service")
 )
+
+type agent struct {
+	AuthTimeout time.Duration
+	TLSCert     tls.Certificate
+	X509Cert    *x509.Certificate
+	RSABits     int
+	HoursValid  string
+}
+
+type Revoke struct {
+	RevocationTime time.Time `mapstructure:"revocation_time"`
+}
+
+type Cert struct {
+	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
+	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
+	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
+	ClientKey      string    `json:"client_key" mapstructure:"private_key"`
+	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
+	Serial         string    `json:"serial" mapstructure:"serial_number"`
+	Expire         time.Time `json:"expire" mapstructure:"-"`
+}
+
+type Agent interface {
+	// IssueCert issues certificate on PKI
+	IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, error)
+	// Revoke revokes certificate from PKI
+	Revoke(serial string) (Revoke, error)
+}
 
 type pkiAgent struct {
 	token     string

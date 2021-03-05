@@ -26,18 +26,18 @@ var (
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	errFailedKeyCreation         = errors.New("failed to create client private key")
-	errFailedDateSetting         = errors.New("failed to set date for certificate")
+	// ErrFailedCertCreation failed to create certificate.
+	ErrFailedCertCreation = errors.New("failed to create client certificate")
+
+	// ErrFailedCertRevocation failed to revoke certificate.
+	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
+
 	errKeyBitsValueWrong         = errors.New("missing RSA bits for certificate creation")
 	errMissingCACertificate      = errors.New("missing CA certificate for certificate signing")
 	errFailedSerialGeneration    = errors.New("failed to generate certificate serial")
 	errFailedPemKeyWrite         = errors.New("failed to write PEM key")
 	errFailedPemDataWrite        = errors.New("failed to write pem data for certificate")
-	errPrivateKeyUnsupportedType = errors.New("private key type is unsupported")
-	errPrivateKeyEmpty           = errors.New("private key is empty")
 	errFailedToRemoveCertFromDB  = errors.New("failed to remove cert serial from db")
-	errFailedCertCreation        = errors.New("failed to create client certificate")
-	errFailedCertRevocation      = errors.New("failed to revoke certificate")
 )
 
 var _ Service = (*certsService)(nil)
@@ -116,31 +116,32 @@ type Cert struct {
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, daysValid string, keyBits int, keyType string) (Cert, error) {
-	var c Cert
 	owner, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return c, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Cert{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
-		return c, errors.Wrap(errFailedCertCreation, err)
+		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
 
-	cert, err := cs.pki.IssueCert(thing.ID, daysValid, keyType, keyBits)
+	cert, err := cs.pki.IssueCert(thing.Key, daysValid, keyType, keyBits)
 	if err != nil {
-		return c, errors.Wrap(errFailedCertCreation, err)
+		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
 
-	c.ThingID = thingID
-	c.OwnerID = owner.GetEmail()
-	c.ClientCert = cert.ClientCert
-	c.IssuingCA = cert.IssuingCA
-	c.CAChain = cert.CAChain
-	c.ClientKey = cert.ClientKey
-	c.PrivateKeyType = cert.PrivateKeyType
-	c.Serial = cert.Serial
-	c.Expire = cert.Expire
+	c := Cert{
+		ThingID:        thingID,
+		OwnerID:        owner.GetEmail(),
+		ClientCert:     cert.ClientCert,
+		IssuingCA:      cert.IssuingCA,
+		CAChain:        cert.CAChain,
+		ClientKey:      cert.ClientKey,
+		PrivateKeyType: cert.PrivateKeyType,
+		Serial:         cert.Serial,
+		Expire:         cert.Expire,
+	}
 
 	_, err = cs.certsRepo.Save(context.Background(), c)
 	return c, err
@@ -154,17 +155,17 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 	}
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
-		return revoke, errors.Wrap(errFailedCertRevocation, err)
+		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 	}
 
 	cert, err := cs.certsRepo.RetrieveByThing(ctx, thing.ID)
 	if err != nil {
-		return revoke, errors.Wrap(errFailedCertRevocation, err)
+		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 	}
 
 	r, err := cs.pki.Revoke(cert.Serial)
 	if err != nil {
-		return revoke, errors.Wrap(errFailedCertRevocation, err)
+		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 	}
 	revoke.RevocationTime = r.RevocationTime
 	if err = cs.certsRepo.Remove(context.Background(), cert.Serial); err != nil {

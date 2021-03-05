@@ -22,7 +22,6 @@ import (
 	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/api"
-	"github.com/mainflux/mainflux/certs/pki"
 	vault "github.com/mainflux/mainflux/certs/pki"
 	"github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/logger"
@@ -154,17 +153,13 @@ func main() {
 		logger.Error("Failed to load CA certificates for issuing client certs")
 	}
 
-	// If PKIHost is not set we don't use 3rd party PKI service.
-	// Certificate generation is done using `crypto/x509`.
-	var pkiClient pki.Agent
 	if cfg.pkiHost == "" {
-		pkiClient = pki.NewAgent()
+		log.Fatalf("No host specified for PKI engine")
 	}
 
-	if cfg.pkiHost != "" {
-		if pkiClient, err = vault.NewVaultClient(cfg.pkiToken, cfg.pkiHost, cfg.pkiPath, cfg.pkiRole); err != nil {
-			logger.Error("Failed to init vault client")
-		}
+	pkiClient, err := vault.NewVaultClient(cfg.pkiToken, cfg.pkiHost, cfg.pkiPath, cfg.pkiRole)
+	if err != nil {
+		log.Fatalf("Failed to configure client for PKI engine")
 	}
 
 	db := connectToDB(cfg.dbConfig, logger)
