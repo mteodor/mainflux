@@ -23,8 +23,8 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		return thingCertsRes{
 			Serial: res.Serial,
 			ID:     res.ThingID,
-			Key:    map[string]string{res.Serial: res.ClientKey},
-			Cert:   map[string]string{res.Serial: res.ClientCert},
+			Key:    res.ClientKey,
+			Cert:   res.ClientCert,
 			CACert: res.IssuingCA,
 		}, nil
 	}
@@ -56,8 +56,8 @@ func listCerts(svc certs.Service) endpoint.Endpoint {
 			view := thingCertsRes{
 				Serial: cert.Serial,
 				ID:     cert.ThingID,
-				Key:    map[string]string{cert.Serial: cert.ClientKey},
-				Cert:   map[string]string{cert.Serial: cert.ClientCert},
+				Key:    cert.ClientKey,
+				Cert:   cert.ClientCert,
 				CACert: cert.IssuingCA,
 			}
 			res.Certs = append(res.Certs, view)

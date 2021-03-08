@@ -40,7 +40,6 @@ paths:
             Failed to retrieve corresponding certificate.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /certs/revoke:
     delete:
       summary: Revokes certificate
       description: |

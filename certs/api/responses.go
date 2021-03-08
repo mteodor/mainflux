@@ -20,12 +20,12 @@ type certsPageRes struct {
 }
 
 type thingCertsRes struct {
-	ID     string            `json:"thing_id"`
-	Cert   map[string]string `json:"thing_cert"`
-	Key    map[string]string `json:"thing_key"`
-	Serial string            `json:"serial"`
-	CACert string            `json:"ca_cert"`
-	Error  string            `json:"error"`
+	ID     string `json:"thing_id"`
+	Cert   string `json:"thing_cert"`
+	Key    string `json:"thing_cert_key"`
+	Serial string `json:"thing_cert_serial"`
+	CACert string `json:"ca_cert"`
+	Error  string `json:"error"`
 }
 
 func (res certsPageRes) Code() int {
