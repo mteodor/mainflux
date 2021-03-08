@@ -32,12 +32,7 @@ var (
 	// ErrFailedCertRevocation failed to revoke certificate.
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
-	errKeyBitsValueWrong         = errors.New("missing RSA bits for certificate creation")
-	errMissingCACertificate      = errors.New("missing CA certificate for certificate signing")
-	errFailedSerialGeneration    = errors.New("failed to generate certificate serial")
-	errFailedPemKeyWrite         = errors.New("failed to write PEM key")
-	errFailedPemDataWrite        = errors.New("failed to write pem data for certificate")
-	errFailedToRemoveCertFromDB  = errors.New("failed to remove cert serial from db")
+	errFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
 )
 
 var _ Service = (*certsService)(nil)

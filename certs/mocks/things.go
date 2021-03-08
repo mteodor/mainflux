@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/groups"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -83,9 +83,7 @@ func (svc *mainfluxThings) Connect(_ context.Context, owner string, chIDs, thIDs
 		if svc.channels[chID].Owner != userID.Email {
 			return things.ErrUnauthorizedAccess
 		}
-		for _, thID := range thIDs {
-			svc.connections[chID] = append(svc.connections[chID], thID)
-		}
+		svc.connections[chID] = append(svc.connections[chID], thIDs...)
 	}
 
 	return nil
@@ -236,35 +234,35 @@ func findIndex(list []string, val string) int {
 	return -1
 }
 
-func (svc *mainfluxThings) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
+func (svc *mainfluxThings) CreateGroup(ctx context.Context, token string, g auth.Group) (string, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+func (svc *mainfluxThings) UpdateGroup(ctx context.Context, token string, g auth.Group) (auth.Group, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
+func (svc *mainfluxThings) ViewGroup(ctx context.Context, token, id string) (auth.Group, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListGroups(ctx context.Context, token string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc *mainfluxThings) ListGroups(ctx context.Context, token string, gm auth.PageMetadata) (auth.GroupPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListChildren(ctx context.Context, token, parentID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc *mainfluxThings) ListChildren(ctx context.Context, token, parentID string, gm auth.PageMetadata) (auth.GroupPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListParents(ctx context.Context, token, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc *mainfluxThings) ListParents(ctx context.Context, token, childID string, gm auth.PageMetadata) (auth.GroupPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+func (svc *mainfluxThings) ListMembers(ctx context.Context, token, groupID string, gm things.PageMetadata) (things.Page, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+func (svc *mainfluxThings) ListMemberships(ctx context.Context, token, memberID string, gm auth.PageMetadata) (auth.GroupPage, error) {
 	panic("not implemented")
 }
 

@@ -30,13 +30,10 @@ import (
 )
 
 const (
-	wrongID    = ""
 	wrongValue = "wrong-value"
 	email      = "user@example.com"
 	token      = "token"
 	thingsNum  = 1
-	n          = uint64(10)
-	cn         = "CN="
 	thingKey   = "thingKey"
 	thingID    = "1"
 	daysValid  = "1h"
@@ -46,8 +43,6 @@ const (
 
 	cfgLogLevel     = "error"
 	cfgClientTLS    = false
-	cfgCACerts      = ""
-	cfgPort         = "8204"
 	cfgServerCert   = ""
 	cfgServerKey    = ""
 	cfgBaseURL      = "http://localhost"

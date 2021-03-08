@@ -144,9 +144,6 @@ func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) 
 		token:   r.Header.Get("Authorization"),
 		thingID: bone.GetValue(r, "id"),
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
 
 	return req, nil
 }
