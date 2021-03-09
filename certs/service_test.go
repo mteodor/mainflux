@@ -18,12 +18,14 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
+	bsmocks "github.com/mainflux/mainflux/bootstrap/mocks"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/things/http"
+	thmocks "github.com/mainflux/mainflux/things/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,10 +61,10 @@ const (
 
 func newService(tokens map[string]string) (certs.Service, error) {
 
-	users := mocks.NewUsersService(map[string]string{token: email})
+	users := bsmocks.NewUsersService(map[string]string{token: email})
 	server := newThingsServer(newThingsService(users))
 
-	auth := mocks.NewAuthService(tokens)
+	auth := thmocks.NewAuthService(tokens)
 	config := mfsdk.Config{
 		BaseURL: server.URL,
 	}
@@ -111,7 +113,7 @@ func newThingsService(auth mainflux.AuthServiceClient) things.Service {
 		}
 	}
 
-	return mocks.NewThingsService(ths, map[string]things.Channel{}, auth)
+	return bsmocks.NewThingsService(ths, map[string]things.Channel{}, auth)
 }
 
 func TestIssueCert(t *testing.T) {
