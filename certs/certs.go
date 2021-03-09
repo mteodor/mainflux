@@ -18,7 +18,7 @@ type Repository interface {
 	// Save  saves cert for thing into database
 	Save(ctx context.Context, cert Cert) (string, error)
 
-	// RetrieveAll retrieve all issued certificates for given owner
+	// RetrieveAll retrieve all issued certificates for given owner adn thing id
 	RetrieveAll(ctx context.Context, ownerID, thingID string, offset, limit uint64) (Page, error)
 
 	// Remove certificate from DB for given thing

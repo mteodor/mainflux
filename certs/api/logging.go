@@ -39,7 +39,7 @@ func (lm *loggingMiddleware) IssueCert(ctx context.Context, token, thingID, days
 
 func (lm *loggingMiddleware) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (cp certs.Page, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_certs for token: %s and thing ID:%s took %s to complete", token, thingID, time.Since(begin))
+		message := fmt.Sprintf("Method list_certs for token: %s and thing id: %s took %s to complete", token, thingID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
