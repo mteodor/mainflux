@@ -15,11 +15,11 @@ type pageRes struct {
 
 type certsPageRes struct {
 	pageRes
-	Certs []thingCertsRes `json:"certs"`
-	Error string          `json:"error,omitempty"`
+	Certs []certsRes `json:"certs"`
+	Error string     `json:"error,omitempty"`
 }
 
-type thingCertsRes struct {
+type certsRes struct {
 	ID     string `json:"thing_id"`
 	Cert   string `json:"thing_cert"`
 	Key    string `json:"thing_cert_key"`
@@ -40,14 +40,14 @@ func (res certsPageRes) Empty() bool {
 	return false
 }
 
-func (res thingCertsRes) Code() int {
+func (res certsRes) Code() int {
 	return http.StatusCreated
 }
 
-func (res thingCertsRes) Headers() map[string]string {
+func (res certsRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res thingCertsRes) Empty() bool {
+func (res certsRes) Empty() bool {
 	return false
 }

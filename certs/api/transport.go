@@ -51,14 +51,14 @@ func MakeHandler(svc certs.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/certs/:id", kithttp.NewServer(
+	r.Get("/certs/:thingId", kithttp.NewServer(
 		listCerts(svc),
 		decodeListCerts,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/certs/:id", kithttp.NewServer(
+	r.Delete("/certs/:certId", kithttp.NewServer(
 		revokeCert(svc),
 		decodeRevokeCerts,
 		encodeResponse,
@@ -100,7 +100,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 	req := listReq{
 		token:   r.Header.Get("Authorization"),
-		thingID: bone.GetValue(r, "id"),
+		thingID: bone.GetValue(r, "thingId"),
 		limit:   l,
 		offset:  o,
 	}
@@ -142,7 +142,7 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	req := revokeReq{
 		token:   r.Header.Get("Authorization"),
-		thingID: bone.GetValue(r, "id"),
+		thingID: bone.GetValue(r, "certId"),
 	}
 
 	return req, nil

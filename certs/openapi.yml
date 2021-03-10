@@ -40,15 +40,16 @@ paths:
             Failed to retrieve corresponding certificate.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /certs/{certID}:
     delete:
       summary: Revokes certificate
       description: |
-        Revokes a certificates for given thing ID .
+        Revokes a certificates for given cert ID .
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/Authorization"
-        - $ref: "#/components/parameters/ThingID"
+        - $ref: "#/components/parameters/CertID"
       responses:
         '200':
           $ref: "#/components/responses/RevokeRes"
@@ -70,6 +71,14 @@ components:
     ThingID:
       name: thingID
       description: Thing ID
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    CertID:
+      name: certID
+      description: Serial of certificate
       in: path
       schema:
         type: string
