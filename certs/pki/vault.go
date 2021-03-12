@@ -38,10 +38,6 @@ var (
 	errFailedCertDecoding   = errors.New("failed to decode response from vault service")
 )
 
-type Revoke struct {
-	RevocationTime time.Time `mapstructure:"revocation_time"`
-}
-
 type Cert struct {
 	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
 	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
