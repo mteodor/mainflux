@@ -19,17 +19,17 @@ var (
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
 
-	// ErrMalformedEntity indicates malformed entity specification.
+	// ErrMalformedEntity indicates malformed entity specification
 	ErrMalformedEntity = errors.New("malformed entity specification")
 
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	// ErrFailedCertCreation failed to create certificate.
+	// ErrFailedCertCreation failed to create certificate
 	ErrFailedCertCreation = errors.New("failed to create client certificate")
 
-	// ErrFailedCertRevocation failed to revoke certificate.
+	// ErrFailedCertRevocation failed to revoke certificate
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
 	errFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")

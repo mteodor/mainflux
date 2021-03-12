@@ -60,7 +60,6 @@ const (
 )
 
 func newService(tokens map[string]string) (certs.Service, error) {
-
 	users := bsmocks.NewUsersService(map[string]string{token: email})
 	server := newThingsServer(newThingsService(users))
 
