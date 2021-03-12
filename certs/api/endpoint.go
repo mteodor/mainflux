@@ -21,11 +21,11 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 			return certsRes{}, err
 		}
 		return certsRes{
-			Serial: res.Serial,
-			ID:     res.ThingID,
-			Key:    res.ClientKey,
-			Cert:   res.ClientCert,
-			CACert: res.IssuingCA,
+			CertSerial: res.Serial,
+			ThingID:    res.ThingID,
+			CertKey:    res.ClientKey,
+			Cert:       res.ClientCert,
+			CACert:     res.IssuingCA,
 		}, nil
 	}
 }
@@ -52,11 +52,11 @@ func listCerts(svc certs.Service) endpoint.Endpoint {
 
 		for _, cert := range page.Certs {
 			view := certsRes{
-				Serial: cert.Serial,
-				ID:     cert.ThingID,
-				Key:    cert.ClientKey,
-				Cert:   cert.ClientCert,
-				CACert: cert.IssuingCA,
+				CertSerial: cert.Serial,
+				ThingID:    cert.ThingID,
+				CertKey:    cert.ClientKey,
+				Cert:       cert.ClientCert,
+				CACert:     cert.IssuingCA,
 			}
 			res.Certs = append(res.Certs, view)
 		}
