@@ -18,7 +18,7 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		}
 		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Valid, req.KeyBits, req.KeyType)
 		if err != nil {
-			return certsRes{Error: err.Error()}, nil
+			return certsRes{}, err
 		}
 		return certsRes{
 			Serial: res.Serial,
@@ -39,9 +39,7 @@ func listCerts(svc certs.Service) endpoint.Endpoint {
 
 		page, err := svc.ListCerts(ctx, req.token, req.thingID, req.offset, req.limit)
 		if err != nil {
-			return certsPageRes{
-				Error: err.Error(),
-			}, err
+			return certsPageRes{}, err
 		}
 		res := certsPageRes{
 			pageRes: pageRes{

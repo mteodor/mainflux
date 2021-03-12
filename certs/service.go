@@ -158,11 +158,11 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 	}
 
-	r, err := cs.pki.Revoke(cert.Serial)
+	revTime, err := cs.pki.Revoke(cert.Serial)
 	if err != nil {
 		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 	}
-	revoke.RevocationTime = r.RevocationTime
+	revoke.RevocationTime = revTime
 	if err = cs.certsRepo.Remove(context.Background(), cert.Serial); err != nil {
 		return revoke, errors.Wrap(errFailedToRemoveCertFromDB, err)
 	}

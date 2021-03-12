@@ -48,10 +48,9 @@ func NewPkiAgent(tlsCert tls.Certificate, caCert *x509.Certificate, keyBits int,
 func (a *agent) IssueCert(cn string, ttl, keyType string, keyBits int) (pki.Cert, error) {
 	return a.certs(cn, ttl, keyBits)
 }
-func (a *agent) Revoke(serial string) (pki.Revoke, error) {
-	return pki.Revoke{
-		RevocationTime: time.Now(),
-	}, nil
+
+func (a *agent) Revoke(serial string) (time.Time, error) {
+	return time.Now(), nil
 }
 
 func (a *agent) certs(cn, daysValid string, keyBits int) (pki.Cert, error) {

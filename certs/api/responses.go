@@ -16,7 +16,6 @@ type pageRes struct {
 type certsPageRes struct {
 	pageRes
 	Certs []certsRes `json:"certs"`
-	Error string     `json:"error,omitempty"`
 }
 
 type certsRes struct {
@@ -25,7 +24,6 @@ type certsRes struct {
 	Key    string `json:"thing_cert_key"`
 	Serial string `json:"thing_cert_serial"`
 	CACert string `json:"ca_cert"`
-	Error  string `json:"error"`
 }
 
 func (res certsPageRes) Code() int {

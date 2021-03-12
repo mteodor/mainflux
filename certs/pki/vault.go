@@ -55,8 +55,9 @@ type Cert struct {
 type Agent interface {
 	// IssueCert issues certificate on PKI
 	IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, error)
+
 	// Revoke revokes certificate from PKI
-	Revoke(serial string) (Revoke, error)
+	Revoke(serial string) (time.Time, error)
 }
 
 type pkiAgent struct {
@@ -150,14 +151,14 @@ func (p *pkiAgent) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert,
 
 }
 
-func (p *pkiAgent) Revoke(serial string) (Revoke, error) {
+func (p *pkiAgent) Revoke(serial string) (time.Time, error) {
 	cReq := certRevokeReq{
 		SerialNumber: serial,
 	}
 
 	r := p.client.NewRequest("POST", p.revokeURL)
 	if err := r.SetJSONBody(cReq); err != nil {
-		return Revoke{}, err
+		return time.Time{}, err
 	}
 
 	resp, err := p.client.RawRequest(r)
@@ -166,29 +167,26 @@ func (p *pkiAgent) Revoke(serial string) (Revoke, error) {
 	}
 
 	if err != nil {
-		return Revoke{}, err
+		return time.Time{}, err
 	}
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		_, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return Revoke{}, err
+			return time.Time{}, err
 		}
-		return Revoke{}, errors.Wrap(errFailedVaultCertIssue, err)
+		return time.Time{}, errors.Wrap(errFailedVaultCertIssue, err)
 	}
 
 	s, err := api.ParseSecret(resp.Body)
 	if err != nil {
-		return Revoke{}, err
+		return time.Time{}, err
 	}
 
 	rev, err := s.Data["revocation_time"].(json.Number).Float64()
 	if err != nil {
-		return Revoke{}, err
+		return time.Time{}, err
 	}
-	revTime := time.Unix(0, int64(rev)*int64(time.Millisecond))
-	return Revoke{
-		RevocationTime: revTime,
-	}, nil
+	return time.Unix(0, int64(rev)*int64(time.Millisecond)), nil
 
 }
