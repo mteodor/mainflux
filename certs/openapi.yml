@@ -22,7 +22,7 @@ paths:
           description: Failed due to malformed JSON.
         '500':
           description: Unexpected server-side error ocurred.
-  /certs/{thingID}:
+  /certs/{thingId}:
     get:
       summary: Retrieves certificates
       description: |
@@ -40,7 +40,7 @@ paths:
             Failed to retrieve corresponding certificate.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /certs/{certID}:
+  /certs/{certId}:
     delete:
       summary: Revokes certificate
       description: |
