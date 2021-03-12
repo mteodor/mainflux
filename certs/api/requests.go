@@ -40,12 +40,12 @@ func (req *listReq) validate() error {
 }
 
 type revokeReq struct {
-	token   string
-	thingID string
+	token  string
+	certID string
 }
 
 func (req *revokeReq) validate() error {
-	if req.token == "" || req.thingID == "" {
+	if req.token == "" || req.certID == "" {
 		return certs.ErrUnauthorizedAccess
 	}
 

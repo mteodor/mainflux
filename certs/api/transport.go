@@ -141,8 +141,8 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	req := revokeReq{
-		token:   r.Header.Get("Authorization"),
-		thingID: bone.GetValue(r, "certId"),
+		token:  r.Header.Get("Authorization"),
+		certID: bone.GetValue(r, "certId"),
 	}
 
 	return req, nil
