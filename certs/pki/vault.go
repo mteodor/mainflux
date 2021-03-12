@@ -25,7 +25,7 @@ var (
 	// ErrNotImplemented indicate that method called is not implemented
 	ErrNotImplemented = errors.New("method not implemented for certs")
 
-	// ErrMissingCACertificate indicates missing CA certificate.
+	// ErrMissingCACertificate indicates missing CA certificate
 	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
 
 	// ErrFailedCertCreation indicates failed to certificate creation
