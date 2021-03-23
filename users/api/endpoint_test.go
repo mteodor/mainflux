@@ -304,7 +304,7 @@ func TestPasswordReset(t *testing.T) {
 		ConfPass string `json:"confirm_password,omitempty"`
 	}{}
 
-	expectedSuccess := toJSON(resData)
+	expectedSuccess := "{}"
 
 	resData.Msg = users.ErrUserNotFound.Error()
 
@@ -387,7 +387,7 @@ func TestPasswordChange(t *testing.T) {
 	}{
 		"",
 	}
-	expectedSuccess := toJSON(resData)
+	expectedSuccess := "{}"
 
 	reqData := struct {
 		Token    string `json:"token,omitempty"`
