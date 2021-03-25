@@ -160,7 +160,13 @@ type SDK interface {
 	DeleteGroup(id, token string) error
 
 	// Groups returns page of users groups.
-	Groups(token string, offset, limit uint64, name string) (GroupsPage, error)
+	Groups(token string, offset, limit uint64) (auth.GroupPage, error)
+
+	// Parents returns page of users groups.
+	Parents(id, token string, offset, limit uint64) (auth.GroupPage, error)
+
+	// Children returns page of users groups.
+	Children(id, token string, offset, limit uint64) (auth.GroupPage, error)
 
 	// Group returns users group object by id.
 	Group(id, token string) (Group, error)

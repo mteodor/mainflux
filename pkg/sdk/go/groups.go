@@ -167,43 +167,54 @@ func (sdk mfSDK) Members(groupID, token string, offset, limit uint64) (auth.Memb
 	return tp, nil
 }
 
-func (sdk mfSDK) Groups(token string, offset, limit uint64, id string) (GroupsPage, error) {
-	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", groupsEndpoint, offset, limit)
-	if id != "" {
-		endpoint = fmt.Sprintf("%s/groups?offset=%d&limit=%d", groupsEndpoint, id, offset, limit)
-	}
+func (sdk mfSDK) Groups(token string, offset, limit uint64) (auth.GroupPage, error) {
+	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&tree=false", groupsEndpoint, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
+	return sdk.getGroups(token, url)
+}
 
+func (sdk mfSDK) Parents(id, token string, offset, limit uint64) (auth.GroupPage, error) {
+	endpoint := fmt.Sprintf("%s/%s/parents?offset=%d&limit=%d&tree=false", groupsEndpoint, id, offset, limit)
+	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
+	return sdk.getGroups(token, url)
+}
+
+func (sdk mfSDK) Children(id, token string, offset, limit uint64) (auth.GroupPage, error) {
+	endpoint := fmt.Sprintf("%s/%s/children?offset=%d&limit=%d&tree=false", groupsEndpoint, id, offset, limit)
+	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
+	return sdk.getGroups(token, url)
+}
+
+func (sdk mfSDK) getGroups(token, url string) (auth.GroupPage, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return GroupsPage{}, err
+		return auth.GroupPage{}, err
 	}
 
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
-		return GroupsPage{}, err
+		return auth.GroupPage{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return GroupsPage{}, err
+		return auth.GroupPage{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return GroupsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
+		return auth.GroupPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
-	var tp GroupsPage
+	var tp auth.GroupPage
 	if err := json.Unmarshal(body, &tp); err != nil {
-		return GroupsPage{}, err
+		return auth.GroupPage{}, err
 	}
-
 	return tp, nil
 }
 
 func (sdk mfSDK) Group(id, token string) (Group, error) {
-	endpoint := fmt.Sprintf("%s/groups/%s", groupsEndpoint, id)
+	endpoint := fmt.Sprintf("%s/%s", groupsEndpoint, id)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

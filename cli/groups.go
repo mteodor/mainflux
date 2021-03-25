@@ -45,7 +45,7 @@ var cmdGroups = []cobra.Command{
 	},
 	cobra.Command{
 		Use:   "get",
-		Short: "get [all | children <group_id> | group_id] <user_auth_token>",
+		Short: "get [all | children <group_id> | parents <group_id> | group_id] <user_auth_token>",
 		Long: `Get all users groups, group children or group by id.
 		all - lists all groups
 		children <group_id> - lists all children groups of <group_id>
@@ -56,7 +56,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "all" {
-				l, err := sdk.Groups(args[1], uint64(Offset), uint64(Limit), "")
+				l, err := sdk.Groups(args[2], uint64(Offset), uint64(Limit))
 				if err != nil {
 					logError(err)
 					return
@@ -65,7 +65,16 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "children" {
-				l, err := sdk.Groups(args[2], uint64(Offset), uint64(Limit), args[1])
+				l, err := sdk.Children(args[1], args[2], uint64(Offset), uint64(Limit))
+				if err != nil {
+					logError(err)
+					return
+				}
+				logJSON(l)
+				return
+			}
+			if args[0] == "parents" {
+				l, err := sdk.Parents(args[1], args[2], uint64(Offset), uint64(Limit))
 				if err != nil {
 					logError(err)
 					return
