@@ -99,7 +99,7 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 
 	mux.Delete("/groups/:groupID/members", kithttp.NewServer(
 		kitot.TraceServer(tracer, "unassign")(unassignEndpoint(svc)),
-		decodeAssignRequest,
+		decodeUnassignRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -271,6 +271,19 @@ func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := assignReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupID"),
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(auth.ErrMalformedEntity, err)
+	}
+
+	return req, nil
+}
+
+func decodeUnassignRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := unassignReq{
 		token:   r.Header.Get("Authorization"),
 		groupID: bone.GetValue(r, "groupID"),
 	}

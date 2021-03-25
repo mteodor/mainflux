@@ -105,17 +105,35 @@ func (sdk mfSDK) Assign(token, groupID, memberType string, memberIDs ...string) 
 }
 
 func (sdk mfSDK) Unassign(token, groupID string, memberIDs ...string) error {
+	var ids []string
 	endpoint := fmt.Sprintf("%s/%s/members", groupsEndpoint, groupID)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 
-	req, err := http.NewRequest(http.MethodDelete, url, bytes.NewReader([]byte{}))
+	ids = append(ids, memberIDs...)
+	assignReq := assignRequest{
+		Members: ids,
+	}
+
+	data, err := json.Marshal(assignReq)
 	if err != nil {
 		return err
 	}
+
+	req, err := http.NewRequest(http.MethodDelete, url, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
 		return err
 	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%v\n", string(body))
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
