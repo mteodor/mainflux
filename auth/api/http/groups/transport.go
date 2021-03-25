@@ -284,8 +284,10 @@ func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error
 
 func decodeUnassignRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := unassignReq{
-		token:   r.Header.Get("Authorization"),
-		groupID: bone.GetValue(r, "groupID"),
+		assignReq{
+			token:   r.Header.Get("Authorization"),
+			groupID: bone.GetValue(r, "groupID"),
+		},
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

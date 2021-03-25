@@ -129,9 +129,7 @@ func (req assignReq) validate() error {
 }
 
 type unassignReq struct {
-	token   string
-	groupID string
-	Members []string `json:"members"`
+	assignReq
 }
 
 func (req unassignReq) validate() error {

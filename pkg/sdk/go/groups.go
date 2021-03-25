@@ -174,13 +174,13 @@ func (sdk mfSDK) Groups(token string, offset, limit uint64) (auth.GroupPage, err
 }
 
 func (sdk mfSDK) Parents(id, token string, offset, limit uint64) (auth.GroupPage, error) {
-	endpoint := fmt.Sprintf("%s/%s/parents?offset=%d&limit=%d&tree=false", groupsEndpoint, id, offset, limit)
+	endpoint := fmt.Sprintf("%s/%s/parents?offset=%d&limit=%d&tree=false&level=%d", groupsEndpoint, id, offset, limit, auth.MaxLevel)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	return sdk.getGroups(token, url)
 }
 
 func (sdk mfSDK) Children(id, token string, offset, limit uint64) (auth.GroupPage, error) {
-	endpoint := fmt.Sprintf("%s/%s/children?offset=%d&limit=%d&tree=false", groupsEndpoint, id, offset, limit)
+	endpoint := fmt.Sprintf("%s/%s/children?offset=%d&limit=%d&tree=false&level=%d", groupsEndpoint, id, offset, limit, auth.MaxLevel)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	return sdk.getGroups(token, url)
 }
