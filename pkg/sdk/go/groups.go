@@ -71,7 +71,7 @@ func (sdk mfSDK) DeleteGroup(id, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) Assign(token, groupID, memberType string, memberIDs ...string) error {
+func (sdk mfSDK) Assign(memberIDs []string, memberType, groupID string, token string) error {
 	var ids []string
 	endpoint := fmt.Sprintf("%s/%s/members", groupsEndpoint, groupID)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
@@ -98,7 +98,7 @@ func (sdk mfSDK) Assign(token, groupID, memberType string, memberIDs ...string) 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(ErrFailedMemberAdd, errors.New(resp.Status))
+		return errors.Wrap(ErrMemberAdd, errors.New(resp.Status))
 	}
 
 	return nil
@@ -167,19 +167,19 @@ func (sdk mfSDK) Members(groupID, token string, offset, limit uint64) (auth.Memb
 	return tp, nil
 }
 
-func (sdk mfSDK) Groups(token string, offset, limit uint64) (auth.GroupPage, error) {
+func (sdk mfSDK) Groups(offset, limit uint64, token string) (auth.GroupPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&tree=false", groupsEndpoint, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	return sdk.getGroups(token, url)
 }
 
-func (sdk mfSDK) Parents(id, token string, offset, limit uint64) (auth.GroupPage, error) {
+func (sdk mfSDK) Parents(id string, offset, limit uint64, token string) (auth.GroupPage, error) {
 	endpoint := fmt.Sprintf("%s/%s/parents?offset=%d&limit=%d&tree=false&level=%d", groupsEndpoint, id, offset, limit, auth.MaxLevel)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	return sdk.getGroups(token, url)
 }
 
-func (sdk mfSDK) Children(id, token string, offset, limit uint64) (auth.GroupPage, error) {
+func (sdk mfSDK) Children(id string, offset, limit uint64, token string) (auth.GroupPage, error) {
 	endpoint := fmt.Sprintf("%s/%s/children?offset=%d&limit=%d&tree=false&level=%d", groupsEndpoint, id, offset, limit, auth.MaxLevel)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	return sdk.getGroups(token, url)

@@ -72,8 +72,8 @@ var (
 	// ErrFailedCertUpdate failed to update certs in bootstrap config
 	ErrFailedCertUpdate = errors.New("failed to update certs in bootstrap config")
 
-	// ErrFailedMemberAdd failed to add member to a group.
-	ErrFailedMemberAdd = errors.New("failed to add member to group")
+	// ErrMemberAdd failed to add member to a group.
+	ErrMemberAdd = errors.New("failed to add member to group")
 )
 
 // ContentType represents all possible content types.
@@ -160,19 +160,19 @@ type SDK interface {
 	DeleteGroup(id, token string) error
 
 	// Groups returns page of users groups.
-	Groups(token string, offset, limit uint64) (auth.GroupPage, error)
+	Groups(offset, limit uint64, token string) (auth.GroupPage, error)
 
 	// Parents returns page of users groups.
-	Parents(id, token string, offset, limit uint64) (auth.GroupPage, error)
+	Parents(id string, offset, limit uint64, token string) (auth.GroupPage, error)
 
 	// Children returns page of users groups.
-	Children(id, token string, offset, limit uint64) (auth.GroupPage, error)
+	Children(id string, offset, limit uint64, token string) (auth.GroupPage, error)
 
 	// Group returns users group object by id.
 	Group(id, token string) (Group, error)
 
 	// Assign assigns member of member type (thing or user) to a group.
-	Assign(token, groupID, memberType string, memberIDs ...string) error
+	Assign(memberIDs []string, memberType, groupID string, token string) error
 
 	// Unassign removes member from a group.
 	Unassign(token, groupID string, memberIDs ...string) error
