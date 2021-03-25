@@ -56,7 +56,11 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "all" {
-				l, err := sdk.Groups(uint64(Offset), uint64(Limit), args[2])
+				if len(args) > 2 {
+					logUsage(cmd.Short)
+					return
+				}
+				l, err := sdk.Groups(uint64(Offset), uint64(Limit), args[1])
 				if err != nil {
 					logError(err)
 					return
@@ -65,6 +69,10 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "children" {
+				if len(args) > 3 {
+					logUsage(cmd.Short)
+					return
+				}
 				l, err := sdk.Children(args[1], uint64(Offset), uint64(Limit), args[2])
 				if err != nil {
 					logError(err)
@@ -74,12 +82,20 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "parents" {
+				if len(args) > 3 {
+					logUsage(cmd.Short)
+					return
+				}
 				l, err := sdk.Parents(args[1], uint64(Offset), uint64(Limit), args[2])
 				if err != nil {
 					logError(err)
 					return
 				}
 				logJSON(l)
+				return
+			}
+			if len(args) > 2 {
+				logUsage(cmd.Short)
 				return
 			}
 			t, err := sdk.Group(args[0], args[1])
