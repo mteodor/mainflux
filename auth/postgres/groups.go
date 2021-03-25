@@ -375,7 +375,7 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, pm a
 					  WHERE gr.group_id = g.id and gr.member_id = :member_id
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
-	params, err := gr.toDBMemberPage("", "", "", pm)
+	params, err := gr.toDBMemberPage(memberID, "", "", pm)
 	if err != nil {
 		return auth.GroupPage{}, err
 	}

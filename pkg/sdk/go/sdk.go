@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/mainflux/mainflux/auth"
 )
 
 const (
@@ -70,8 +72,8 @@ var (
 	// ErrFailedCertUpdate failed to update certs in bootstrap config
 	ErrFailedCertUpdate = errors.New("failed to update certs in bootstrap config")
 
-	// ErrFailedUserAdd failed to add user to a group.
-	ErrFailedUserAdd = errors.New("failed to add user to group")
+	// ErrFailedMemberAdd failed to add member to a group.
+	ErrFailedMemberAdd = errors.New("failed to add member to group")
 )
 
 // ContentType represents all possible content types.
@@ -163,14 +165,14 @@ type SDK interface {
 	// Group returns users group object by id.
 	Group(id, token string) (Group, error)
 
-	// Assign assigns user to a group.
-	Assign(userID, groupID, token string) error
+	// Assign assigns member of member type (thing or user) to a group.
+	Assign(token, groupID, memberType string, memberIDs ...string) error
 
-	// Unassign removes user from a group.
-	Unassign(userID, groupID, token string) error
+	// Unassign removes member from a group.
+	Unassign(token, groupID string, memberIDs ...string) error
 
-	// Members lists member users of a group.
-	Members(groupID, token string, offset, limit uint64) (UsersPage, error)
+	// Members lists members of a group.
+	Members(groupID, token string, offset, limit uint64) (auth.MemberPage, error)
 
 	// Memberships lists groups for user.
 	Memberships(userID, token string, offset, limit uint64) (GroupsPage, error)
