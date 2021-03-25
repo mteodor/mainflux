@@ -129,13 +129,7 @@ func (sdk mfSDK) Unassign(token, groupID string, memberIDs ...string) error {
 		return err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("%v\n", string(body))
-
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
 	}
 
