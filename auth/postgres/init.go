@@ -113,15 +113,15 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "auth_2",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS policies (
-						id          VARCHAR(254) NOT NULL,
-						subject     VARCHAR(254) NOT NULL,
-						subject_id  VARCHAR(254) NOT NULL,
-						object 		VARCHAR(254) NOT NULL,
-						object_id	VARCHAR(254) NOT NULL,
-						action      VARCHAR(254) NOT NULL,
-						description VARCHAR(1024),
-						created_at  TIMESTAMPTZ,
-						updated_at  TIMESTAMPTZ,
+						id           VARCHAR(254) NOT NULL,
+						subject_type VARCHAR(254) NOT NULL,
+						subject_id   VARCHAR(254) NOT NULL,
+						object_type  VARCHAR(254) NOT NULL,
+						object_id	 VARCHAR(254) NOT NULL,
+						actions       VARCHAR(254) NOT NULL,
+						description  VARCHAR(1024),
+						created_at   TIMESTAMPTZ,
+						updated_at   TIMESTAMPTZ
 					)`,
 				},
 				Down: []string{

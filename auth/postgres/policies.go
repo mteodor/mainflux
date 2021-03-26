@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -9,11 +11,23 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+type policy struct {
+	ID          string    `db:"id"`
+	Subject     string    `db:"subject_type"`
+	SubjectID   string    `db:"subject_id"`
+	Object      string    `db:"object_type"`
+	ObjectID    string    `db:"object_id"`
+	actions     string    `db:"actions"`
+	Description string    `db:"description"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
+}
+
 func (gr groupRepository) SavePolicy(ctx context.Context, p auth.Policy) (auth.Policy, error) {
 	// For root group path is initialized with id
-	q := `INSERT INTO policy (id, description, subject, subject_id, object, object_id, action, created_at, updated_at) 
-		  VALUES (:id, :description, :subject, :subject_id, :object, :object_id, :action :created_at, :updated_at) 
-		  RETURNING id, description, subject, subject_id, object, object_id, action, created_at, updated_at`
+	q := `INSERT INTO policy (id, description, subject_type, subject_id, object_type, object_id, actions, created_at, updated_at) 
+		  VALUES (:id, :description, :subject, :subject_id, :object, :object_id, :actions :created_at, :updated_at) 
+		  RETURNING id, description, subject, subject_id, object, object_id, actions, created_at, updated_at`
 
 	row, err := gr.db.NamedQueryContext(ctx, q, p)
 	if err != nil {
@@ -42,11 +56,17 @@ func (gr groupRepository) SavePolicy(ctx context.Context, p auth.Policy) (auth.P
 }
 
 func (gr groupRepository) RetrievePolicy(ctx context.Context, p auth.Policy) (map[string]interface{}, error) {
-	q := `SELECT id, description, subject, subject_id, object, object_id, action, created_at, updated_at FROM policies 
-					  WHERE subject = :subject, subject_id = :subject_id, object = :object , object_id = :object_id 
-					  GROUP BY subject, subject_id, object, object_id`
+	q := `SELECT id, description, subject_type, subject_id, object_type, object_id, actions, created_at, updated_at FROM policies
+		  WHERE subject_type = :subject_type AND subject_id = :subject_id AND object_type = :object_type AND object_id = :object_id`
 
-	rows, err := gr.db.NamedQueryContext(ctx, q, p)
+	pol := policy{
+		Subject:   p.Subject,
+		SubjectID: p.SubjectID,
+		Object:    p.Object,
+		ObjectID:  p.ObjectID,
+	}
+
+	rows, err := gr.db.NamedQueryContext(ctx, q, pol)
 	if err != nil {
 		return map[string]interface{}{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
 	}
@@ -65,20 +85,23 @@ func (gr groupRepository) processPolicyRows(rows *sqlx.Rows) (map[string]interfa
 	var subjects map[string]map[string]auth.Policy
 
 	for rows.Next() {
-		p := auth.Policy{}
-		if err := rows.StructScan(&p); err != nil {
+		dbPolicy := policy{}
+		if err := rows.StructScan(&dbPolicy); err != nil {
 			return items, err
 		}
-
-		s, ok := subjects[p.Subject]
+		actions := strings.Split(dbPolicy.actions, ",")
+		p := auth.Policy{
+			Subject:   dbPolicy.Subject,
+			SubjectID: dbPolicy.SubjectID,
+			ObjectID:  dbPolicy.ObjectID,
+			Object:    dbPolicy.Object,
+			Actions:   actions,
+		}
+		_, ok := subjects[p.Subject]
 		if !ok {
 			subjects[p.Subject] = make(map[string]auth.Policy)
 		}
-		sub, ok := s[p.SubjectID]
-		if !ok {
-			s[p.SubjectID] = p
-		}
-		sub.Actions = append(sub.Actions, p.Actions...)
+		subjects[p.Subject][p.SubjectID] = p
 	}
 
 	for key, s := range subjects {

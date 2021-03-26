@@ -85,7 +85,7 @@ type dbKey struct {
 	ID        string       `db:"id"`
 	Type      uint32       `db:"type"`
 	IssuerID  string       `db:"issuer_id"`
-	Subject   string       `db:"subject"`
+	Subject   string       `db:"subject_type"`
 	Revoked   bool         `db:"revoked"`
 	IssuedAt  time.Time    `db:"issued_at"`
 	ExpiresAt sql.NullTime `db:"expires_at"`

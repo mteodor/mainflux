@@ -21,7 +21,7 @@ function cleanup {
 ###
 # NATS
 ###
-nats-server &
+gnatsd &
 counter=1
 until fuser 4222/tcp 1>/dev/null 2>&1;
 do

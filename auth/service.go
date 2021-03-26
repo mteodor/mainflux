@@ -4,7 +4,10 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/mainflux/mainflux"
@@ -12,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/ulid"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
-	"github.com/open-policy-agent/opa/util"
 )
 
 const (
@@ -24,7 +26,6 @@ const (
 	members
 	membership
 
-	groupsObject     = "groups"
 	loginDuration    = 10 * time.Hour
 	recoveryDuration = 5 * time.Minute
 	policyQuery      = "data.mainflux.allow"
@@ -33,7 +34,8 @@ const (
 )
 
 var (
-	actions = map[int]string{
+	groupsObject = "groups"
+	actions      = map[int]string{
 		create:     "create",
 		update:     "update",
 		view:       "view",
@@ -52,7 +54,15 @@ var (
 		p := object.get(data.policies.groups, input.groups, {})
 		p.action[_] == input.action
 		p.object == input.object
-	}`
+	}
+	
+	allow {
+		p := object.get(data.policies.groups, input.groups, {})
+		p.action[_] == input.action
+		p.object == input.object
+	}
+	
+	`
 
 	// ErrUnauthorizedAccess represents unauthorized access.
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
@@ -275,22 +285,17 @@ func (svc service) CreateGroup(ctx context.Context, token string, group Group) (
 	// 	return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	// }
 
-	p := `{
-		"policies": {
-			"groups":{
-				"groupName1": {
-					"action": ["read"],
-					"object": "things"
-				}    
-			}
-		}
-	}`
+	// p := `{
+	// 	"policies": {
+	// 		"groups":{
+	// 			"groupName1": {
+	// 				"action": ["read"],
+	// 				"object_type": "things"
+	// 			}
+	// 		}
+	// 	}
+	// }`
 
-	var policy map[string]interface{}
-	err = util.UnmarshalJSON([]byte(p), &policy)
-	if err != nil {
-		return Group{}, err
-	}
 	p := Policy{
 		Subject:   "user",
 		SubjectID: user.ID,
@@ -298,8 +303,9 @@ func (svc service) CreateGroup(ctx context.Context, token string, group Group) (
 	}
 	svc.groups.RetrievePolicy(ctx, p)
 
-	req := createAuthorizationRequest(user.ID, actions[create], groupsObject)
-	svc.authorize(ctx, req, policy)
+	req := createAuthorizationRequest(user.ID, "", actions[create], groupsObject)
+
+	svc.authorize(ctx, req, p)
 
 	ulid, err := svc.ulidProvider.ID()
 	if err != nil {
@@ -402,8 +408,13 @@ func getTimestmap() time.Time {
 	return time.Now().UTC().Round(time.Millisecond)
 }
 
-func (svc service) authorize(ctx context.Context, req interface{}, policy map[string]interface{}) (bool, error) {
-	store := inmem.NewFromObject(policy)
+func (svc service) authorize(ctx context.Context, req interface{}, p Policy) (bool, error) {
+	b, err := json.Marshal(p)
+	if err != nil {
+		return false, err
+	}
+	fmt.Printf("%v\n", b)
+	store := inmem.NewFromReader(bytes.NewBufferString(string(b)))
 	// maybe to set path for store
 
 	rego := rego.New(
@@ -429,8 +440,8 @@ func (svc service) authorize(ctx context.Context, req interface{}, policy map[st
 
 func createAuthorizationRequest(groupID, userID, action, object string) map[string]interface{} {
 	return map[string]interface{}{
-		"user":   userID,
-		"action": action,
-		"object": object,
+		"user":        userID,
+		"action":      action,
+		"object_type": object,
 	}
 }
