@@ -91,7 +91,7 @@ type Policy struct {
 	SubjectID   string    `json:"subject_id" db:"subject_id"`
 	Object      string    `json:"object_type" db:"object_type"`
 	ObjectID    string    `json:"object_id" db:"object_id"`
-	Actions     []string  `json:"actions" db:"actions"`
+	Actions     string    `json:"actions" db:"actions"`
 	Description string    `json:"description" db:"description"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`

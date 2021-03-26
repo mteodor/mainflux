@@ -31,12 +31,13 @@ require (
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect
-	github.com/open-policy-agent/opa v0.27.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/ory/dockertest/v3 v3.6.0
 	github.com/pelletier/go-toml v1.8.0
 	github.com/plgd-dev/go-coap/v2 v2.0.4
 	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.14.0 // indirect
+	github.com/prometheus/procfs v0.2.0 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -46,7 +47,9 @@ require (
 	github.com/uber/jaeger-client-go v2.24.0+incompatible
 	go.mongodb.org/mongo-driver v1.3.5
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974
+	golang.org/x/tools v0.1.0 // indirect
 	gonum.org/v1/gonum v0.7.0
 	google.golang.org/grpc v1.30.0
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect

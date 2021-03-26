@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -17,7 +16,7 @@ type policy struct {
 	SubjectID   string    `db:"subject_id"`
 	Object      string    `db:"object_type"`
 	ObjectID    string    `db:"object_id"`
-	actions     string    `db:"actions"`
+	Actions     string    `db:"actions"`
 	Description string    `db:"description"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
@@ -81,21 +80,20 @@ func (gr groupRepository) RetrievePolicy(ctx context.Context, p auth.Policy) (ma
 }
 
 func (gr groupRepository) processPolicyRows(rows *sqlx.Rows) (map[string]interface{}, error) {
-	var items map[string]interface{}
-	var subjects map[string]map[string]auth.Policy
+	items := map[string]interface{}{}
+	subjects := map[string]map[string]auth.Policy{}
 
 	for rows.Next() {
 		dbPolicy := policy{}
 		if err := rows.StructScan(&dbPolicy); err != nil {
 			return items, err
 		}
-		actions := strings.Split(dbPolicy.actions, ",")
 		p := auth.Policy{
 			Subject:   dbPolicy.Subject,
 			SubjectID: dbPolicy.SubjectID,
 			ObjectID:  dbPolicy.ObjectID,
 			Object:    dbPolicy.Object,
-			Actions:   actions,
+			Actions:   dbPolicy.Actions,
 		}
 		_, ok := subjects[p.Subject]
 		if !ok {
