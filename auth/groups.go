@@ -200,7 +200,7 @@ type GroupRepository interface {
 	Unassign(ctx context.Context, groupID string, memberIDs ...string) error
 
 	SavePolicy(ctx context.Context, p Policy) (Policy, error)
-	RetrievePolicy(ctx context.Context, p Policy) (map[string]interface{}, error)
+	RetrievePolicy(ctx context.Context, p Policy) (map[string]map[string]Policy, error)
 }
 
 // type PolicyRepository interface {

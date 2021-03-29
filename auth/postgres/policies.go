@@ -54,7 +54,7 @@ func (gr groupRepository) SavePolicy(ctx context.Context, p auth.Policy) (auth.P
 	return p, nil
 }
 
-func (gr groupRepository) RetrievePolicy(ctx context.Context, p auth.Policy) (map[string]interface{}, error) {
+func (gr groupRepository) RetrievePolicy(ctx context.Context, p auth.Policy) (map[string]map[string]auth.Policy, error) {
 	q := `SELECT id, description, subject_type, subject_id, object_type, object_id, actions, created_at, updated_at FROM policies
 		  WHERE subject_type = :subject_type AND subject_id = :subject_id AND object_type = :object_type AND object_id = :object_id`
 
@@ -67,21 +67,20 @@ func (gr groupRepository) RetrievePolicy(ctx context.Context, p auth.Policy) (ma
 
 	rows, err := gr.db.NamedQueryContext(ctx, q, pol)
 	if err != nil {
-		return map[string]interface{}{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
+		return map[string]map[string]auth.Policy{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
 	}
 	defer rows.Close()
 
 	items, err := gr.processPolicyRows(rows)
 	if err != nil {
-		return map[string]interface{}{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
+		return map[string]map[string]auth.Policy{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
 	}
 
 	return items, nil
 }
 
-func (gr groupRepository) processPolicyRows(rows *sqlx.Rows) (map[string]interface{}, error) {
-	items := map[string]interface{}{}
-	subjects := map[string]map[string]auth.Policy{}
+func (gr groupRepository) processPolicyRows(rows *sqlx.Rows) (map[string]map[string]auth.Policy, error) {
+	items := map[string]map[string]auth.Policy{}
 
 	for rows.Next() {
 		dbPolicy := policy{}
@@ -95,15 +94,11 @@ func (gr groupRepository) processPolicyRows(rows *sqlx.Rows) (map[string]interfa
 			Object:    dbPolicy.Object,
 			Actions:   dbPolicy.Actions,
 		}
-		_, ok := subjects[p.Subject]
+		_, ok := items[p.Subject]
 		if !ok {
-			subjects[p.Subject] = make(map[string]auth.Policy)
+			items[p.Subject] = make(map[string]auth.Policy)
 		}
-		subjects[p.Subject][p.SubjectID] = p
-	}
-
-	for key, s := range subjects {
-		items[key] = s
+		items[p.Subject][p.SubjectID] = p
 	}
 
 	return items, nil

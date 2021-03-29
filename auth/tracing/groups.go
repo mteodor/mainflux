@@ -136,7 +136,7 @@ func (grm groupRepositoryMiddleware) SavePolicy(ctx context.Context, p auth.Poli
 	return grm.repo.SavePolicy(ctx, p)
 }
 
-func (grm groupRepositoryMiddleware) RetrievePolicy(ctx context.Context, p auth.Policy) (map[string]interface{}, error) {
+func (grm groupRepositoryMiddleware) RetrievePolicy(ctx context.Context, p auth.Policy) (map[string]map[string]auth.Policy, error) {
 	span := createSpan(ctx, grm.tracer, unassign)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)

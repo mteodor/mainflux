@@ -5,7 +5,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -375,13 +374,9 @@ func getTimestmap() time.Time {
 	return time.Now().UTC().Round(time.Millisecond)
 }
 
-func (svc service) authorize(ctx context.Context, req map[string]interface{}, policies map[string]interface{}) (bool, error) {
-	for k, v := range policies {
-		fmt.Printf("%v\n", k)
-		vBySubject := v.(map[string]Policy)
-		for k1, v1 := range vBySubject {
-			fmt.Printf("    %v\n", k1)
-			policy := v1
+func (svc service) authorize(ctx context.Context, req map[string]interface{}, policies map[string]map[string]Policy) (bool, error) {
+	for _, policyMap := range policies {
+		for _, policy := range policyMap {
 			ok := strings.Contains(policy.Actions, req["action"].(string))
 			if ok {
 				return true, nil
