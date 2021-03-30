@@ -31,8 +31,10 @@ const (
 )
 
 var (
-	groupsObject = "groups"
-	actions      = map[int]string{
+	objectType  = "groups"
+	subjectType = "user"
+
+	actions = map[int]string{
 		create:     "create",
 		update:     "update",
 		view:       "view",
@@ -126,6 +128,7 @@ type Service interface {
 
 	// Implements groups API, creating groups, assigning members
 	GroupService
+	PolicyService
 }
 
 var _ Service = (*service)(nil)
@@ -133,13 +136,14 @@ var _ Service = (*service)(nil)
 type service struct {
 	keys         KeyRepository
 	groups       GroupRepository
+	policy       PolicyRepository
 	idProvider   mainflux.IDProvider
 	ulidProvider mainflux.IDProvider
 	tokenizer    Tokenizer
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, groups GroupRepository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
+func New(keys KeyRepository, groups GroupRepository, policies PolicyRepository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
 
 	return &service{
 		tokenizer:    tokenizer,
@@ -260,17 +264,17 @@ func (svc service) login(token string) (string, string, error) {
 
 func (svc service) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
 	user, err := svc.Identify(ctx, token)
-	p := Policy{
-		Subject:   "user",
-		SubjectID: user.ID,
-		Object:    "group",
+	pReq := PolicyReq{
+		SubjectType: subjectType,
+		SubjectID:   user.ID,
+		ObjectType:  objectType,
 	}
 
-	policies, err := svc.groups.RetrievePolicy(ctx, p)
+	policies, err := svc.policy.RetrievePolicy(ctx, pReq)
 	if err != nil {
 		return Group{}, ErrUnauthorizedAccess
 	}
-	req := createAuthorizationRequest(user.ID, "", actions[read], groupsObject)
+	req := createAuthorizationRequest(user.ID, "", actions[read], objectType)
 	svc.authorize(ctx, req, policies)
 
 	ulid, err := svc.ulidProvider.ID()
@@ -278,7 +282,7 @@ func (svc service) CreateGroup(ctx context.Context, token string, group Group) (
 		return Group{}, errors.Wrap(ErrGenerateGroupID, err)
 	}
 
-	timestamp := getTimestmap()
+	timestamp := getTimestamp()
 	group.UpdatedAt = timestamp
 	group.CreatedAt = timestamp
 
@@ -338,7 +342,7 @@ func (svc service) UpdateGroup(ctx context.Context, token string, group Group) (
 		return Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	group.UpdatedAt = getTimestmap()
+	group.UpdatedAt = getTimestamp()
 	return svc.groups.Update(ctx, group)
 }
 
@@ -370,11 +374,45 @@ func (svc service) ListMemberships(ctx context.Context, token string, memberID s
 	return svc.groups.Memberships(ctx, memberID, pm)
 }
 
-func getTimestmap() time.Time {
+func (svc service) CreatePolicy(ctx context.Context, token string, p PolicyDef) error {
+	if _, err := svc.Identify(ctx, token); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	ulid, err := svc.ulidProvider.ID()
+	if err != nil {
+		return errors.Wrap(ErrGenerateGroupID, err)
+	}
+	timestamp := getTimestamp()
+	p.UpdatedAt = timestamp
+	p.CreatedAt = timestamp
+	p.ID = ulid
+	_, err = svc.policy.SavePolicy(ctx, p)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (svc service) RetrievePolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string) (map[string]map[string]PolicyDef, error) {
+	if _, err := svc.Identify(ctx, token); err != nil {
+		return map[string]map[string]PolicyDef{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	req := PolicyReq{
+		SubjectID:   subjectID,
+		SubjectType: subjectType,
+		ObjectID:    objectID,
+		ObjectType:  objectType,
+	}
+
+	return svc.policy.RetrievePolicy(ctx, req)
+}
+
+func getTimestamp() time.Time {
 	return time.Now().UTC().Round(time.Millisecond)
 }
 
-func (svc service) authorize(ctx context.Context, req map[string]interface{}, policies map[string]map[string]Policy) (bool, error) {
+func (svc service) authorize(ctx context.Context, req map[string]interface{}, policies map[string]map[string]PolicyDef) (bool, error) {
 	for _, policyMap := range policies {
 		for _, policy := range policyMap {
 			ok := strings.Contains(policy.Actions, req["action"].(string))

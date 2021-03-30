@@ -244,6 +244,34 @@ func listMembersEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func createPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(createPolicyReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		p := auth.PolicyDef{
+			SubjectType: req.SubjectType,
+			SubjectID:   req.SubjectID,
+			Actions:     req.Actions,
+		}
+		svc.CreatePolicy(ctx, p)
+		return nil, nil
+	}
+}
+
+func listPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		return nil, nil
+	}
+}
+
+func policyAssignEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		return nil, nil
+	}
+}
+
 func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
 	groupsMap := map[string]*auth.Group{}
 	// Parents' map keeps its array of children.

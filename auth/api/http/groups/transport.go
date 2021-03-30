@@ -118,6 +118,27 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 		opts...,
 	))
 
+	mux.Post("/policy", kithttp.NewServer(
+		kitot.TraceServer(tracer, "create_policy")(createPolicyEndpoint(svc)),
+		decodeCreatePolicyRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/policy", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_policy")(listPolicyEndpoint(svc)),
+		decodeListPolicyRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/policy/:policyID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "policy_assign")(policyAssignEndpoint(svc)),
+		decodeAssignPolicyRequest,
+		encodeResponse,
+		opts...,
+	))
+
 	return mux
 
 }
@@ -277,6 +298,40 @@ func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(auth.ErrMalformedEntity, err)
+	}
+
+	return req, nil
+}
+
+func decodeCreatePolicyRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, auth.ErrUnsupportedContentType
+	}
+
+	var req createPolicyReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(auth.ErrFailedDecode, err)
+	}
+
+	req.token = r.Header.Get("Authorization")
+	return req, nil
+}
+
+func decodeAssignPolicyRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := assignReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "policyID"),
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(auth.ErrMalformedEntity, err)
+	}
+
+	return req, nil
+}
+func decodeListPolicyRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := listPolicyReq{
+		token: r.Header.Get("Authorization"),
 	}
 
 	return req, nil

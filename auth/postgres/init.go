@@ -122,10 +122,12 @@ func migrateDB(db *sqlx.DB) error {
 						created_at   TIMESTAMPTZ,
 						updated_at   TIMESTAMPTZ
 					)`,
-					`CREATE TABLE IF NOT EXISTS policy (
+					`CREATE TABLE IF NOT EXISTS subject_policy (
 						policy_id VARCHAR(254) NOT NULL,
 						subject_type VARCHAR(254) NOT NULL,
 						subject_id   VARCHAR(254) NOT NULL,
+						created_at   TIMESTAMPTZ,
+						updated_at   TIMESTAMPTZ,
 						FOREIGN KEY (policy_id) REFERENCES policy_def (id) ON DELETE CASCADE
 					)`,
 				},

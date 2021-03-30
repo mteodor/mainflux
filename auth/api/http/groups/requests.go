@@ -144,3 +144,53 @@ func (req groupReq) validate() error {
 
 	return nil
 }
+
+type createPolicyReq struct {
+	token string
+	auth.PolicyDef
+}
+
+func (req createPolicyReq) validate() error {
+	if req.token == "" {
+		return auth.ErrUnauthorizedAccess
+	}
+
+	if req.SubjectID == "" && req.SubjectType == "" {
+		return auth.ErrMalformedEntity
+	}
+
+	if req.Actions == "" {
+		return auth.ErrMalformedEntity
+	}
+	return nil
+}
+
+type assignPolicyReq struct {
+	token    string
+	policyID string
+	auth.PolicyReq
+}
+
+func (req assignPolicyReq) validate() error {
+	if req.token == "" {
+		return auth.ErrUnauthorizedAccess
+	}
+	if req.policyID == "" {
+		return auth.ErrMalformedEntity
+	}
+	if req.ObjectID == "" && req.ObjectType == "" {
+		return auth.ErrMalformedEntity
+	}
+	return nil
+}
+
+type listPolicyReq struct {
+	token string
+}
+
+func (req listPolicyReq) validate() error {
+	if req.token == "" {
+		return auth.ErrUnauthorizedAccess
+	}
+	return nil
+}

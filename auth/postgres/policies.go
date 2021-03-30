@@ -1,8 +1,10 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package postgres
 
 import (
 	"context"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -10,21 +12,22 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-type policy struct {
-	ID          string    `db:"id"`
-	Subject     string    `db:"subject_type"`
-	SubjectID   string    `db:"subject_id"`
-	Object      string    `db:"object_type"`
-	ObjectID    string    `db:"object_id"`
-	Actions     string    `db:"actions"`
-	Description string    `db:"description"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+var _ auth.GroupRepository = (*groupRepository)(nil)
+
+type policyRepository struct {
+	db Database
 }
 
-func (gr groupRepository) SavePolicy(ctx context.Context, p auth.Policy) (auth.Policy, error) {
+// NewPolicyRepo instantiates a PostgreSQL implementation of group
+// repository.
+func NewPolicyRepo(db Database) auth.PolicyRepository {
+	return &policyRepository{
+		db: db,
+	}
+}
+func (gr policyRepository) SavePolicy(ctx context.Context, p auth.PolicyDef) (auth.PolicyDef, error) {
 	// For root group path is initialized with id
-	q := `INSERT INTO policy (id, description, subject_type, subject_id, object_type, object_id, actions, created_at, updated_at) 
+	q := `INSERT INTO policy (id, description,  object_type, object_id, actions, created_at, updated_at) 
 		  VALUES (:id, :description, :subject, :subject_id, :object, :object_id, :actions :created_at, :updated_at) 
 		  RETURNING id, description, subject, subject_id, object, object_id, actions, created_at, updated_at`
 
@@ -34,71 +37,58 @@ func (gr groupRepository) SavePolicy(ctx context.Context, p auth.Policy) (auth.P
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return auth.Policy{}, errors.Wrap(auth.ErrMalformedEntity, err)
+				return auth.PolicyDef{}, errors.Wrap(auth.ErrMalformedEntity, err)
 			case errFK:
-				return auth.Policy{}, errors.Wrap(auth.ErrCreateGroup, err)
+				return auth.PolicyDef{}, errors.Wrap(auth.ErrCreateGroup, err)
 			case errDuplicate:
-				return auth.Policy{}, errors.Wrap(auth.ErrGroupConflict, err)
+				return auth.PolicyDef{}, errors.Wrap(auth.ErrGroupConflict, err)
 			}
 		}
 
-		return auth.Policy{}, errors.Wrap(auth.ErrCreateGroup, errors.New(pqErr.Message))
+		return auth.PolicyDef{}, errors.Wrap(auth.ErrCreateGroup, errors.New(pqErr.Message))
 	}
 
 	defer row.Close()
 	row.Next()
-	p = auth.Policy{}
+	p = auth.PolicyDef{}
 	if err := row.StructScan(&p); err != nil {
-		return auth.Policy{}, err
+		return auth.PolicyDef{}, err
 	}
 	return p, nil
 }
 
-func (gr groupRepository) RetrievePolicy(ctx context.Context, p auth.Policy) (map[string]map[string]auth.Policy, error) {
-	q := `SELECT id, description, subject_type, subject_id, object_type, object_id, actions, created_at, updated_at FROM policies
-		  WHERE subject_type = :subject_type AND subject_id = :subject_id AND object_type = :object_type AND object_id = :object_id`
+func (gr policyRepository) RetrievePolicy(ctx context.Context, pReq auth.PolicyReq) (map[string]map[string]auth.PolicyDef, error) {
+	q := `SELECT id, description, subject_type, subject_id, actions, created_at, updated_at FROM policy_def pd, subject_policy sp
+		  WHERE pd.id = sp.policy_id AND sp.subject_type = :subject_type OR sp.subject_id = :subject_id AND pd.object_type = :object_type OR pd.object_id = :object_id`
 
-	pol := policy{
-		Subject:   p.Subject,
-		SubjectID: p.SubjectID,
-		Object:    p.Object,
-		ObjectID:  p.ObjectID,
-	}
-
-	rows, err := gr.db.NamedQueryContext(ctx, q, pol)
+	rows, err := gr.db.NamedQueryContext(ctx, q, pReq)
 	if err != nil {
-		return map[string]map[string]auth.Policy{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
+		return map[string]map[string]auth.PolicyDef{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
 	}
 	defer rows.Close()
 
 	items, err := gr.processPolicyRows(rows)
 	if err != nil {
-		return map[string]map[string]auth.Policy{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
+		return map[string]map[string]auth.PolicyDef{}, errors.Wrap(auth.ErrFailedToRetrievePolicy, err)
 	}
 
 	return items, nil
 }
 
-func (gr groupRepository) processPolicyRows(rows *sqlx.Rows) (map[string]map[string]auth.Policy, error) {
-	items := map[string]map[string]auth.Policy{}
+func (gr policyRepository) processPolicyRows(rows *sqlx.Rows) (map[string]map[string]auth.PolicyDef, error) {
+	items := map[string]map[string]auth.PolicyDef{}
 
 	for rows.Next() {
-		dbPolicy := policy{}
+		dbPolicy := auth.PolicyDef{}
 		if err := rows.StructScan(&dbPolicy); err != nil {
 			return items, err
 		}
-		p := auth.Policy{
-			Subject:   dbPolicy.Subject,
-			SubjectID: dbPolicy.SubjectID,
-			ObjectID:  dbPolicy.ObjectID,
-			Object:    dbPolicy.Object,
-			Actions:   dbPolicy.Actions,
-		}
-		_, ok := items[p.Subject]
+
+		_, ok := items[dbPolicy.SubjectType]
 		if !ok {
-			items[p.Subject] = make(map[string]auth.Policy)
+			items[dbPolicy.SubjectType] = make(map[string]auth.PolicyDef)
 		}
-		items[p.Subject][p.SubjectID] = p
+		items[dbPolicy.SubjectType][dbPolicy.SubjectID] = dbPolicy
 	}
 
 	return items, nil

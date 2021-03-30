@@ -63,9 +63,10 @@ func (tr testRequest) make() (*http.Response, error) {
 func newService() auth.Service {
 	repo := mocks.NewKeyRepository()
 	groupRepo := mocks.NewGroupRepository()
+	policyRepo := mocks.NewPolicyRepository()
 	idProvider := uuid.NewMock()
 	t := jwt.New(secret)
-	return auth.New(repo, groupRepo, idProvider, t)
+	return auth.New(repo, groupRepo, policyRepo, idProvider, t)
 }
 
 func newServer(svc auth.Service) *httptest.Server {

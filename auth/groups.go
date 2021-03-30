@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package auth
 
 import (
@@ -84,30 +87,6 @@ type Group struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
-
-type Policy struct {
-	ID          string    `json:"id" db:"id"`
-	Subject     string    `json:"subject_type" db:"subject_type"`
-	SubjectID   string    `json:"subject_id" db:"subject_id"`
-	Object      string    `json:"object_type" db:"object_type"`
-	ObjectID    string    `json:"object_id" db:"object_id"`
-	Actions     string    `json:"actions" db:"actions"`
-	Description string    `json:"description" db:"description"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-}
-
-// type Policy struct {
-// 	ID          string    `json:"id"`
-// 	Subject     string    `json:"subject_type"`
-// 	SubjectID   string    `json:"subject_id"`
-// 	Object      string    `json:"object_type"`
-// 	ObjectID    string    `json:"object_id"`
-// 	Actions     []string  `json:"actions"`
-// 	Description string    `json:"description"`
-// 	CreatedAt   time.Time `json:"created_at"`
-// 	UpdatedAt   time.Time `json:"updated_at"`
-// }
 
 type PageMetadata struct {
 	Total    uint64
@@ -198,11 +177,4 @@ type GroupRepository interface {
 
 	// Unassign removes a member from a group
 	Unassign(ctx context.Context, groupID string, memberIDs ...string) error
-
-	SavePolicy(ctx context.Context, p Policy) (Policy, error)
-	RetrievePolicy(ctx context.Context, p Policy) (map[string]map[string]Policy, error)
 }
-
-// type PolicyRepository interface {
-
-// }
