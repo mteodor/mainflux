@@ -168,3 +168,30 @@ func (ms *metricsMiddleware) Unassign(ctx context.Context, token, groupID string
 
 	return ms.svc.Unassign(ctx, token, groupID, memberIDs...)
 }
+
+func (ms *metricsMiddleware) CreatePolicy(ctx context.Context, token string, p auth.PolicyDef) (auth.PolicyDef, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "create_policy").Add(1)
+		ms.latency.With("method", "create_policy").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.CreatePolicy(ctx, token, p)
+}
+
+func (ms *metricsMiddleware) AssignPolicy(ctx context.Context, token string, pReq auth.PolicyReq) (err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "assign_policy").Add(1)
+		ms.latency.With("method", "assign_policy").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.AssignPolicy(ctx, token, pReq)
+}
+
+func (ms *metricsMiddleware) RetrievePolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string) (map[string]map[string]auth.PolicyDef, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "retrieve_policy").Add(1)
+		ms.latency.With("method", "retrieve_policy").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RetrievePolicy(ctx, token, subjectID, subjectType, objectID, objectType)
+}

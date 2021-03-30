@@ -26,7 +26,6 @@ func NewPolicyRepository() auth.PolicyRepository {
 	}
 }
 
-// CreatePolicy creates policy definition
 func (pr *policyRepositoryMock) SavePolicy(ctx context.Context, p auth.PolicyDef) (auth.PolicyDef, error) {
 	pr.mu.Lock()
 	defer pr.mu.Unlock()
@@ -38,7 +37,10 @@ func (pr *policyRepositoryMock) SavePolicy(ctx context.Context, p auth.PolicyDef
 	return p, nil
 }
 
-// RetrievePolicy retrieves policy for given subject and object
+func (pr *policyRepositoryMock) AssignPolicy(ctx context.Context, pReq auth.PolicyReq) error {
+	panic("not implemented")
+}
+
 func (pr *policyRepositoryMock) RetrievePolicy(ctx context.Context, pReq auth.PolicyReq) (map[string]map[string]auth.PolicyDef, error) {
 	panic("not implemented")
 }

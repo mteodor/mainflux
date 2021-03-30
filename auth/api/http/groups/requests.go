@@ -166,8 +166,7 @@ func (req createPolicyReq) validate() error {
 }
 
 type assignPolicyReq struct {
-	token    string
-	policyID string
+	token string
 	auth.PolicyReq
 }
 
@@ -175,7 +174,7 @@ func (req assignPolicyReq) validate() error {
 	if req.token == "" {
 		return auth.ErrUnauthorizedAccess
 	}
-	if req.policyID == "" {
+	if req.PolicyID == "" {
 		return auth.ErrMalformedEntity
 	}
 	if req.ObjectID == "" && req.ObjectType == "" {

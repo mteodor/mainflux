@@ -318,9 +318,11 @@ func decodeCreatePolicyRequest(_ context.Context, r *http.Request) (interface{},
 }
 
 func decodeAssignPolicyRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := assignReq{
-		token:   r.Header.Get("Authorization"),
-		groupID: bone.GetValue(r, "policyID"),
+	req := assignPolicyReq{
+		token: r.Header.Get("Authorization"),
+		PolicyReq: auth.PolicyReq{
+			PolicyID: bone.GetValue(r, "policyID"),
+		},
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

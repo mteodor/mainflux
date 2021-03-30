@@ -237,3 +237,40 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, token string, groupID
 
 	return lm.svc.Unassign(ctx, token, groupID, memberIDs...)
 }
+
+func (lm *loggingMiddleware) CreatePolicy(ctx context.Context, token string, pDef auth.PolicyDef) (p auth.PolicyDef, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method create_policy for token %s and subject id: %s and subject type: %s took %s to complete", token, pDef.SubjectID, pDef.SubjectType, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.CreatePolicy(ctx, token, p)
+}
+
+func (lm *loggingMiddleware) AssignPolicy(ctx context.Context, token string, pReq auth.PolicyReq) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method assign_policy for token %s and policy id: %s  and subject id: %s and subject type: %s and object id: %s and object type: %s took %s to complete", token, pReq.PolicyID, pReq.SubjectID, pReq.SubjectType, pReq.ObjectID, pReq.ObjectType, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.AssignPolicy(ctx, token, pReq)
+}
+
+func (lm *loggingMiddleware) RetrievePolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string) (m map[string]map[string]auth.PolicyDef, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method retrieve_policy for token %s and subject id: %s and subject type: %s and object id: %s and object type: %s took %s to complete", token, subjectID, subjectType, objectID, objectType, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.RetrievePolicy(ctx, token, subjectID, subjectType, objectID, objectType)
+}

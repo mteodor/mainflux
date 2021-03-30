@@ -255,8 +255,11 @@ func createPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 			SubjectID:   req.SubjectID,
 			Actions:     req.Actions,
 		}
-		svc.CreatePolicy(ctx, p)
-		return nil, nil
+		pDef, err := svc.CreatePolicy(ctx, req.token, p)
+		if err != nil {
+			return policyRes{created: false}, err
+		}
+		return policyRes{id: pDef.ID, created: true}, nil
 	}
 }
 
@@ -268,7 +271,21 @@ func listPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func policyAssignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		return nil, nil
+		req := request.(assignPolicyReq)
+		if err := req.validate(); err != nil {
+			return assignRes{}, err
+		}
+		pReq := auth.PolicyReq{
+			SubjectType: req.SubjectType,
+			SubjectID:   req.SubjectID,
+			ObjectType:  req.ObjectType,
+			ObjectID:    req.ObjectID,
+			PolicyID:    req.PolicyID,
+		}
+		if err := svc.AssignPolicy(ctx, req.token, pReq); err != nil {
+			return assignRes{}, err
+		}
+		return assignRes{}, nil
 	}
 }
 

@@ -35,6 +35,14 @@ func (prm policyRepositoryMiddleware) SavePolicy(ctx context.Context, p auth.Pol
 	return prm.repo.SavePolicy(ctx, p)
 }
 
+func (prm policyRepositoryMiddleware) AssignPolicy(ctx context.Context, p auth.PolicyReq) error {
+	span := createSpan(ctx, prm.tracer, unassign)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	return prm.repo.AssignPolicy(ctx, p)
+}
+
 func (prm policyRepositoryMiddleware) RetrievePolicy(ctx context.Context, p auth.PolicyReq) (map[string]map[string]auth.PolicyDef, error) {
 	span := createSpan(ctx, prm.tracer, unassign)
 	defer span.Finish()

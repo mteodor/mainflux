@@ -160,3 +160,30 @@ func (res unassignRes) Empty() bool {
 type errorRes struct {
 	Err string `json:"error"`
 }
+
+type policyRes struct {
+	id      string
+	created bool
+}
+
+func (res policyRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
+}
+
+func (res policyRes) Headers() map[string]string {
+	if res.created {
+		return map[string]string{
+			"Location": fmt.Sprintf("/groups/%s", res.id),
+		}
+	}
+
+	return map[string]string{}
+}
+
+func (res policyRes) Empty() bool {
+	return true
+}

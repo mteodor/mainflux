@@ -26,6 +26,7 @@ type SubjectPolicy struct {
 }
 
 type PolicyReq struct {
+	PolicyID    string `json:"policy_id"`
 	SubjectType string `json:"subject_type" db:"subject_type"`
 	SubjectID   string `json:"subject_id" db:"subject_id"`
 	ObjectType  string `json:"object_type" db:"object_type"`
@@ -46,13 +47,13 @@ type PolicyReq struct {
 
 type PolicyService interface {
 	// CreatePolicy creates policy definition
-	CreatePolicy(ctx context.Context, token string, p PolicyDef) error
+	CreatePolicy(ctx context.Context, token string, p PolicyDef) (PolicyDef, error)
 
 	//AssignPolicy
-	AssignPolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string)
+	AssignPolicy(ctx context.Context, token string, pReq PolicyReq) error
 
 	// RetrievePolicy retrieves policy for given subject and object
-	RetrievePolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string)
+	RetrievePolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string) (map[string]map[string]PolicyDef, error)
 }
 
 type PolicyRepository interface {
@@ -60,6 +61,7 @@ type PolicyRepository interface {
 	SavePolicy(ctx context.Context, p PolicyDef) (PolicyDef, error)
 
 	// AssignPolicy
+	AssignPolicy(ctx context.Context, p PolicyReq) error
 
 	// RetrievePolicy retrieve policy
 	RetrievePolicy(ctx context.Context, p PolicyReq) (map[string]map[string]PolicyDef, error)

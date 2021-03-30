@@ -144,7 +144,6 @@ type service struct {
 
 // New instantiates the auth service implementation.
 func New(keys KeyRepository, groups GroupRepository, policies PolicyRepository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
-
 	return &service{
 		tokenizer:    tokenizer,
 		keys:         keys,
@@ -374,24 +373,25 @@ func (svc service) ListMemberships(ctx context.Context, token string, memberID s
 	return svc.groups.Memberships(ctx, memberID, pm)
 }
 
-func (svc service) CreatePolicy(ctx context.Context, token string, p PolicyDef) error {
+func (svc service) CreatePolicy(ctx context.Context, token string, p PolicyDef) (PolicyDef, error) {
 	if _, err := svc.Identify(ctx, token); err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
+		return PolicyDef{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	ulid, err := svc.ulidProvider.ID()
 	if err != nil {
-		return errors.Wrap(ErrGenerateGroupID, err)
+		return PolicyDef{}, errors.Wrap(ErrGenerateGroupID, err)
 	}
+
 	timestamp := getTimestamp()
 	p.UpdatedAt = timestamp
 	p.CreatedAt = timestamp
 	p.ID = ulid
-	_, err = svc.policy.SavePolicy(ctx, p)
+	p, err = svc.policy.SavePolicy(ctx, p)
 	if err != nil {
-		return err
+		return PolicyDef{}, err
 	}
-	return nil
+	return p, nil
 }
 
 func (svc service) RetrievePolicy(ctx context.Context, token, subjectID, subjectType, objectID, objectType string) (map[string]map[string]PolicyDef, error) {
@@ -406,6 +406,14 @@ func (svc service) RetrievePolicy(ctx context.Context, token, subjectID, subject
 	}
 
 	return svc.policy.RetrievePolicy(ctx, req)
+}
+
+func (svc service) AssignPolicy(ctx context.Context, token string, req PolicyReq) error {
+	if _, err := svc.Identify(ctx, token); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return svc.policy.AssignPolicy(ctx, req)
 }
 
 func getTimestamp() time.Time {
