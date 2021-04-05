@@ -22,6 +22,17 @@ type viewUserReq struct {
 }
 
 func (req viewUserReq) validate() error {
+	// if req.token == "" {
+	// 	return users.ErrUnauthorizedAccess
+	// }
+	return nil
+}
+
+type authReq struct {
+	token string
+}
+
+func (req authReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
