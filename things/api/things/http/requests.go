@@ -331,3 +331,16 @@ func (req listThingsGroupReq) validate() error {
 	return nil
 
 }
+
+type verifyReq struct {
+	token string
+	resource string
+	thingID  string
+}
+
+func (req verifyReq) validate() error {
+	if req.token == "" {
+		return things.ErrUnauthorizedAccess
+	}
+	return nil
+}

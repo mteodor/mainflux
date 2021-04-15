@@ -5,6 +5,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/auth"
@@ -505,6 +506,31 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		return buildThingsResponse(page), nil
+	}
+}
+
+func verifyReqEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		fmt.Println("verification request")
+		// X-Original-Uri", Value ["/grafana/d/NniREnXMk/new-dashboard-copy?orgId=1&var-thing=baf5ed0d-31f0-4309-828b-19ab4f33823f&kiosk"]
+
+		// return authRes{User: "moko@example.com", authenticated: true}, nil
+
+		// // req := request.(verifyReq)
+		// // if err := req.validate(); err != nil {
+		// // 	return nil, err
+		// // }
+
+		// // u, err := svc.ViewProfile(ctx, req.token)
+		// // if err != nil {
+		// // 	return nil, err
+		// // }
+		// // return viewUserRes{
+		// // 	ID:       u.ID,
+		// // 	Email:    u.Email,
+		// // 	Metadata: u.Metadata,
+		// // }, nil
+		return nil, nil
 	}
 }
 

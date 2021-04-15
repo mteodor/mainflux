@@ -20,6 +20,7 @@ var (
 	_ mainflux.Response = (*channelsPageRes)(nil)
 	_ mainflux.Response = (*connectionRes)(nil)
 	_ mainflux.Response = (*disconnectionRes)(nil)
+	_ mainflux.Response = (*authRes)(nil)
 )
 
 type removeRes struct{}
@@ -254,6 +255,28 @@ func (res disconnectionRes) Headers() map[string]string {
 }
 
 func (res disconnectionRes) Empty() bool {
+	return true
+}
+
+type authRes struct {
+	User          string
+	authenticated bool
+}
+
+func (res authRes) Code() int {
+	return http.StatusOK
+}
+
+func (res authRes) Headers() map[string]string {
+	if res.authenticated {
+		return map[string]string{
+			"X-MF-USER": res.User,
+		}
+	}
+	return map[string]string{}
+}
+
+func (res authRes) Empty() bool {
 	return true
 }
 

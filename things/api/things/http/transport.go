@@ -6,8 +6,10 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
@@ -179,6 +181,13 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	r.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
 		decodeListMembersRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/verify", kithttp.NewServer(
+		kitot.TraceServer(tracer, "verify")(verifyReqEndpoint(svc)),
+		decodeAuthReq,
 		encodeResponse,
 		opts...,
 	))
@@ -442,6 +451,26 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			Limit:    l,
 			Metadata: m,
 		},
+	}
+	return req, nil
+}
+
+func decodeAuthReq(_ context.Context, r *http.Request) (interface{}, error) {
+	req := verifyReq{
+		token: r.Header.Get("Authorization"),
+	}
+	originalURI, err := url.ParseRequestURI(r.Header.Get("X-Original-URI"))
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("original uri:%v", originalURI)
+	for val, t := range originalURI.Query() {
+		fmt.Printf("val:%v, par:%v\n", val, t)
+	}
+
+	fmt.Printf("var-thing:%v\n", originalURI.Query()["var-thing"])
+	for k, v := range r.Header {
+		fmt.Printf("Header field %q, Value %q\n", k, v)
 	}
 	return req, nil
 }
