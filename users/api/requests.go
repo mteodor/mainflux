@@ -28,17 +28,6 @@ func (req viewUserReq) validate() error {
 	return nil
 }
 
-type authReq struct {
-	token string
-}
-
-func (req authReq) validate() error {
-	if req.token == "" {
-		return users.ErrUnauthorizedAccess
-	}
-	return nil
-}
-
 type listUsersReq struct {
 	token    string
 	offset   uint64

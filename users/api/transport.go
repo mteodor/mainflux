@@ -109,13 +109,6 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Get("/mfauth", kithttp.NewServer(
-		kitot.TraceServer(tracer, "view_profile")(authReqEndpoint(svc)),
-		decodeAuthReq,
-		encodeResponse,
-		opts...,
-	))
-
 	mux.GetFunc("/version", mainflux.Version("users"))
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -131,13 +124,6 @@ func decodeViewUser(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) {
-	req := viewUserReq{
-		token: r.Header.Get("Authorization"),
-	}
-	return req, nil
-}
-
-func decodeAuthReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewUserReq{
 		token: r.Header.Get("Authorization"),
 	}
