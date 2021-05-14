@@ -53,14 +53,14 @@ func migrateDB(db *sqlx.DB) error {
 						owner    VARCHAR(254),
 						key      VARCHAR(4096) UNIQUE NOT NULL,
 						name     VARCHAR(1024),
-						metadata JSON,
+						metadata JSONB,
 						PRIMARY KEY (id, owner)
 					)`,
 					`CREATE TABLE IF NOT EXISTS channels (
 						id       UUID,
 						owner    VARCHAR(254),
 						name     VARCHAR(1024),
-						metadata JSON,
+						metadata JSONB,
 						PRIMARY KEY (id, owner)
 					)`,
 					`CREATE TABLE IF NOT EXISTS connections (
@@ -77,26 +77,6 @@ func migrateDB(db *sqlx.DB) error {
 					"DROP TABLE connections",
 					"DROP TABLE things",
 					"DROP TABLE channels",
-				},
-			},
-			{
-				Id: "things_2",
-				Up: []string{
-					`ALTER TABLE IF EXISTS things ALTER COLUMN
-					 metadata TYPE JSONB using metadata::text::jsonb`,
-				},
-			},
-			{
-				Id: "things_3",
-				Up: []string{
-					`ALTER TABLE IF EXISTS channels ALTER COLUMN
-					 metadata TYPE JSONB using metadata::text::jsonb`,
-				},
-			},
-			{
-				Id: "things_4",
-				Up: []string{
-					`ALTER TABLE IF EXISTS things ADD CONSTRAINT things_id_key UNIQUE (id)`,
 				},
 			},
 		},
