@@ -9,7 +9,8 @@ import (
 )
 
 type userReq struct {
-	user users.User
+	webauthUser string
+	user        users.User
 }
 
 func (req userReq) validate() error {

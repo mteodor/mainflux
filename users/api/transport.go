@@ -184,7 +184,10 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
-	return userReq{user}, nil
+	return userReq{
+		user:        user,
+		webauthUser: r.Header.Get("X-WEBAUTH-JWT"),
+	}, nil
 }
 
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {

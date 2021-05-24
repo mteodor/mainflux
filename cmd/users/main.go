@@ -296,7 +296,7 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 
 	idProvider := uuid.New()
 
-	svc := users.New(userRepo, hasher, auth, emailer, idProvider, c.passRegex)
+	svc := users.New(userRepo, hasher, auth, emailer, idProvider, c.passRegex, true)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

@@ -122,16 +122,17 @@ type UserPage struct {
 var _ Service = (*usersService)(nil)
 
 type usersService struct {
-	users      UserRepository
-	hasher     Hasher
-	email      Emailer
-	auth       mainflux.AuthServiceClient
-	idProvider mainflux.IDProvider
-	passRegex  *regexp.Regexp
+	users               UserRepository
+	hasher              Hasher
+	email               Emailer
+	auth                mainflux.AuthServiceClient
+	idProvider          mainflux.IDProvider
+	passRegex           *regexp.Regexp
+	proxyAuthentication bool
 }
 
 // New instantiates the users service implementation
-func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, e Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp) Service {
+func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, e Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp, proxyAuthentication bool) Service {
 	return &usersService{
 		users:      users,
 		hasher:     hasher,
@@ -169,11 +170,43 @@ func (svc usersService) Register(ctx context.Context, user User) (string, error)
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
 	if err != nil {
+		if svc.proxyAuthentication && user.Email != "" {
+			pass, err := svc.idProvider.ID()
+			if err != nil {
+				return "", errors.Wrap(ErrCreateUser, err)
+			}
+			user.Password = pass
+			_, err = svc.Register(ctx, user)
+			if err != nil {
+				return "", errors.Wrap(ErrCreateUser, err)
+			}
+
+			dbUser, err = svc.users.RetrieveByEmail(ctx, user.Email)
+			if err != nil {
+				return "", errors.Wrap(ErrCreateUser, err)
+			}
+		}
+
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
+
+	// Not checking password as authentication is done on proxy
+	if !svc.proxyAuthentication {
+		if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
+			return "", errors.Wrap(ErrUnauthorizedAccess, err)
+		}
+	}
+
+	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.UserKey)
+}
+
+func (svc usersService) LoginWithHeader(ctx context.Context, user User) (string, error) {
+	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
+	if err != nil {
+
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
+
 	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.UserKey)
 }
 
@@ -343,4 +376,8 @@ func (svc usersService) members(ctx context.Context, token, groupID string, limi
 		return nil, err
 	}
 	return res.Members, nil
+}
+
+func (svc usersService) ProxyAuthentication() bool {
+	return true
 }

@@ -7,7 +7,7 @@ RUN mkdir -p /var/log/nginx && \
 RUN /usr/local/openresty/luajit/bin/luarocks install lua-resty-http
 RUN /usr/local/openresty/luajit/bin/luarocks install lua-cjson
 RUN /usr/local/openresty/luajit/bin/luarocks install lua-resty-session
-
+RUN /usr/local/openresty/luajit/bin/luarocks install lua-resty-openidc
 
 RUN mkdir -p /data/nginx/cache/ui
 
