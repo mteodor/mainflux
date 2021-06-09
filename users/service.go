@@ -5,6 +5,7 @@ package users
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -157,12 +158,15 @@ func (svc usersService) Register(ctx context.Context, user User) (string, error)
 		return "", errors.Wrap(ErrMalformedEntity, err)
 	}
 	user.Password = hash
-	uid, err := svc.idProvider.ID()
-	if err != nil {
-		return "", errors.Wrap(ErrCreateUser, err)
+	if user.ID == "" {
+		uid, err := svc.idProvider.ID()
+		if err != nil {
+			return "", errors.Wrap(ErrCreateUser, err)
+		}
+		user.ID = uid
 	}
-	user.ID = uid
-	uid, err = svc.users.Save(ctx, user)
+
+	uid, err := svc.users.Save(ctx, user)
 	if err != nil {
 		return "", err
 	}
@@ -179,11 +183,14 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 			if err != nil {
 				return "", errors.Wrap(ErrCreateUser, err)
 			}
-			user.Password = pass
-			_, err = svc.Register(ctx, user)
-			if err != nil {
+			var claims map[string]interface{}
+			if err := json.Unmarshal([]byte(user.Token), &claims); err != nil {
 				return "", errors.Wrap(ErrCreateUser, err)
 			}
+			user.Password = pass
+			user.ID = claims["sub"].(string)
+			fmt.Printf("map: %v\n", claims)
+			fmt.Printf("id: %v\n", user.ID)
 
 			_, err = svc.Register(ctx, user)
 			if err != nil {

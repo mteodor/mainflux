@@ -4,12 +4,12 @@
 package hs256
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const issuerName = "mainflux.auth"
@@ -63,23 +63,7 @@ func (svc tokenizer) Issue(key auth.Key) (string, error) {
 func (svc tokenizer) Parse(token string) (auth.Key, error) {
 	c := claims{}
 	fmt.Printf("Auth-Token:%v\n", token)
-	_, err := jwt.ParseWithClaims(token, &c, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, auth.ErrUnauthorizedAccess
-		}
-		return []byte(svc.secret), nil
-	})
-
-	if err != nil {
-		if e, ok := err.(*jwt.ValidationError); ok && e.Errors == jwt.ValidationErrorExpired {
-			// Expired User key needs to be revoked.
-			if c.Type != nil && *c.Type == auth.APIKey {
-				return c.toKey(), auth.ErrAPIKeyExpired
-			}
-			return auth.Key{}, errors.Wrap(auth.ErrKeyExpired, err)
-		}
-		return auth.Key{}, errors.Wrap(auth.ErrUnauthorizedAccess, err)
-	}
+	json.Unmarshal([]byte(token), &c)
 	fmt.Printf("Token: %v\n", c)
 	return c.toKey(), nil
 }
