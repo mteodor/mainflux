@@ -38,6 +38,7 @@ type User struct {
 	Email    string
 	Password string
 	Metadata Metadata
+	Token    string
 }
 
 // Validate returns an error if user representation is invalid.

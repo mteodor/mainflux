@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/auth"
@@ -164,12 +165,13 @@ func loginEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
+		fmt.Printf("login/user create %v\n", req.user.Email)
 		token, err := svc.Login(ctx, req.user)
 		if err != nil {
 			return nil, err
 		}
 
-		return tokenRes{token}, nil
+		return tokenRes{Token: token, Authenticated: true}, nil
 	}
 }
 

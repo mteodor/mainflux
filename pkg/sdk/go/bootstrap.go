@@ -55,6 +55,7 @@ func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error)
 	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, configsEndpoint)
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+	http.DefaultClient.Get()
 	if err != nil {
 		return "", err
 	}

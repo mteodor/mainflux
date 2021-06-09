@@ -4,6 +4,7 @@
 package jwt
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,6 +17,7 @@ const issuerName = "mainflux.auth"
 type claims struct {
 	jwt.StandardClaims
 	IssuerID string  `json:"issuer_id,omitempty"`
+	Email    string  `json:"email,omitempty"`
 	Type     *uint32 `json:"type,omitempty"`
 }
 
@@ -77,7 +79,7 @@ func (svc tokenizer) Parse(token string) (auth.Key, error) {
 		}
 		return auth.Key{}, errors.Wrap(auth.ErrUnauthorizedAccess, err)
 	}
-
+	fmt.Printf("Token: %v\n", c)
 	return c.toKey(), nil
 }
 

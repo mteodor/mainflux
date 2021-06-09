@@ -18,7 +18,7 @@ import (
 	api "github.com/mainflux/mainflux/auth/api"
 	grpcapi "github.com/mainflux/mainflux/auth/api/grpc"
 	httpapi "github.com/mainflux/mainflux/auth/api/http"
-	"github.com/mainflux/mainflux/auth/jwt"
+	"github.com/mainflux/mainflux/auth/hs256"
 	"github.com/mainflux/mainflux/auth/postgres"
 	"github.com/mainflux/mainflux/auth/tracing"
 	"github.com/mainflux/mainflux/logger"
@@ -183,7 +183,9 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger lo
 	groupsRepo = tracing.GroupRepositoryMiddleware(tracer, groupsRepo)
 
 	idProvider := uuid.New()
-	t := jwt.New(secret)
+	// Conditional, if service is authenticated
+	// over OpenID connect proxy
+	t := hs256.New(secret)
 
 	svc := auth.New(keysRepo, groupsRepo, idProvider, t)
 	svc = api.LoggingMiddleware(svc, logger)

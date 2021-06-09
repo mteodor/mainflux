@@ -5,6 +5,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/mainflux/mainflux"
@@ -134,12 +135,13 @@ type usersService struct {
 // New instantiates the users service implementation
 func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, e Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp, proxyAuthentication bool) Service {
 	return &usersService{
-		users:      users,
-		hasher:     hasher,
-		auth:       auth,
-		email:      e,
-		idProvider: idp,
-		passRegex:  passRegex,
+		users:               users,
+		hasher:              hasher,
+		auth:                auth,
+		email:               e,
+		idProvider:          idp,
+		passRegex:           passRegex,
+		proxyAuthentication: proxyAuthentication,
 	}
 }
 
@@ -169,8 +171,10 @@ func (svc usersService) Register(ctx context.Context, user User) (string, error)
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
-	if err != nil {
-		if svc.proxyAuthentication && user.Email != "" {
+	fmt.Printf("User from db: %v, err:%v,  proxy: %v, Token%v \n", dbUser, err, svc.proxyAuthentication, user.Token)
+	if err != nil || dbUser.ID == "" {
+		if svc.proxyAuthentication && user.Token != "" {
+			fmt.Printf("User: %v\n", user)
 			pass, err := svc.idProvider.ID()
 			if err != nil {
 				return "", errors.Wrap(ErrCreateUser, err)
@@ -181,7 +185,7 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 				return "", errors.Wrap(ErrCreateUser, err)
 			}
 
-			dbUser, err = svc.users.RetrieveByEmail(ctx, user.Email)
+			_, err = svc.Register(ctx, user)
 			if err != nil {
 				return "", errors.Wrap(ErrCreateUser, err)
 			}
@@ -195,9 +199,14 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 		if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
 			return "", errors.Wrap(ErrUnauthorizedAccess, err)
 		}
+		return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.UserKey)
 	}
 
-	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.UserKey)
+	if user.Token == "" {
+		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return user.Token, nil
 }
 
 func (svc usersService) LoginWithHeader(ctx context.Context, user User) (string, error) {

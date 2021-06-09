@@ -15,21 +15,21 @@ volumes:
   mainflux-es-redis-volume:
   mainflux-mqtt-broker-volume:
 
-services:
-  nginx:
-    image: mainflux-nginx:latest
-    container_name: mainflux-nginx
-    restart: on-failure
-    volumes:
-      - ./nginx/mfx-nginx-${AUTH-key}.conf:/usr/local/openresty/nginx/conf/nginx.conf.template
-      - ./nginx/nginx-${AUTH-key}.conf:/usr/local/openresty/nginx/conf/nginx.conf
-      - ./nginx/entrypoint.sh:/entrypoint.sh
-      - ./nginx/snippets:/usr/local/openresty/nginx/conf/snippets
-      - ./ssl/authorization.js:/usr/local/openresty/nginx/conf/snippets/authorization.js
-      - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
-      - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
-      - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
-      - ./ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
+  services:
+    nginx:
+      image: mainflux-nginx:latest
+      container_name: mainflux-nginx
+      restart: on-failure
+      volumes:
+        - ./nginx/mfx-nginx-${AUTH-key}.conf:/usr/local/openresty/nginx/conf/nginx.conf.template
+        - ./nginx/nginx-${AUTH-key}.conf:/usr/local/openresty/nginx/conf/nginx.conf
+        - ./nginx/entrypoint.sh:/entrypoint.sh
+        - ./nginx/snippets:/usr/local/openresty/nginx/conf/snippets
+        - ./ssl/authorization.js:/usr/local/openresty/nginx/conf/snippets/authorization.js
+        - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
+        - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
+        - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
+        - ./ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
     ports:
       - ${MF_NGINX_HTTP_PORT}:${MF_NGINX_HTTP_PORT}
       - ${MF_NGINX_SSL_PORT}:${MF_NGINX_SSL_PORT}
