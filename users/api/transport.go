@@ -6,6 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -183,8 +184,18 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
+	// If request is coming over authenticated proxy it must contain
+	// user in header.
 
-	return userReq{user}, nil
+	user.Email = r.Header.Get("X-WEBAUTH-USER")
+	user.Token = r.Header.Get("Authorization")
+	fmt.Printf("User decoded: %v\n", user)
+	fmt.Printf("Header: %v , %v\n", r.Header.Get("X-WEBAUTH-USER"), r.Header.Get("Authorization"))
+	// When request is coming over authenticated proxy it contains
+	// access token in Authorization header.
+	return userReq{
+		user: user,
+	}, nil
 }
 
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {

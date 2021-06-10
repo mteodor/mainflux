@@ -60,7 +60,8 @@ func (res createUserRes) Empty() bool {
 }
 
 type tokenRes struct {
-	Token string `json:"token,omitempty"`
+	Token         string `json:"token,omitempty"`
+	Authenticated bool   `json:"authenticated,omitempty"`
 }
 
 func (res tokenRes) Code() int {
