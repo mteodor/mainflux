@@ -142,13 +142,13 @@ func main() {
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
-	authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)
-	defer authCloser.Close()
+	// authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)
+	// defer authCloser.Close()
 
-	auth, close := createAuthClient(cfg, authTracer, logger)
-	if close != nil {
-		defer close()
-	}
+	// auth, close := createAuthClient(cfg, authTracer, logger)
+	// if close != nil {
+	// 	defer close()
+	// }
 
 	dbTracer, dbCloser := initJaeger("things_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
@@ -156,7 +156,7 @@ func main() {
 	cacheTracer, cacheCloser := initJaeger("things_cache", cfg.jaegerURL, logger)
 	defer cacheCloser.Close()
 
-	svc := newService(auth, dbTracer, cacheTracer, db, cacheClient, esClient, logger)
+	svc := newService(nil, dbTracer, cacheTracer, db, cacheClient, esClient, logger)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(thhttpapi.MakeHandler(thingsTracer, svc), cfg.httpPort, cfg, logger, errs)
