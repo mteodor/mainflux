@@ -6,7 +6,6 @@ package things
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 
@@ -163,8 +162,6 @@ func New(auth mainflux.AuthServiceClient, things ThingRepository, channels Chann
 }
 
 func identify(ctx context.Context, token string) (u *mainflux.UserIdentity, err error) {
-	fmt.Printf("Token: %v\n", token)
-	defer fmt.Printf("Response %v, err: %v\n", u, err)
 	var jwt map[string]interface{}
 	if err = json.Unmarshal([]byte(token), &jwt); err != nil {
 		return nil, err
